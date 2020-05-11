@@ -3,10 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:hg="clr-namespace:HierarchyGrid;assembly=HierarchyGrid"
         xmlns:local="clr-namespace:Demo"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow"
+        Height="450"
+        Width="800">
     <Grid>
-
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <hg:VirtualHierarchyGrid x:Name="HGrid" />
+        <UniformGrid Rows="1"
+                     Margin="2"
+                     Grid.Row="1">
+            <Button x:Name="TestButton"
+                    Content="Test" />
+        </UniformGrid>
     </Grid>
 </Window>

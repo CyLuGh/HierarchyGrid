@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using System;
+using System.Linq;
 using Xunit;
 
 namespace HierarchyGrid.Definitions.Tests
@@ -74,6 +75,17 @@ namespace HierarchyGrid.Definitions.Tests
             child1.IsExpanded = false;
             root.Count().Should().Be(2);
             root.Count(true).Should().Be(4);
+        }
+
+        [Fact]
+        public void TestLeaves()
+        {
+            var rootConsumers = new ConsumerDefinition { Content = "Root" };
+            rootConsumers.Add(new ConsumerDefinition { Content = "A1" });
+            rootConsumers.Add(new ConsumerDefinition { Content = "B1" });
+
+            var consumers = new[] { rootConsumers };
+            consumers.Leaves().Count().Should().Be(2);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace HierarchyGrid.Definitions
@@ -8,9 +9,31 @@ namespace HierarchyGrid.Definitions
     /// </summary>
     public class HierarchyDefinitions
     {
-        public IEnumerable<ProducerDefinition> Rows { get; set; }
-        public IEnumerable<ConsumerDefinition> Columns { get; set; }
+        public ImmutableList<ProducerDefinition> Producers { get; }
+        public ImmutableList<ConsumerDefinition> Consumers { get; }
 
-        public bool HasDefinitions => Rows?.Any() == true && Columns?.Any() == true;
+        public bool HasDefinitions => Producers?.Any() == true && Consumers?.Any() == true;
+
+        public HierarchyDefinitions(IEnumerable<ProducerDefinition> producers, IEnumerable<ConsumerDefinition> consumers)
+        {
+            Producers = Build(producers).ToImmutableList();
+            Consumers = Build(consumers).ToImmutableList();
+        }
+
+        public IEnumerable<T> Build<T>(IEnumerable<T> input) where T : HierarchyDefinition
+        {
+            int position = -1;
+            return input.Select(s =>
+            {
+                s.UpdatePosition(ref position);
+                return s;
+            });
+        }
+
+        //=> input.FlatList().Select((s, i) =>
+        //{
+        //    s.Position = i;
+        //    return s;
+        //});
     }
 }
