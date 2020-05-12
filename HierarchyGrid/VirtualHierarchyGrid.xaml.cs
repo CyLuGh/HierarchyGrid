@@ -39,12 +39,13 @@ namespace HierarchyGrid
                 viewToVmConverter: d => Convert.ToInt32(d))
                 .DisposeWith(disposables);
 
-            //this.Bind(hgvm,
-            //    vm => vm.HScrollPos,
-            //    v => v.HScrollVGrid.Value,
-            //    vmToViewConverter: i => Convert.ToDouble(i),
-            //    viewToVmConverter: d => Convert.ToInt32(d))
-            //    .DisposeWith(disposables);
+            this.Bind(hgvm,
+                vm => vm.HScrollPos,
+                v => v.HScrollVGrid.Value,
+                HScrollVGrid.Events().Scroll,
+                vmToViewConverter: i => Convert.ToDouble(i),
+                viewToVmConverter: d => Convert.ToInt32(d))
+                .DisposeWith(disposables);
 
             //this.VScrollVGrid.Events().Scroll.SubscribeSafe(e =>
             //{
@@ -98,11 +99,27 @@ namespace HierarchyGrid
 
                 UpdateSize(hgvm.RowsElements, hgvm.ColumnsElements, false);
 
-                DrawHeaders(hgvm.RowsElements, hgvm.RowLevels, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, hgvm.VScrollPos, false);
-                DrawHeaders(hgvm.ColumnsElements, hgvm.ColumnLevels, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, hgvm.HScrollPos, true);
+                DrawGridVirtual(hgvm);
+
+                //DrawHeaders(hgvm.RowsElements, hgvm.RowLevels, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, hgvm.VScrollPos, false);
+                //DrawHeaders(hgvm.ColumnsElements, hgvm.ColumnLevels, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, hgvm.HScrollPos, true);
 
                 ctx.SetOutput(Unit.Default);
-            });
+            }).DisposeWith(disposables);
+
+            hgvm.HorizontalScrollInteraction.RegisterHandler(ctx =>
+            {
+                DrawGridVirtualH(hgvm);
+
+                ctx.SetOutput(Unit.Default);
+            }).DisposeWith(disposables);
+
+            hgvm.VerticalScrollInteraction.RegisterHandler(ctx =>
+            {
+                DrawGridVirtualV(hgvm);
+
+                ctx.SetOutput(Unit.Default);
+            }).DisposeWith(disposables);
         }
     }
 }

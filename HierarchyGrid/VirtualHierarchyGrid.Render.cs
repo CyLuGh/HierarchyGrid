@@ -143,5 +143,220 @@ namespace HierarchyGrid
                     ViewModel.HScrollPos = (int)scrollBar.Maximum;
             }
         }
+
+        /// <summary>
+        /// Removes children elements and row/column definitions for each grid components.
+        /// </summary>
+        private void ClearGrids()
+        {
+            //foreach (var col in ConsumersFlat)
+            //    col.IsHovered = col.IsContentHovered = false;
+
+            //foreach (var row in ProducersFlat)
+            //    row.IsHovered = row.IsContentHovered = false;
+
+            VColumnHeadersGrid.ColumnDefinitions.Clear();
+            VColumnHeadersGrid.RowDefinitions.Clear();
+            VColumnHeadersGrid.Children.Clear();
+
+            VRowHeadersGrid.ColumnDefinitions.Clear();
+            VRowHeadersGrid.RowDefinitions.Clear();
+            VRowHeadersGrid.Children.Clear();
+
+            ClearCells();
+        }
+
+        private void ClearCells()
+        {
+            VCellsGrid.ColumnDefinitions.Clear();
+            VCellsGrid.RowDefinitions.Clear();
+        }
+
+        /// <summary>
+        /// Removes column elements only (horizontal scroll)
+        /// </summary>
+        private void ClearH()
+        {
+            //foreach (var col in ConsumersFlat)
+            //    col.IsHovered = col.IsContentHovered = false;
+
+            VColumnHeadersGrid.ColumnDefinitions.Clear();
+            VColumnHeadersGrid.RowDefinitions.Clear();
+            VColumnHeadersGrid.Children.Clear();
+
+            VCellsGrid.ColumnDefinitions.Clear();
+        }
+
+        /// <summary>
+        /// Removes row elements only (vertical scroll)
+        /// </summary>
+        private void ClearV()
+        {
+            //foreach (var row in ProducersFlat)
+            //    row.IsHovered = row.IsContentHovered = false;
+
+            VRowHeadersGrid.ColumnDefinitions.Clear();
+            VRowHeadersGrid.RowDefinitions.Clear();
+            VRowHeadersGrid.Children.Clear();
+
+            VCellsGrid.RowDefinitions.Clear();
+        }
+
+        /// <summary>
+        /// Redraws the visible parts of the grid.
+        /// </summary>
+        private void DrawGridVirtual(HierarchyGridViewModel hgvm)
+        {
+            ClearGrids();
+
+            DrawHeaders(hgvm.RowsElements, hgvm.RowLevels, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, hgvm.VScrollPos, false);
+            DrawHeaders(hgvm.ColumnsElements, hgvm.ColumnLevels, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, hgvm.HScrollPos, true);
+
+            DrawCellsContent(hgvm);
+
+            //if (CheckDefinitions(ProducersDefinitions, ConsumersDefinitions))
+            //{
+            //    DrawHeaders(RowsElements, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, VScrollPos, false);
+            //    DrawHeaders(ColumnsElements, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, HScrollPos, true);
+
+            //    DrawGlobalHeaders();
+            //    Timer.Interval = DetermineDelay();
+            //    SuggestDrawCellsContent();
+            //}
+        }
+
+        /// <summary>
+        /// Redraws the grid when scrolling horizontally
+        /// </summary>
+        private void DrawGridVirtualH(HierarchyGridViewModel hgvm)
+        {
+            //DrawingHHeaders = true;
+            ClearH();
+            DrawHeaders(hgvm.ColumnsElements, hgvm.ColumnLevels, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, hgvm.HScrollPos, true);
+
+            DrawCellsContent(hgvm);
+            //DrawHeaders(ColumnsElements, ScrollGrid.ActualWidth * 1 / ScaleFactor - VGrid.ColumnDefinitions[0].Width.Value, HScrollPos, true);
+            //DrawingHHeaders = false;
+            //SuggestDrawCellsContent();
+        }
+
+        /// <summary>
+        /// Redraws the grid when scrolling vertically
+        /// </summary>
+        private void DrawGridVirtualV(HierarchyGridViewModel hgvm)
+        {
+            //DrawingVHeaders = true;
+            ClearV();
+            DrawHeaders(hgvm.RowsElements, hgvm.RowLevels, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, hgvm.VScrollPos, false);
+
+            DrawCellsContent(hgvm);
+            //DrawHeaders(RowsElements, ScrollGrid.RowDefinitions[0].ActualHeight * 1 / ScaleFactor, VScrollPos, false);
+            //DrawingVHeaders = false;
+            //SuggestDrawCellsContent();
+        }
+
+        private void DrawCellsContent(HierarchyGridViewModel hgvm)
+        {
+            int cpt = 0;
+            int childCount = VCellsGrid.Children.Count;
+
+            for (int col = 0; col < VCellsGrid.ColumnDefinitions.Count; col++)
+                for (int row = 0; row < VCellsGrid.RowDefinitions.Count; row++)
+                    cpt = DrawCellContent(hgvm, cpt, childCount, row, col);
+
+            /* Remove unused elements */
+            if (cpt < childCount)
+                VCellsGrid.Children.RemoveRange(cpt, childCount);
+        }
+
+        /// <summary>
+        /// Draw content of a cell, recycling components when it can.
+        /// </summary>
+        /// <param name="cpt">Position of the cell in control.</param>
+        /// <param name="childCount">Current child elements count in control. Elements alternate between Rectangle and GridTextBlock.</param>
+        /// <param name="row">Current row.</param>
+        /// <param name="col">Current column.</param>
+        private int DrawCellContent(HierarchyGridViewModel hgvm, int cpt, int childCount, int row, int col)
+        {
+            ToggleButton rH = GetRowHeader(row);
+            ToggleButton cH = GetColumnHeader(col);
+
+            if (cH == null || rH == null)
+                return 0;
+
+            var producer = (ProducerDefinition)(!hgvm.IsTransposed ? rH.Tag : cH.Tag);
+            var consumer = (ConsumerDefinition)(!hgvm.IsTransposed ? cH.Tag : rH.Tag);
+            //var coord = new GridCoordinates(producer, consumer);
+
+            var cell = GetCell(ref cpt, childCount, row, col, producer, consumer);
+            //cell.Producer = producer;
+            //cell.Consumer = consumer;
+
+            //// TODO Set decors
+            ////if ( HasDecor )
+            ////{
+            ////    Decor decors = GetDecor( ref cpt , childCount , row , col );
+            ////    DrawDecor( decors , coord );
+            ////}
+
+            //cell.ClickAction = (o, e) => CellSingleClickAction(o, e, coord, col, row);
+            //cell.RightClickAction = (o, e) => RightClickAction(o, e, coord, cell.ClickAction);
+            //if (!producer.IsReadOnly && !consumer.IsReadOnly && consumer.Edit != null)
+            //    cell.DoubleClickAction = (o, e) => CellDoubleClickAction(cell, e, coord, col, row);
+
+            return cpt;
+        }
+
+        /// <summary>
+        /// Creates or recycles a VirtualHierarchyGridCell (with mouse behavior)
+        /// </summary>
+        /// <param name="cpt">Current cell count</param>
+        /// <param name="childCount">Cells already existing</param>
+        /// <param name="row">Grid row</param>
+        /// <param name="col">Grid column</param>
+        /// <param name="rowHDef">Row definition</param>
+        /// <param name="columnHDef">Column definition</param>
+        /// <returns>Cell newly created or recycled</returns>
+        private HierarchyGridCell GetCell(ref int cpt, int childCount, int row, int col, ProducerDefinition producer, ConsumerDefinition consumer)
+        {
+            HierarchyGridCell cell = null;
+
+            if (cpt < childCount)
+            {
+                cell = VCellsGrid.Children[cpt] as HierarchyGridCell;
+                cell.ViewModel.Producer = null;
+                cell.ViewModel.Consumer = null;
+                //if (cell != null)
+                //{
+                //    cell.ClickAction = null;
+                //    cell.DoubleClickAction = null;
+                //    cell.RightClickAction = null;
+                //    cell.Clear();
+                //}
+            }
+
+            if (cell == null) // We're out of bounds or element wasn't a cell
+            {
+                cell = new HierarchyGridCell
+                {
+                    ViewModel = new HierarchyGridCellViewModel()
+                };
+                VCellsGrid.Children.Add(cell);
+            }
+
+            cell.ViewModel.Producer = producer;
+            cell.ViewModel.Consumer = consumer;
+
+            //cell.TextAlignment = CellTextAlignment;
+            //cell.HasDecor = HasDecor;
+            //cell.Classification = CellClassification.Normal;
+            //cell.EnableCrosshair = EnableCrosshair;
+
+            Grid.SetColumn(cell, col);
+            Grid.SetRow(cell, row);
+
+            cpt++;
+            return cell;
+        }
     }
 }

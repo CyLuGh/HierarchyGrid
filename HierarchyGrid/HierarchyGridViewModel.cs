@@ -23,8 +23,6 @@ namespace HierarchyGrid
         public ReadOnlyObservableCollection<HierarchyDefinition> Producers => _producers;
         public ReadOnlyObservableCollection<HierarchyDefinition> Consumers => _consumers;
 
-        [Reactive] public ProducerDefinition[] ProducerDefinitions { get; set; }
-        [Reactive] public ConsumerDefinition[] ConsumerDefinitions { get; set; }
         [Reactive] public bool IsTransposed { get; set; }
         [Reactive] public bool HasNoData { get; set; } = true;
         [Reactive] public int HScrollPos { get; set; }
@@ -39,7 +37,15 @@ namespace HierarchyGrid
 
         internal HierarchyDefinition[] RowsElements => (!IsTransposed ? Producers : Consumers).ToArray();
 
+        public ReactiveCommand<int, Unit> VerticalScrollCommand { get; }
+        public ReactiveCommand<int, Unit> HorizontalScrollCommand { get; }
         public ReactiveCommand<Unit, Unit> DrawGridCommand { get; }
+
+        public Interaction<int, Unit> VerticalScrollInteraction { get; }
+            = new Interaction<int, Unit>(RxApp.MainThreadScheduler);
+
+        public Interaction<int, Unit> HorizontalScrollInteraction { get; }
+            = new Interaction<int, Unit>(RxApp.MainThreadScheduler);
 
         public Interaction<Unit, Unit> DrawGridInteraction { get; }
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
@@ -47,9 +53,13 @@ namespace HierarchyGrid
         public HierarchyGridViewModel()
         {
             Activator = new ViewModelActivator();
+            VerticalScrollInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+            HorizontalScrollInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
             DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
 
             DrawGridCommand = ReactiveCommand.CreateFromObservable(() => DrawGridInteraction.Handle(Unit.Default));
+            VerticalScrollCommand = ReactiveCommand.CreateFromObservable<int, Unit>(pos => VerticalScrollInteraction.Handle(pos));
+            HorizontalScrollCommand = ReactiveCommand.CreateFromObservable<int, Unit>(pos => HorizontalScrollInteraction.Handle(pos));
 
             this.WhenActivated(disposables =>
             {
@@ -71,10 +81,20 @@ namespace HierarchyGrid
 
                 ProducersCache.Connect().Select(_ => Unit.Default)
                     .Merge(ConsumersCache.Connect().Select(_ => Unit.Default))
-                    .Merge(this.WhenAnyValue(o => o.HScrollPos).Select(_ => Unit.Default))
-                    .Merge(this.WhenAnyValue(o => o.VScrollPos).Select(_ => Unit.Default))
                     .Throttle(TimeSpan.FromMilliseconds(150))
                     .InvokeCommand(DrawGridCommand)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(o => o.HScrollPos)
+                    //.Throttle(TimeSpan.FromMilliseconds(150))
+                    .DistinctUntilChanged()
+                    .InvokeCommand(HorizontalScrollCommand)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(o => o.VScrollPos)
+                    //.Throttle(TimeSpan.FromMilliseconds(150))
+                    .DistinctUntilChanged()
+                    .InvokeCommand(VerticalScrollCommand)
                     .DisposeWith(disposables);
             });
         }
