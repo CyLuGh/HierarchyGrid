@@ -89,13 +89,13 @@ namespace HierarchyGrid
             return rDef;
         }
 
-        private void UpdateSize(HierarchyDefinition[] rowsElements, HierarchyDefinition[] colsElements, bool draw = true)
+        private void UpdateSize(HierarchyGridViewModel hgvm, bool draw = true)
         {
-            UpdateSize(rowsElements.Leaves().ToList(), AvailableRowSpace, VScrollVGrid, true, ScrollGrid.ColumnDefinitions[1].Width, 25);
-            UpdateSize(colsElements.Leaves().ToList(), AvailableColumnSpace, HScrollVGrid, false, ScrollGrid.RowDefinitions[1].Height, 0);
+            UpdateSize(hgvm.RowsElements.Leaves().ToList(), AvailableRowSpace, VScrollVGrid, true, ScrollGrid.ColumnDefinitions[1].Width, 25);
+            UpdateSize(hgvm.ColumnsElements.Leaves().ToList(), AvailableColumnSpace, HScrollVGrid, false, ScrollGrid.RowDefinitions[1].Height, 0);
 
-            //if (draw)
-            //    DrawGridVirtual();
+            if (draw)
+                DrawGridVirtual(hgvm);
         }
 
         /// <summary>
@@ -255,6 +255,8 @@ namespace HierarchyGrid
             //SuggestDrawCellsContent();
         }
 
+        private int _previousVPos, _previousHPos;
+
         private void DrawCellsContent(HierarchyGridViewModel hgvm)
         {
             int cpt = 0;
@@ -267,6 +269,9 @@ namespace HierarchyGrid
             /* Remove unused elements */
             if (cpt < childCount)
                 VCellsGrid.Children.RemoveRange(cpt, childCount);
+
+            _previousHPos = hgvm.HScrollPos;
+            _previousVPos = hgvm.VScrollPos;
         }
 
         /// <summary>
@@ -288,9 +293,9 @@ namespace HierarchyGrid
             var consumer = (ConsumerDefinition)(!hgvm.IsTransposed ? cH.Tag : rH.Tag);
             //var coord = new GridCoordinates(producer, consumer);
 
-            var cell = GetCell(ref cpt, childCount, row, col, producer, consumer);
-            //cell.Producer = producer;
-            //cell.Consumer = consumer;
+            var viewModel = hgvm.FindCell(producer, consumer);
+
+            var cell = GetCell(ref cpt, childCount, row, col, viewModel);
 
             //// TODO Set decors
             ////if ( HasDecor )
@@ -317,15 +322,14 @@ namespace HierarchyGrid
         /// <param name="rowHDef">Row definition</param>
         /// <param name="columnHDef">Column definition</param>
         /// <returns>Cell newly created or recycled</returns>
-        private HierarchyGridCell GetCell(ref int cpt, int childCount, int row, int col, ProducerDefinition producer, ConsumerDefinition consumer)
+        private HierarchyGridCell GetCell(ref int cpt, int childCount, int row, int col, HierarchyGridCellViewModel viewModel)
         {
             HierarchyGridCell cell = null;
 
             if (cpt < childCount)
             {
                 cell = VCellsGrid.Children[cpt] as HierarchyGridCell;
-                cell.ViewModel.Producer = null;
-                cell.ViewModel.Consumer = null;
+
                 //if (cell != null)
                 //{
                 //    cell.ClickAction = null;
@@ -337,15 +341,11 @@ namespace HierarchyGrid
 
             if (cell == null) // We're out of bounds or element wasn't a cell
             {
-                cell = new HierarchyGridCell
-                {
-                    ViewModel = new HierarchyGridCellViewModel()
-                };
+                cell = new HierarchyGridCell();
                 VCellsGrid.Children.Add(cell);
             }
 
-            cell.ViewModel.Producer = producer;
-            cell.ViewModel.Consumer = consumer;
+            cell.ViewModel = viewModel;
 
             //cell.TextAlignment = CellTextAlignment;
             //cell.HasDecor = HasDecor;

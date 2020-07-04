@@ -8,5 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HierarchyGrid\HierarchyGrid.csproj" />
+    <ProjectReference Include="..\VirtualHierarchyGrid\VirtualHierarchyGrid.csproj" />
   </ItemGroup>
 </Project>

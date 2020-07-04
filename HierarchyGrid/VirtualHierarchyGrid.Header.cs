@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows.Controls.Primitives;
 
 namespace HierarchyGrid
 {
@@ -42,6 +43,8 @@ namespace HierarchyGrid
 
             if (hdef.HasChild)
             {
+                header.Events().Checked.Subscribe(_ => Toggle(ViewModel, hdef, true));
+                header.Events().Unchecked.Subscribe(_ => Toggle(ViewModel, hdef, false));
                 // Folded node
                 //header.Style = (Style)FindResource("HierarchyToggle");
                 //header.Checked += Expand;
@@ -83,6 +86,19 @@ namespace HierarchyGrid
                 DrawRowHeaderLeaves(leaves, availSpace, depth, scrollPosition, maxDepth != depth);
                 DrawRowHeaderExpanded(scrollPosition, levels);
             }
+        }
+
+        /// <summary>
+        /// Switches hierarchy element of collapsed of expanded.
+        /// </summary>
+        /// <param name="def">Element to be updated</param>
+        /// <param name="isExpanded">Whether the node is expaned or not</param>
+        private void Toggle(HierarchyGridViewModel hgvm, HierarchyDefinition def, bool isExpanded)
+        {
+            def.IsExpanded = isExpanded;
+            ResizeGridRowHeaders(hgvm.ColumnsOnly, hgvm.RowsElements);
+            //CacheLayout();
+            UpdateSize(hgvm, true);
         }
     }
 }

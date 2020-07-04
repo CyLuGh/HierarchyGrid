@@ -1,8 +1,12 @@
 ﻿using DynamicData;
+using DynamicData.Kernel;
 using HierarchyGrid.Definitions;
+using MoreLinq;
+using NLog;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,8 +18,13 @@ namespace HierarchyGrid
 {
     public class HierarchyGridViewModel : ReactiveObject, IActivatableViewModel
     {
+        private static readonly NLog.ILogger _logger = LogManager.GetCurrentClassLogger();
+
         private SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
         private SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
+
+        private ConcurrentDictionary<(int, int), HierarchyGridCellViewModel> _cells
+            = new ConcurrentDictionary<(int, int), HierarchyGridCellViewModel>();
 
         private ReadOnlyObservableCollection<HierarchyDefinition> _producers;
         private ReadOnlyObservableCollection<HierarchyDefinition> _consumers;
@@ -36,6 +45,8 @@ namespace HierarchyGrid
         internal HierarchyDefinition[] ColumnsElements => (!IsTransposed ? Consumers : Producers).ToArray();
 
         internal HierarchyDefinition[] RowsElements => (!IsTransposed ? Producers : Consumers).ToArray();
+
+        public ReactiveCommand<Unit, Unit> BuildCacheCommand { get; }
 
         public ReactiveCommand<int, Unit> VerticalScrollCommand { get; }
         public ReactiveCommand<int, Unit> HorizontalScrollCommand { get; }
@@ -60,6 +71,14 @@ namespace HierarchyGrid
             DrawGridCommand = ReactiveCommand.CreateFromObservable(() => DrawGridInteraction.Handle(Unit.Default));
             VerticalScrollCommand = ReactiveCommand.CreateFromObservable<int, Unit>(pos => VerticalScrollInteraction.Handle(pos));
             HorizontalScrollCommand = ReactiveCommand.CreateFromObservable<int, Unit>(pos => HorizontalScrollInteraction.Handle(pos));
+
+            BuildCacheCommand = ReactiveCommand.CreateFromObservable(() => Observable.Start(() =>
+            {
+                _cells.Clear();
+                ProducersCache.Items.AsParallel().ForAll(producer =>
+                   ConsumersCache.Items.ForEach(consumer => _cells.TryAdd((producer.Position, consumer.Position), new HierarchyGridCellViewModel { Producer = producer, Consumer = consumer }))
+                   );
+            }));
 
             this.WhenActivated(disposables =>
             {
@@ -107,6 +126,18 @@ namespace HierarchyGrid
             ConsumersCache.AddOrUpdate(hierarchyDefinitions.Consumers);
 
             CacheLayout(hierarchyDefinitions.Producers, hierarchyDefinitions.Consumers);
+        }
+
+        public HierarchyGridCellViewModel FindCell(ProducerDefinition producer, ConsumerDefinition consumer)
+        {
+            if (_cells.TryGetValue((producer.Position, consumer.Position), out var vm))
+                return vm;
+            else
+            {
+                var viewModel = new HierarchyGridCellViewModel { Producer = producer, Consumer = consumer };
+                _cells.TryAdd((producer.Position, consumer.Position), viewModel);
+                return viewModel;
+            }
         }
 
         public void Clear()

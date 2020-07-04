@@ -1,4 +1,5 @@
 ﻿using HierarchyGrid.Definitions;
+using LanguageExt;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -35,16 +36,19 @@ namespace HierarchyGrid
 
         private void PopulateFromViewModel(HierarchyGridCellViewModel hgcvm, CompositeDisposable disposables)
         {
-            //hgcvm.WhenAnyValue(o => o.Content)
-            //    .Throttle(TimeSpan.FromMilliseconds(25))
+            //_txtContent.Text = hgcvm.Result.Match(s => s, () => string.Empty);
+
+            //hgcvm.WhenAnyValue(o => o.Result)
+            //    .Throttle(TimeSpan.FromMilliseconds(45))
+            //    .Select(r => r.Match(s => s, () => string.Empty))
             //    .ObserveOn(RxApp.MainThreadScheduler)
             //    .BindTo(this, x => x._txtContent.Text)
             //    .DisposeWith(disposables);
 
-            this.OneWayBind(hgcvm,
-                vm => vm.Result,
-                v => v._txtContent.Text)
-                .DisposeWith(disposables);
+            //this.OneWayBind(hgcvm,
+            //    vm => vm.Result,
+            //    v => v._txtContent.Text)
+            //    .DisposeWith(disposables);
         }
     }
 }

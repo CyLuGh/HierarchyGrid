@@ -47,6 +47,13 @@ namespace HierarchyGrid
                 viewToVmConverter: d => Convert.ToInt32(d))
                 .DisposeWith(disposables);
 
+            this.ScrollGrid.Events().SizeChanged
+                .SubscribeSafe(e =>
+                {
+                    UpdateSize(hgvm);
+                })
+                .DisposeWith(disposables);
+
             //this.VScrollVGrid.Events().Scroll.SubscribeSafe(e =>
             //{
             //    var test = VScrollVGrid.Value;
@@ -97,7 +104,7 @@ namespace HierarchyGrid
                 for (int i = 0; i < hgvm.RowsElements.TotalDepth(); i++)
                     RowHeadersWidth.Add(DefaultRowHeaderWidth);
 
-                UpdateSize(hgvm.RowsElements, hgvm.ColumnsElements, false);
+                UpdateSize(hgvm, false);
 
                 DrawGridVirtual(hgvm);
 
