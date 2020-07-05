@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using MoreLinq;
+using System.Windows.Forms;
 
 namespace VirtualHierarchyGrid
 {
@@ -36,19 +37,20 @@ namespace VirtualHierarchyGrid
 
             int headerCount = 0;
             int splitterCount = 0;
-            DrawColumnsHeaders(size.Width, ref headerCount, ref splitterCount);
-            DrawRowsHeaders(size.Height, ref headerCount, ref splitterCount);
-
-            DrawCells(size);
-        }
-
-        private void DrawCells(Size size)
-        {
-            double horizontalPosition = ViewModel.RowsHeadersWidth.Sum();
-            int horizontalIdx = ViewModel.HorizontalOffset;
 
             var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
+
+            DrawColumnsHeaders(colDefinitions, size.Width, ref headerCount, ref splitterCount);
+            DrawRowsHeaders(rowDefinitions, size.Height, ref headerCount, ref splitterCount);
+
+            DrawCells(size, rowDefinitions, colDefinitions);
+        }
+
+        private void DrawCells(Size size, HierarchyDefinition[] rowDefinitions, HierarchyDefinition[] colDefinitions)
+        {
+            double horizontalPosition = ViewModel.RowsHeadersWidth.Sum();
+            int horizontalIdx = ViewModel.HorizontalOffset;
 
             int idx = 0;
 
@@ -70,9 +72,17 @@ namespace VirtualHierarchyGrid
                     }
                     else
                     {
-                        cell = new HierarchyGridCell();
+                        cell = new HierarchyGridCell { ViewModel = new HierarchyGridCellViewModel(ViewModel) };
                         _cells.Add(cell);
                     }
+
+                    cell.ViewModel.ColumnIndex = horizontalIdx;
+                    cell.ViewModel.RowIndex = verticalIdx;
+                    var producer = (ProducerDefinition)(!ViewModel.IsTransposed ? rowDefinitions[verticalIdx] : colDefinitions[horizontalIdx]);
+                    var consumer = (ConsumerDefinition)(!ViewModel.IsTransposed ? colDefinitions[horizontalIdx] : rowDefinitions[verticalIdx]);
+
+                    if (ViewModel.ResultSets.TryGetValue((producer.Position, consumer.Position), out var rs))
+                        cell.ViewModel.ResultSet = rs;
 
                     cell.Width = width;
                     cell.Height = height;
@@ -96,12 +106,11 @@ namespace VirtualHierarchyGrid
                 _cells.RemoveRange(idx, _cells.Count - idx);
         }
 
-        private void DrawColumnsHeaders(double availableWidth, ref int headerCount, ref int splitterCount)
+        private void DrawColumnsHeaders(HierarchyDefinition[] hdefs, double availableWidth, ref int headerCount, ref int splitterCount)
         {
             double currentPosition = ViewModel.RowsHeadersWidth.Sum();
             int column = ViewModel.HorizontalOffset;
 
-            var hdefs = ViewModel.ColumnsDefinitions.Leaves().ToArray();
             ViewModel.MaxHorizontalOffset = hdefs.Length - 1;
             var splitters = new List<GridSplitter>();
 
@@ -135,7 +144,7 @@ namespace VirtualHierarchyGrid
                 Canvas.SetTop(gridSplitter, top);
                 splitters.Add(gridSplitter);
 
-                DrawParentColumnHeader(hdef, column, currentPosition, ref headerCount);
+                DrawParentColumnHeader(hdef, hdef, column, currentPosition, ref headerCount);
 
                 column++;
                 currentPosition += width;
@@ -145,7 +154,7 @@ namespace VirtualHierarchyGrid
                 HierarchyGridCanvas.Children.Add(gridSplitter);
         }
 
-        private void DrawParentColumnHeader(HierarchyDefinition src, int column, double currentPosition, ref int headerCount)
+        private void DrawParentColumnHeader(HierarchyDefinition src, HierarchyDefinition origin, int column, double currentPosition, ref int headerCount)
         {
             if (src.Parent == null)
                 return;
@@ -155,7 +164,7 @@ namespace VirtualHierarchyGrid
             if (_columnsParents.Contains(hdef))
                 return;
 
-            var width = Enumerable.Range(column, hdef.Count() - src.RelativePosition)
+            var width = Enumerable.Range(column, hdef.Count() - origin.RelativePositionFrom(hdef))
                 .Select(x => ViewModel.ColumnsWidths.TryGetValue(x, out var size) ? size : 0).Sum();
 
             var height = ViewModel.ColumnsHeadersHeight[hdef.Level];
@@ -169,15 +178,14 @@ namespace VirtualHierarchyGrid
 
             _columnsParents.Add(hdef);
 
-            DrawParentColumnHeader(hdef, column, currentPosition, ref headerCount);
+            DrawParentColumnHeader(hdef, origin, column, currentPosition, ref headerCount);
         }
 
-        private void DrawRowsHeaders(double availableHeight, ref int headerCount, ref int splitterCount)
+        private void DrawRowsHeaders(HierarchyDefinition[] hdefs, double availableHeight, ref int headerCount, ref int splitterCount)
         {
             double currentPosition = ViewModel.ColumnsHeadersHeight.Sum();
             int row = ViewModel.VerticalOffset;
 
-            var hdefs = ViewModel.RowsDefinitions.Leaves().ToArray();
             ViewModel.MaxVerticalOffset = hdefs.Length - 1;
             var splitters = new List<GridSplitter>();
 
@@ -214,7 +222,7 @@ namespace VirtualHierarchyGrid
                 Canvas.SetTop(gridSplitter, currentPosition + height - 1);
                 splitters.Add(gridSplitter);
 
-                DrawParentRowHeader(hdef, row, currentPosition, ref headerCount);
+                DrawParentRowHeader(hdef, hdef, row, currentPosition, ref headerCount);
 
                 row++;
                 currentPosition += height;
@@ -224,7 +232,7 @@ namespace VirtualHierarchyGrid
                 HierarchyGridCanvas.Children.Add(gridSplitter);
         }
 
-        private void DrawParentRowHeader(HierarchyDefinition src, int row, double currentPosition, ref int headerCount)
+        private void DrawParentRowHeader(HierarchyDefinition src, HierarchyDefinition origin, int row, double currentPosition, ref int headerCount)
         {
             if (src.Parent == null)
                 return;
@@ -234,7 +242,7 @@ namespace VirtualHierarchyGrid
             if (_rowsParents.Contains(hdef))
                 return;
 
-            var height = Enumerable.Range(row, hdef.Count() - src.RelativePosition)
+            var height = Enumerable.Range(row, hdef.Count() - origin.RelativePositionFrom(hdef))
                 .Select(x => ViewModel.RowsHeights.TryGetValue(x, out var size) ? size : 0).Sum();
 
             var width = ViewModel.RowsHeadersWidth[hdef.Level];
@@ -248,7 +256,7 @@ namespace VirtualHierarchyGrid
 
             _rowsParents.Add(hdef);
 
-            DrawParentRowHeader(hdef, row, currentPosition, ref headerCount);
+            DrawParentRowHeader(hdef, origin, row, currentPosition, ref headerCount);
         }
 
         private ToggleButton BuildHeader(ref int headerCount, HierarchyDefinition hdef, double width, double height)

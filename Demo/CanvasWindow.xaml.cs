@@ -62,17 +62,17 @@ namespace Demo
                     //hpd.Freeze(true);
                 }
 
-                AddChildRows(hpd, x);
+                AddChildRows(hpd, 3);
                 return hpd;
             });
         }
 
-        private void AddChildRows(ProducerDefinition parent, int childCount)
+        private void AddChildRows(ProducerDefinition parent, int childCount, bool addChild = true)
         {
             for (int i = 0; i < childCount; i++)
             {
                 var idx = i;
-                parent.Add(new ProducerDefinition
+                var node = parent.Add(new ProducerDefinition
                 {
                     Content = idx.ToString(),
                     //Producer = () =>
@@ -82,6 +82,9 @@ namespace Demo
                     //},
                     //Classification = () => idx == 3 ? CellClassification.Remark : CellClassification.Normal
                 });
+
+                if (addChild)
+                    AddChildRows(node, 4, false);
             }
         }
 

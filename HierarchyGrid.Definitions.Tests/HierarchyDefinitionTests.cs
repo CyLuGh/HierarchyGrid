@@ -45,6 +45,26 @@ namespace HierarchyGrid.Definitions.Tests
         }
 
         [Fact]
+        public void TestRelativePositionFrom()
+        {
+            var root = new ProducerDefinition();
+
+            var child1 = root.Add(new ProducerDefinition());
+            var child2 = root.Add(new ProducerDefinition());
+
+            child1.RelativePositionFrom(root).Should().Be(0);
+            child2.RelativePositionFrom(root).Should().Be(1);
+
+            var child1child1 = child1.Add(new ProducerDefinition());
+            var child1child2 = child1.Add(new ProducerDefinition());
+            var child1child3 = child1.Add(new ProducerDefinition());
+
+            child1child1.RelativePositionFrom(root).Should().Be(0);
+            child1child3.RelativePositionFrom(root).Should().Be(2);
+            child2.RelativePositionFrom(root).Should().Be(3);
+        }
+
+        [Fact]
         public void TestDepth()
         {
             var root = new ProducerDefinition();

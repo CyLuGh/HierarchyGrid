@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using DynamicData;
+using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -198,6 +199,9 @@ namespace HierarchyGrid.Definitions
                 return pos;
             }
         }
+
+        public int RelativePositionFrom(HierarchyDefinition hierarchyDefinition)
+            => new[] { hierarchyDefinition }.Leaves().IndexOf(this);
 
         public HierarchyDefinition Root
         {
