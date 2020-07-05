@@ -3,8 +3,10 @@ using HierarchyGrid.Definitions;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System;
 using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 
 namespace VirtualHierarchyGrid
@@ -15,6 +17,12 @@ namespace VirtualHierarchyGrid
 
         private SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
         private SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
+
+        [Reactive] public int HorizontalOffset { get; set; }
+        [Reactive] public int VerticalOffset { get; set; }
+
+        [Reactive] public int MaxHorizontalOffset { get; set; }
+        [Reactive] public int MaxVerticalOffset { get; set; }
 
         [Reactive] public bool IsTransposed { get; set; }
 
@@ -29,12 +37,24 @@ namespace VirtualHierarchyGrid
         public Interaction<Unit, Unit> DrawGridInteraction { get; }
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
 
+        public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
+
         public HierarchyGridViewModel()
         {
             Activator = new ViewModelActivator();
 
             DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
             DrawGridCommand = ReactiveCommand.CreateFromObservable(() => DrawGridInteraction.Handle(Unit.Default));
+
+            this.WhenActivated(disposables =>
+            {
+                this.WhenAnyValue(x => x.HorizontalOffset)
+                    .CombineLatest(this.WhenAnyValue(x => x.VerticalOffset),
+                    (ho, vo) => Unit.Default)
+                    .Throttle(TimeSpan.FromMilliseconds(5))
+                .InvokeCommand(DrawGridCommand)
+                .DisposeWith(disposables);
+            });
         }
 
         public void Set(HierarchyDefinitions hierarchyDefinitions)
@@ -68,6 +88,9 @@ namespace VirtualHierarchyGrid
 
             ColumnsWidths.Clear();
             RowsHeights.Clear();
+
+            HorizontalOffset = 0;
+            VerticalOffset = 0;
         }
     }
 }

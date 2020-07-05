@@ -91,7 +91,7 @@ namespace Demo
             {
                 var hdef = new ConsumerDefinition { Content = string.Format("Parent {0}", a), IsExpanded = a != 1 };
 
-                foreach (var child in Enumerable.Range(0, 4).Select(x => new ConsumerDefinition
+                foreach (var child in Enumerable.Range(0, a).Select(x => new ConsumerDefinition
                 {
                     Content = x.ToString()
                     //Consumer = o =>
@@ -102,6 +102,7 @@ namespace Demo
                 }))
                 {
                     hdef.Add(child);
+
                     //child.ContextMenuBuilder = o =>
                     //{
                     //    var mi = new MenuItem { Header = "Test menu" };

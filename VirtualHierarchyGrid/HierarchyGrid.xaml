@@ -24,8 +24,20 @@
                 Grid.Column="0">
         </Canvas>
 
-        <ScrollBar Grid.Column="1" />
-        <ScrollBar Orientation="Horizontal"
+        <ScrollBar x:Name="VerticalScrollBar"
+                   Minimum="0"
+                   SmallChange="1"
+                   LargeChange="5"
+                   Grid.Column="1" />
+        <ScrollBar x:Name="HorizontalScrollBar"
+                   Minimum="0"
+                   SmallChange="1"
+                   LargeChange="5"
+                   Orientation="Horizontal"
                    Grid.Row="1" />
+
+        <Rectangle Grid.Column="1"
+                   Grid.Row="1"
+                   Fill="Gray" />
     </Grid>
 </rxui:ReactiveUserControl>
