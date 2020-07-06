@@ -20,8 +20,12 @@
         </Grid.ColumnDefinitions>
 
         <Canvas x:Name="HierarchyGridCanvas"
+                Background="Transparent"
                 Grid.Row="0"
                 Grid.Column="0">
+            <Canvas.LayoutTransform>
+                <ScaleTransform x:Name="ScaleTransform" />
+            </Canvas.LayoutTransform>
         </Canvas>
 
         <ScrollBar x:Name="VerticalScrollBar"

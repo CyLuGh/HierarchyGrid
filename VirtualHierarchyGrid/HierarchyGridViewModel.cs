@@ -3,11 +3,9 @@ using HierarchyGrid.Definitions;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
@@ -30,6 +28,8 @@ namespace VirtualHierarchyGrid
 
         [Reactive] public int HorizontalOffset { get; set; }
         [Reactive] public int VerticalOffset { get; set; }
+
+        [Reactive] public double Scale { get; set; } = 1d;
 
         [Reactive] public int MaxHorizontalOffset { get; set; }
         [Reactive] public int MaxVerticalOffset { get; set; }
@@ -64,10 +64,21 @@ namespace VirtualHierarchyGrid
 
             this.WhenActivated(disposables =>
             {
+                this.WhenAnyValue(x => x.Scale)
+                    .Where(x => x < 0.75)
+                    .SubscribeSafe(_ => Scale = 0.75)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.Scale)
+                    .Where(x => x > 1)
+                    .SubscribeSafe(_ => Scale = 1)
+                    .DisposeWith(disposables);
+
                 this.WhenAnyValue(x => x.HorizontalOffset)
                     .CombineLatest(this.WhenAnyValue(x => x.VerticalOffset),
-                    (ho, vo) => Unit.Default)
-                    .Throttle(TimeSpan.FromMilliseconds(5))
+                    this.WhenAnyValue(x => x.Scale).DistinctUntilChanged(),
+                    (ho, vo, sc) => Unit.Default)
+                    .Throttle(TimeSpan.FromMilliseconds(15))
                 .InvokeCommand(DrawGridCommand)
                 .DisposeWith(disposables);
 
@@ -87,6 +98,16 @@ namespace VirtualHierarchyGrid
                     .Where(x => x)
                     .ObserveOn(RxApp.MainThreadScheduler)
                     .SubscribeSafe(_ => VerticalOffset = MaxVerticalOffset)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.HorizontalOffset)
+                    .Where(x => x < 0)
+                    .SubscribeSafe(_ => HorizontalOffset = 0)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.VerticalOffset)
+                    .Where(x => x < 0)
+                    .SubscribeSafe(_ => VerticalOffset = 0)
                     .DisposeWith(disposables);
 
                 this.WhenAnyValue(x => x.EnableMultiSelection)

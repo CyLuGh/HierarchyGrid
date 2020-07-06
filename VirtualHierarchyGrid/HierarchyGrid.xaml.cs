@@ -35,6 +35,16 @@ namespace VirtualHierarchyGrid
 
         private static void PopulateFromViewModel(HierarchyGrid hierarchyGrid, HierarchyGridViewModel vm, CompositeDisposable disposables)
         {
+            hierarchyGrid.OneWayBind(vm,
+                vm => vm.Scale,
+                v => v.ScaleTransform.ScaleX)
+                .DisposeWith(disposables);
+
+            hierarchyGrid.OneWayBind(vm,
+                vm => vm.Scale,
+                v => v.ScaleTransform.ScaleY)
+                .DisposeWith(disposables);
+
             vm.DrawGridInteraction.RegisterHandler(ctx =>
                 {
                     hierarchyGrid.DrawGrid(hierarchyGrid.RenderSize);
@@ -49,6 +59,19 @@ namespace VirtualHierarchyGrid
                 .SubscribeSafe(e =>
                 {
                     hierarchyGrid.DrawGrid(e.NewSize);
+                })
+                .DisposeWith(disposables);
+
+            hierarchyGrid.HierarchyGridCanvas.Events()
+                .MouseWheel
+                .SubscribeSafe(e =>
+                {
+                    if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
+                        vm.Scale += .05 * (e.Delta < 0 ? 1 : -1);
+                    else if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+                        vm.HorizontalOffset += 5 * (e.Delta < 0 ? 1 : -1);
+                    else
+                        vm.VerticalOffset += 5 * (e.Delta < 0 ? 1 : -1);
                 })
                 .DisposeWith(disposables);
 

@@ -41,8 +41,8 @@ namespace VirtualHierarchyGrid
             var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
 
-            DrawColumnsHeaders(colDefinitions, size.Width, ref headerCount, ref splitterCount);
-            DrawRowsHeaders(rowDefinitions, size.Height, ref headerCount, ref splitterCount);
+            DrawColumnsHeaders(colDefinitions, size.Width / ViewModel.Scale, ref headerCount, ref splitterCount);
+            DrawRowsHeaders(rowDefinitions, size.Height / ViewModel.Scale, ref headerCount, ref splitterCount);
 
             DrawCells(size, rowDefinitions, colDefinitions);
         }
@@ -83,7 +83,7 @@ namespace VirtualHierarchyGrid
                 int rowIdx = ViewModel.VerticalOffset + frozenRows.Length;
 
                 verticalPosition = ViewModel.ColumnsHeadersHeight.Sum() + frozenRows.Sum(f => ViewModel.RowsHeights[rowDefinitions.IndexOf(f)]);
-                while (rowIdx < rowDefinitions.Length && verticalPosition < size.Height)
+                while (rowIdx < rowDefinitions.Length && verticalPosition < size.Height / ViewModel.Scale)
                 {
                     var height = ViewModel.RowsHeights[rowIdx];
                     DrawCell(ref idx, rowIdx, colIdx, width, height, horizontalPosition, verticalPosition, rowDefinitions, colDefinitions);
@@ -103,7 +103,7 @@ namespace VirtualHierarchyGrid
                 int colIdx = ViewModel.HorizontalOffset + frozenCols.Length;
 
                 horizontalPosition = ViewModel.RowsHeadersWidth.Sum() + frozenCols.Sum(f => ViewModel.ColumnsWidths[colDefinitions.IndexOf(f)]);
-                while (colIdx < colDefinitions.Length && horizontalPosition < size.Width)
+                while (colIdx < colDefinitions.Length && horizontalPosition < size.Width / ViewModel.Scale)
                 {
                     var width = ViewModel.ColumnsWidths[colIdx];
                     DrawCell(ref idx, rowIdx, colIdx, width, height, horizontalPosition, verticalPosition, rowDefinitions, colDefinitions);
@@ -117,14 +117,14 @@ namespace VirtualHierarchyGrid
             // Draw non frozen elements
             int horizontalIdx = ViewModel.HorizontalOffset + frozenCols.Length;
             horizontalPosition = ViewModel.RowsHeadersWidth.Sum() + frozenCols.Sum(f => ViewModel.ColumnsWidths[colDefinitions.IndexOf(f)]);
-            while (horizontalIdx < colDefinitions.Length && horizontalPosition < size.Width)
+            while (horizontalIdx < colDefinitions.Length && horizontalPosition < size.Width / ViewModel.Scale)
             {
                 var width = ViewModel.ColumnsWidths[horizontalIdx];
 
                 verticalPosition = ViewModel.ColumnsHeadersHeight.Sum() + frozenRows.Sum(f => ViewModel.RowsHeights[rowDefinitions.IndexOf(f)]);
                 int verticalIdx = ViewModel.VerticalOffset + frozenRows.Length;
 
-                while (verticalIdx < rowDefinitions.Length && verticalPosition < size.Height)
+                while (verticalIdx < rowDefinitions.Length && verticalPosition < size.Height / ViewModel.Scale)
                 {
                     var height = ViewModel.RowsHeights[verticalIdx];
                     DrawCell(ref idx, verticalIdx, horizontalIdx, width, height, horizontalPosition, verticalPosition, rowDefinitions, colDefinitions);
