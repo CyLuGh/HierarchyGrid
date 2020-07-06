@@ -44,7 +44,7 @@ namespace VirtualHierarchyGrid
 
             hierarchyGrid.HierarchyGridCanvas.Events()
                 .SizeChanged
-                .Throttle(TimeSpan.FromMilliseconds(200))
+                .Throttle(TimeSpan.FromMilliseconds(75))
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .SubscribeSafe(e =>
                 {

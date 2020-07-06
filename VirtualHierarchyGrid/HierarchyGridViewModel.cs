@@ -22,11 +22,11 @@ namespace VirtualHierarchyGrid
         private SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
         private SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
 
-        public ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet> ResultSets { get; }
-            = new ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet>();
+        public ConcurrentDictionary<(int row, int col), ResultSet> ResultSets { get; }
+            = new ConcurrentDictionary<(int row, int col), ResultSet>();
 
-        public ObservableCollection<(int producerPosition, int consumerPosition)> Selections { get; }
-            = new ObservableCollection<(int producerPosition, int consumerPosition)>();
+        public ObservableCollection<(int row, int col)> Selections { get; }
+            = new ObservableCollection<(int row, int col)>();
 
         [Reactive] public int HorizontalOffset { get; set; }
         [Reactive] public int VerticalOffset { get; set; }
@@ -39,6 +39,8 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool EnableCrosshair { get; set; }
         [Reactive] public int HoveredColumn { get; set; }
         [Reactive] public int HoveredRow { get; set; }
+
+        [Reactive] public bool EnableMultiSelection { get; set; }
 
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
@@ -87,13 +89,8 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe(_ => VerticalOffset = MaxVerticalOffset)
                     .DisposeWith(disposables);
 
-                Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                    h => Selections.CollectionChanged += h,
-                    h => Selections.CollectionChanged -= h)
-                    .SubscribeSafe(_ =>
-                    {
-                        this.Log().Debug("Collection changed");
-                    })
+                this.WhenAnyValue(x => x.EnableMultiSelection)
+                    .SubscribeSafe(_ => Selections.Clear())
                     .DisposeWith(disposables);
             });
         }

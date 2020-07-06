@@ -81,10 +81,16 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.Events().MouseLeftButtonUp
-                .Subscribe(_ =>
+                .Subscribe(e =>
                 {
-                    vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
-                    vm.IsSelected = !vm.IsSelected;
+                    if (vm.IsSelected)
+                        vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
+                    else
+                    {
+                        if (!vm.HierarchyGridViewModel.EnableMultiSelection)
+                            vm.HierarchyGridViewModel.Selections.Clear();
+                        vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+                    }
                 })
                 .DisposeWith(disposables);
         }

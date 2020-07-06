@@ -59,10 +59,10 @@ namespace Demo
                     //    return new[] { mi };
                     //};
 
-                    //hpd.Freeze(true);
+                    hpd.Frozen = true;
                 }
-
-                AddChildRows(hpd, 3);
+                else
+                    AddChildRows(hpd, 3);
                 return hpd;
             });
         }
@@ -92,32 +92,35 @@ namespace Demo
         {
             return Enumerable.Range(0, 10).Select(a =>
             {
-                var hdef = new ConsumerDefinition { Content = string.Format("Parent {0}", a), IsExpanded = a != 1 };
+                var hdef = new ConsumerDefinition { Content = string.Format("Parent {0}", a), IsExpanded = a != 3 };
 
-                foreach (var child in Enumerable.Range(0, a).Select(x => new ConsumerDefinition
-                {
-                    Content = x.ToString()
-                    //Consumer = o =>
-                    //{
-                    //    return string.Format("R {0} C {1}", o, x);
-                    //},
-                    //Edit = (o, s) => false
-                }))
-                {
-                    hdef.Add(child);
+                if (a > 1)
+                    foreach (var child in Enumerable.Range(0, a).Select(x => new ConsumerDefinition
+                    {
+                        Content = x.ToString()
+                        //Consumer = o =>
+                        //{
+                        //    return string.Format("R {0} C {1}", o, x);
+                        //},
+                        //Edit = (o, s) => false
+                    }))
+                    {
+                        hdef.Add(child);
 
-                    //child.ContextMenuBuilder = o =>
-                    //{
-                    //    var mi = new MenuItem { Header = "Test menu" };
-                    //    return new[] { mi };
-                    //};
-                    //child.Classification = o =>
-                    //{
-                    //    if (o.ToString().Equals(child.Content))
-                    //        return CellClassification.Warning;
-                    //    return CellClassification.Normal;
-                    //};
-                }
+                        //child.ContextMenuBuilder = o =>
+                        //{
+                        //    var mi = new MenuItem { Header = "Test menu" };
+                        //    return new[] { mi };
+                        //};
+                        //child.Classification = o =>
+                        //{
+                        //    if (o.ToString().Equals(child.Content))
+                        //        return CellClassification.Warning;
+                        //    return CellClassification.Normal;
+                        //};
+                    }
+                else
+                    hdef.Frozen = true;
 
                 return hdef;
             });

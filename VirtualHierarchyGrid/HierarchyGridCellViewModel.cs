@@ -3,6 +3,8 @@ using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -46,6 +48,15 @@ namespace VirtualHierarchyGrid
                         var (row, col, ec) = t;
                         if (ec)
                             IsHovered = row == RowIndex || col == ColumnIndex;
+                    })
+                    .DisposeWith(disposables);
+
+                Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+                    h => hierarchyGridViewModel.Selections.CollectionChanged += h,
+                    h => hierarchyGridViewModel.Selections.CollectionChanged -= h)
+                    .SubscribeSafe(e =>
+                    {
+                        IsSelected = hierarchyGridViewModel.Selections.Any(x => x.row == RowIndex && x.col == ColumnIndex);
                     })
                     .DisposeWith(disposables);
             });
