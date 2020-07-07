@@ -4,5 +4,10 @@
              xmlns:local="clr-namespace:Demo"
              StartupUri="CanvasWindow.xaml">
     <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/VirtualHierarchyGrid;component/GruvBoxBrushes.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

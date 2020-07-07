@@ -1,5 +1,4 @@
 ﻿using DynamicData;
-using DynamicData.Kernel;
 using HierarchyGrid.Definitions;
 using MoreLinq;
 using NLog;

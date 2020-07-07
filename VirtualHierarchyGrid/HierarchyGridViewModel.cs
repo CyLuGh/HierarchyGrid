@@ -143,13 +143,8 @@ namespace VirtualHierarchyGrid
                 {
                     var consumers = hierarchyDefinitions.Consumers.FlatList().ToArray();
                     hierarchyDefinitions.Producers.FlatList().AsParallel().ForAll(producer =>
-                    {
-                        consumers.ForEach(consumer =>
-                        {
-                            var resultSet = new ResultSet { Result = $"{producer.Content} x {consumer.Content}" };
-                            ResultSets.TryAdd((producer.Position, consumer.Position), resultSet);
-                        });
-                    });
+                        consumers.ForEach(consumer => ResultSets.TryAdd((producer.Position, consumer.Position), HierarchyDefinition.Resolve(producer, consumer)))
+                    );
                 })
                 .InvokeCommand(DrawGridCommand);
         }

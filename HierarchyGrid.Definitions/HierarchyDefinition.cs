@@ -295,5 +295,14 @@ namespace HierarchyGrid.Definitions
 
         public override string ToString()
             => string.Join('.', Path.Select(o => o.Content));
+
+        public static ResultSet Resolve(ProducerDefinition producer, ConsumerDefinition consumer)
+        {
+            var input = producer.Produce();
+            var rs = input.Some(o => consumer.Process(o))
+                .None(() => new ResultSet { Qualifier = Qualification.Empty });
+
+            return rs;
+        }
     }
 }

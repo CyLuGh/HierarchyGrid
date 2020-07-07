@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Windows.Shapes;
 
 namespace VirtualHierarchyGrid
 {
@@ -18,6 +19,47 @@ namespace VirtualHierarchyGrid
     {
         private static Thickness UnselectedThickness { get; } = new Thickness(1);
         private static Thickness SelectedThickness { get; } = new Thickness(2);
+
+        private static Brush CellBackground { get; set; }
+        private static Brush CellForeground { get; set; }
+        private static Brush CellBorderBrush { get; set; }
+        private static Brush CellSelectedBorder { get; set; }
+        private static Brush CellHoverBackground { get; set; }
+        private static Brush CellHoverForeground { get; set; }
+        private static Brush CellErrorBackground { get; set; }
+        private static Brush CellErrorForeground { get; set; }
+        private static Brush CellWarningBackground { get; set; }
+        private static Brush CellWarningForeground { get; set; }
+        private static Brush CellRemarkBackground { get; set; }
+        private static Brush CellRemarkForeground { get; set; }
+
+        private static Brush EmptyBrush { get; set; }
+
+        static HierarchyGridCell()
+        {
+            var rect = new Rectangle();
+            CellBackground = (Brush)rect.TryFindResource("CellBackground") ?? Brushes.White;
+            CellForeground = (Brush)rect.TryFindResource("CellForeground") ?? Brushes.Black;
+            CellBorderBrush = (Brush)rect.TryFindResource("CellBorder") ?? Brushes.DarkGray;
+
+            CellSelectedBorder = (Brush)rect.TryFindResource("CellSelectedBorder") ?? Brushes.BlueViolet;
+
+            CellHoverBackground = (Brush)rect.TryFindResource("CellHoverBackground") ?? Brushes.LightSeaGreen;
+            CellHoverForeground = (Brush)rect.TryFindResource("CellHoverForeground") ?? Brushes.Black;
+
+            CellErrorBackground = (Brush)rect.TryFindResource("CellErrorBackground") ?? Brushes.IndianRed;
+            CellErrorForeground = (Brush)rect.TryFindResource("CellErrorForeground") ?? Brushes.Black;
+
+            CellWarningBackground = (Brush)rect.TryFindResource("CellWarningBackground") ?? Brushes.YellowGreen;
+            CellWarningForeground = (Brush)rect.TryFindResource("CellWarningForeground") ?? Brushes.Black;
+
+            CellRemarkBackground = (Brush)rect.TryFindResource("CellRemarkBackground") ?? Brushes.GreenYellow;
+            CellRemarkForeground = (Brush)rect.TryFindResource("CellRemarkForeground") ?? Brushes.Black;
+
+            EmptyBrush = (Brush)rect.TryFindResource("EmptyBrush") ?? Brushes.Transparent;
+
+            rect = null;
+        }
 
         public HierarchyGridCell()
         {
@@ -42,15 +84,39 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.OneWayBind(vm,
-                vm => vm.IsHovered,
+                vm => vm.Qualifier,
                 v => v.CellBorder.Background,
-                hovered => hovered ? Brushes.LightBlue : Brushes.LightGoldenrodYellow)
+                q => q switch
+                    {
+                        Qualification.Error => CellErrorBackground,
+                        Qualification.Warning => CellWarningBackground,
+                        Qualification.Remark => CellRemarkBackground,
+                        Qualification.Hovered => CellHoverBackground,
+                        Qualification.Empty => EmptyBrush,
+                        _ => CellBackground
+                    }
+                )
+                .DisposeWith(disposables);
+
+            cell.OneWayBind(vm,
+                vm => vm.Qualifier,
+                v => v.Foreground,
+                q => q switch
+                    {
+                        Qualification.Error => CellErrorForeground,
+                        Qualification.Warning => CellWarningForeground,
+                        Qualification.Remark => CellRemarkForeground,
+                        Qualification.Hovered => CellHoverForeground,
+                        Qualification.Empty => Brushes.Transparent,
+                        _ => CellForeground
+                    }
+                )
                 .DisposeWith(disposables);
 
             cell.OneWayBind(vm,
                 vm => vm.IsSelected,
                 v => v.CellBorder.BorderBrush,
-                selected => selected ? Brushes.Blue : Brushes.Gray)
+                selected => selected ? CellSelectedBorder : CellBorderBrush)
                 .DisposeWith(disposables);
 
             cell.OneWayBind(vm,

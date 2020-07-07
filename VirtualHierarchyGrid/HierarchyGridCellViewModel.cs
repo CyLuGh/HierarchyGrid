@@ -25,6 +25,8 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool IsHovered { get; set; }
         [Reactive] public bool IsSelected { get; set; }
 
+        public Qualification Qualifier { [ObservableAsProperty] get; }
+
         public ViewModelActivator Activator { get; }
 
         private ReactiveCommand<(ProducerDefinition, ConsumerDefinition), ResultSet> ResolveCommand { get; set; }
@@ -58,6 +60,18 @@ namespace VirtualHierarchyGrid
                     {
                         IsSelected = hierarchyGridViewModel.Selections.Any(x => x.row == RowIndex && x.col == ColumnIndex);
                     })
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.ResultSet)
+                    .CombineLatest(this.WhenAnyValue(x => x.IsHovered),
+                    (rs, ho) => (rs, ho))
+                    .Select(t =>
+                    {
+                        var (resultSet, isHovered) = t;
+                        return isHovered ? Qualification.Hovered : resultSet.Qualifier;
+                    })
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .ToPropertyEx(this, x => x.Qualifier)
                     .DisposeWith(disposables);
             });
         }

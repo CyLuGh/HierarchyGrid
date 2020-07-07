@@ -75,11 +75,7 @@ namespace Demo
                 var node = parent.Add(new ProducerDefinition
                 {
                     Content = idx.ToString(),
-                    //Producer = () =>
-                    //{
-                    //    System.Threading.Thread.Sleep(SleepTime);
-                    //    return idx;
-                    //},
+                    Producer = () => idx,
                     //Classification = () => idx == 3 ? CellClassification.Remark : CellClassification.Normal
                 });
 
@@ -92,12 +88,27 @@ namespace Demo
         {
             return Enumerable.Range(0, 10).Select(a =>
             {
-                var hdef = new ConsumerDefinition { Content = string.Format("Parent {0}", a), IsExpanded = a != 3 };
+                var hdef = new ConsumerDefinition
+                {
+                    Content = string.Format("Parent {0}", a),
+                    IsExpanded = a != 3,
+                    Consumer = o => o is int idx ? (object)(idx * a) : "Oops",
+                    Formatter = o => $"Parent: {o}"
+                };
 
                 if (a > 1)
                     foreach (var child in Enumerable.Range(0, a).Select(x => new ConsumerDefinition
                     {
-                        Content = x.ToString()
+                        Content = x.ToString(),
+                        Consumer = o => o is int idx ? (object)(idx + (2 * x)) : "Oops",
+                        Formatter = o => $"Res: {o}",
+                        Qualify = o => int.TryParse(o.ToString(), out var i) ? i switch
+                        {
+                            4 => Qualification.Remark,
+                            5 => Qualification.Warning,
+                            9 => Qualification.Error,
+                            _ => Qualification.Normal
+                        } : Qualification.Normal
                         //Consumer = o =>
                         //{
                         //    return string.Format("R {0} C {1}", o, x);

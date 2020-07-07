@@ -19,7 +19,7 @@ namespace VirtualHierarchyGrid
         // Keep a cache of cells to be reused when redrawing -- it costs less to reuse than create
         private List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
 
-        private List<ToggleButton> _headers = new List<ToggleButton>();
+        private List<HierarchyGridHeader> _headers = new List<HierarchyGridHeader>();
         private List<GridSplitter> _splitters = new List<GridSplitter>();
 
         private HashSet<HierarchyDefinition> _columnsParents = new HashSet<HierarchyDefinition>();
@@ -187,9 +187,8 @@ namespace VirtualHierarchyGrid
             {
                 var width = ViewModel.ColumnsWidths[hdefs.IndexOf(hdef)];
                 DrawColumnHeader(ref headerCount, ref splitterCount, ref currentPosition, column, splitters, hdef, width);
+                column++;
             }
-
-            column += frozen.Length;
 
             while (column < hdefs.Length && currentPosition < availableWidth)
             {
@@ -212,6 +211,7 @@ namespace VirtualHierarchyGrid
                                     .Select(x => ViewModel.ColumnsHeadersHeight[x]).Sum();
 
             var tb = BuildHeader(ref headerCount, hdef, width, height);
+            tb.ViewModel.ColumnIndex = column;
 
             var top = Enumerable.Range(0, hdef.Level).Select(x => ViewModel.ColumnsHeadersHeight[x]).Sum();
             Canvas.SetLeft(tb, currentPosition);
@@ -275,9 +275,8 @@ namespace VirtualHierarchyGrid
             {
                 var height = ViewModel.RowsHeights[hdefs.IndexOf(hdef)];
                 DrawRowHeader(ref headerCount, ref splitterCount, ref currentPosition, row, splitters, hdef, height);
+                row++;
             }
-
-            row += frozen.Length;
 
             while (row < hdefs.Length && currentPosition < availableHeight)
             {
@@ -301,6 +300,7 @@ namespace VirtualHierarchyGrid
                                     .Select(x => ViewModel.RowsHeadersWidth[x]).Sum();
 
             var tb = BuildHeader(ref headerCount, hdef, width, height);
+            tb.ViewModel.RowIndex = row;
 
             var left = Enumerable.Range(0, hdef.Level).Where(x => x < ViewModel.RowsHeadersWidth.Length).Select(x => ViewModel.RowsHeadersWidth[x]).Sum();
             Canvas.SetLeft(tb, left);
@@ -351,38 +351,44 @@ namespace VirtualHierarchyGrid
             DrawParentRowHeader(hdef, origin, row, currentPosition, ref headerCount);
         }
 
-        private ToggleButton BuildHeader(ref int headerCount, HierarchyDefinition hdef, double width, double height)
+        private HierarchyGridHeader BuildHeader(ref int headerCount, HierarchyDefinition hdef, double width, double height)
         {
-            ToggleButton tb = null;
+            HierarchyGridHeader tb = null;
             if (headerCount < _headers.Count)
             {
                 tb = _headers[headerCount];
                 if (tb.Tag is Queue<IDisposable> evts)
                     evts.ForEach(e => e.Dispose());
                 tb.Tag = null;
+                tb.ViewModel.RowIndex = null;
+                tb.ViewModel.ColumnIndex = null;
             }
             else
             {
-                tb = new ToggleButton();
+                tb = new HierarchyGridHeader { ViewModel = new HierarchyGridHeaderViewModel(ViewModel) };
                 _headers.Add(tb);
             }
 
-            tb.Content = hdef.Content;
+            tb.ViewModel.Content = hdef.Content;
             tb.Height = height;
             tb.Width = width;
-            tb.IsChecked = hdef.HasChild && hdef.IsExpanded;
+            tb.ViewModel.IsChecked = hdef.HasChild && hdef.IsExpanded;
 
             if (hdef.HasChild)
             {
                 var evts = new Queue<IDisposable>();
-                evts.Enqueue(tb.Events().Checked
-                    .Do(_ => hdef.IsExpanded = true)
+                evts.Enqueue(tb.Events().MouseLeftButtonDown
+                    .Do(_ => hdef.IsExpanded = !hdef.IsExpanded)
                     .Select(_ => Unit.Default)
                     .InvokeCommand(ViewModel, x => x.DrawGridCommand));
-                evts.Enqueue(tb.Events().Unchecked
-                    .Do(_ => hdef.IsExpanded = false)
-                    .Select(_ => Unit.Default)
-                    .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                //evts.Enqueue(tb.Events().Checked
+                //    .Do(_ => hdef.IsExpanded = true)
+                //    .Select(_ => Unit.Default)
+                //    .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                //evts.Enqueue(tb.Events().Unchecked
+                //    .Do(_ => hdef.IsExpanded = false)
+                //    .Select(_ => Unit.Default)
+                //    .InvokeCommand(ViewModel, x => x.DrawGridCommand));
                 tb.Tag = evts;
             }
 
