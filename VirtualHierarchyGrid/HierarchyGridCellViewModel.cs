@@ -26,10 +26,10 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool IsSelected { get; set; }
 
         public Qualification Qualifier { [ObservableAsProperty] get; }
+        public bool CanEdit { [ObservableAsProperty]get; }
 
         public ViewModelActivator Activator { get; }
 
-        private ReactiveCommand<(ProducerDefinition, ConsumerDefinition), ResultSet> ResolveCommand { get; set; }
         public HierarchyGridViewModel HierarchyGridViewModel { get; }
 
         public HierarchyGridCellViewModel(HierarchyGridViewModel hierarchyGridViewModel)
@@ -74,6 +74,18 @@ namespace VirtualHierarchyGrid
                     })
                     .ObserveOn(RxApp.MainThreadScheduler)
                     .ToPropertyEx(this, x => x.Qualifier)
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.ResultSet)
+                    .Select(rs =>
+                    {
+                        if (rs == null)
+                            return false;
+
+                        return rs.Editor.Match(_ => rs.Qualifier != Qualification.ReadOnly, () => false);
+                    })
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .ToPropertyEx(this, x => x.CanEdit)
                     .DisposeWith(disposables);
             });
         }

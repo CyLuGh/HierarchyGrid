@@ -10,6 +10,11 @@ namespace HierarchyGrid.Definitions
         public Func<object, Qualification> Qualify { get; set; } = _ => Qualification.Normal;
         public Func<object, (byte a, byte r, byte g, byte b)> Colorize { get; set; }
 
+        /// <summary>
+        /// Func that will be called from editing textbox, input being string from textbox and bool being the success state of the update.
+        /// </summary>
+        public Func<string, bool> Editor { get; set; }
+
         public ResultSet Process(InputSet inputSet)
         {
             var resultSet = new ResultSet();
@@ -30,6 +35,8 @@ namespace HierarchyGrid.Definitions
                     else
                         resultSet.CustomColor = Option<(byte a, byte r, byte g, byte b)>.None;
                 });
+
+            resultSet.Editor = Editor != null ? Option<Func<string, bool>>.Some(Editor) : Option<Func<string, bool>>.None;
 
             return resultSet;
         }

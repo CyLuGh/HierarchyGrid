@@ -1,5 +1,6 @@
 ﻿using DynamicData;
 using HierarchyGrid.Definitions;
+using LanguageExt.Common;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -41,6 +42,7 @@ namespace VirtualHierarchyGrid
         [Reactive] public int HoveredRow { get; set; } = -1;
 
         [Reactive] public bool EnableMultiSelection { get; set; }
+        [Reactive] public bool IsEditing { get; set; }
 
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
@@ -55,6 +57,16 @@ namespace VirtualHierarchyGrid
 
         public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
 
+        public ReactiveCommand<(int row, int column, ResultSet rs), Unit> EditCommand { get; }
+
+        public Interaction<(int row, int column, ResultSet rs), Unit> EditInteraction { get; }
+            = new Interaction<(int row, int column, ResultSet rs), Unit>(RxApp.MainThreadScheduler);
+
+        public ReactiveCommand<Unit, Unit> EndEditionCommand { get; }
+
+        public Interaction<Unit, Unit> EndEditionInteraction { get; }
+            = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
+
         public HierarchyGridViewModel()
         {
             Activator = new ViewModelActivator();
@@ -62,18 +74,27 @@ namespace VirtualHierarchyGrid
             DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
             DrawGridCommand = ReactiveCommand.CreateFromObservable(() => DrawGridInteraction.Handle(Unit.Default));
 
+            EditInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+            EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet), Unit>(t => EditInteraction.Handle(t));
+
+            EndEditionInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+            EndEditionCommand = ReactiveCommand.CreateFromObservable(() => EndEditionInteraction.Handle(Unit.Default));
+
             this.WhenActivated(disposables =>
             {
+                /* Don't allow scale < 0.75 */
                 this.WhenAnyValue(x => x.Scale)
                     .Where(x => x < 0.75)
                     .SubscribeSafe(_ => Scale = 0.75)
                     .DisposeWith(disposables);
 
+                /* Don't allow scale > 1 */
                 this.WhenAnyValue(x => x.Scale)
                     .Where(x => x > 1)
                     .SubscribeSafe(_ => Scale = 1)
                     .DisposeWith(disposables);
 
+                /* Redraw grid when scrolling or changing scale */
                 this.WhenAnyValue(x => x.HorizontalOffset)
                     .CombineLatest(this.WhenAnyValue(x => x.VerticalOffset),
                     this.WhenAnyValue(x => x.Scale).DistinctUntilChanged(),
@@ -82,6 +103,7 @@ namespace VirtualHierarchyGrid
                 .InvokeCommand(DrawGridCommand)
                 .DisposeWith(disposables);
 
+                /* Don't allow horizontal offset to go abose max offset */
                 this.WhenAnyValue(x => x.HorizontalOffset)
                     .CombineLatest(this.WhenAnyValue(x => x.MaxHorizontalOffset),
                     (ho, m) => ho > m && m > 0)
@@ -91,6 +113,7 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe(_ => HorizontalOffset = MaxHorizontalOffset)
                     .DisposeWith(disposables);
 
+                /* Don't allow vertical offset to go abose max offset */
                 this.WhenAnyValue(x => x.VerticalOffset)
                     .CombineLatest(this.WhenAnyValue(x => x.MaxVerticalOffset),
                     (vo, m) => vo > m && m > 0)
@@ -100,18 +123,37 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe(_ => VerticalOffset = MaxVerticalOffset)
                     .DisposeWith(disposables);
 
+                /* Don't allow negative horizontal offset */
                 this.WhenAnyValue(x => x.HorizontalOffset)
                     .Where(x => x < 0)
                     .SubscribeSafe(_ => HorizontalOffset = 0)
                     .DisposeWith(disposables);
 
+                /* Don't allow negative vertical offset */
                 this.WhenAnyValue(x => x.VerticalOffset)
                     .Where(x => x < 0)
                     .SubscribeSafe(_ => VerticalOffset = 0)
                     .DisposeWith(disposables);
 
+                /* Clear selection when changing selection mode */
                 this.WhenAnyValue(x => x.EnableMultiSelection)
                     .SubscribeSafe(_ => Selections.Clear())
+                    .DisposeWith(disposables);
+
+                /* Toggle edit mode on */
+                EditCommand.SubscribeSafe(_ => IsEditing = true)
+                    .DisposeWith(disposables);
+
+                /* Toggle edit mode off */
+                DrawGridCommand.SubscribeSafe(_ => IsEditing = false)
+                    .DisposeWith(disposables);
+
+                /* Clear textbox when exiting edition mode */
+                this.WhenAnyValue(x => x.IsEditing)
+                    .DistinctUntilChanged()
+                    .Where(x => !x)
+                    .Select(_ => Unit.Default)
+                    .InvokeCommand(EndEditionCommand)
                     .DisposeWith(disposables);
             });
         }

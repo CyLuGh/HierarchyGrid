@@ -1,5 +1,6 @@
 ﻿using HierarchyGrid.Definitions;
 using ReactiveUI;
+using Splat;
 using System;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -15,7 +16,7 @@ using System.Windows.Shapes;
 
 namespace VirtualHierarchyGrid
 {
-    public partial class HierarchyGridCell
+    public partial class HierarchyGridCell : IEnableLogger
     {
         private static Thickness UnselectedThickness { get; } = new Thickness(1);
         private static Thickness SelectedThickness { get; } = new Thickness(2);
@@ -32,6 +33,8 @@ namespace VirtualHierarchyGrid
         private static Brush CellWarningForeground { get; set; }
         private static Brush CellRemarkBackground { get; set; }
         private static Brush CellRemarkForeground { get; set; }
+        private static Brush CellReadOnlyBackground { get; set; }
+        private static Brush CellReadOnlyForeground { get; set; }
 
         private static Brush EmptyBrush { get; set; }
 
@@ -55,6 +58,9 @@ namespace VirtualHierarchyGrid
 
             CellRemarkBackground = (Brush)rect.TryFindResource("CellRemarkBackground") ?? Brushes.GreenYellow;
             CellRemarkForeground = (Brush)rect.TryFindResource("CellRemarkForeground") ?? Brushes.Black;
+
+            CellReadOnlyBackground = (Brush)rect.TryFindResource("CellReadOnlyBackground") ?? Brushes.GreenYellow;
+            CellReadOnlyForeground = (Brush)rect.TryFindResource("CellReadOnlyForeground") ?? Brushes.Black;
 
             EmptyBrush = (Brush)rect.TryFindResource("EmptyBrush") ?? Brushes.Transparent;
 
@@ -91,6 +97,7 @@ namespace VirtualHierarchyGrid
                         Qualification.Error => CellErrorBackground,
                         Qualification.Warning => CellWarningBackground,
                         Qualification.Remark => CellRemarkBackground,
+                        Qualification.ReadOnly => CellReadOnlyBackground,
                         Qualification.Hovered => CellHoverBackground,
                         Qualification.Empty => EmptyBrush,
                         Qualification.Custom => vm.ResultSet.CustomColor.Some(c => (Brush)new SolidColorBrush(Color.FromArgb(c.a, c.r, c.g, c.b)))
@@ -108,6 +115,7 @@ namespace VirtualHierarchyGrid
                         Qualification.Error => CellErrorForeground,
                         Qualification.Warning => CellWarningForeground,
                         Qualification.Remark => CellRemarkForeground,
+                        Qualification.ReadOnly => CellReadOnlyForeground,
                         Qualification.Hovered => CellHoverForeground,
                         Qualification.Empty => Brushes.Transparent,
                         _ => CellForeground
@@ -145,16 +153,39 @@ namespace VirtualHierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            cell.Events().MouseLeftButtonDown
+            cell.Events().MouseDoubleClick
                 .Subscribe(e =>
                 {
-                    if (vm.IsSelected)
-                        vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
-                    else
+                    if (e.ChangedButton == MouseButton.Left)
                     {
                         if (!vm.HierarchyGridViewModel.EnableMultiSelection)
                             vm.HierarchyGridViewModel.Selections.Clear();
                         vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+
+                        if (vm.CanEdit)
+                            Observable.Return((vm.RowIndex, vm.ColumnIndex, vm.ResultSet))
+                                      .InvokeCommand(vm.HierarchyGridViewModel, x => x.EditCommand);
+                    }
+                })
+                .DisposeWith(disposables);
+
+            cell.Events().MouseLeftButtonDown
+                .Subscribe(e =>
+                {
+                    vm.HierarchyGridViewModel.IsEditing = false;
+                    if (e.ClickCount == 1)
+                    {
+                        if (vm.IsSelected)
+                        {
+                            if (Keyboard.Modifiers == ModifierKeys.Control)
+                                vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
+                        }
+                        else
+                        {
+                            if (!vm.HierarchyGridViewModel.EnableMultiSelection)
+                                vm.HierarchyGridViewModel.Selections.Clear();
+                            vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+                        }
                     }
                 })
                 .DisposeWith(disposables);

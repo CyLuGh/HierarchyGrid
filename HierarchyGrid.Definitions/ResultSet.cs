@@ -1,4 +1,5 @@
 ﻿using LanguageExt;
+using System;
 
 namespace HierarchyGrid.Definitions
 {
@@ -11,6 +12,7 @@ namespace HierarchyGrid.Definitions
         Warning,
         Remark,
         Custom,
+        ReadOnly,
         Hovered
     }
 
@@ -34,5 +36,7 @@ namespace HierarchyGrid.Definitions
         public string Result { get; set; }
         public Qualification Qualifier { get; set; }
         public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
+
+        public Option<Func<string, bool>> Editor { get; set; } = Option<Func<string, bool>>.None;
     }
 }

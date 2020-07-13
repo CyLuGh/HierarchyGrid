@@ -40,6 +40,12 @@
     <SolidColorBrush x:Key="CellRemarkForeground"
                      Color="#FF3C3836" />
 
+    <!-- Read Only brushes -->
+    <SolidColorBrush x:Key="CellReadOnlyBackground"
+                     Color="#FFA89984" />
+    <SolidColorBrush x:Key="CellReadOnlyForeground"
+                     Color="#FF3C3836" />
+
     <!-- Empty brushes -->
     <VisualBrush x:Key="EmptyBrush"
                  TileMode="Tile"

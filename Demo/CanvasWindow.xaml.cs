@@ -108,6 +108,7 @@ namespace Demo
                             4 => Qualification.Remark,
                             6 => Qualification.Warning,
                             9 => Qualification.Error,
+                            10 => Qualification.ReadOnly,
                             17 => Qualification.Custom,
                             18 => Qualification.Custom,
                             _ => Qualification.Normal
@@ -117,27 +118,11 @@ namespace Demo
                             17 => ((byte)150, (byte)100, (byte)120, (byte)0),
                             18 => ((byte)150, (byte)0, (byte)100, (byte)120),
                             _ => ((byte)0, (byte)0, (byte)0, (byte)0)
-                        } : ((byte)0, (byte)0, (byte)0, (byte)0)
-                        //Consumer = o =>
-                        //{
-                        //    return string.Format("R {0} C {1}", o, x);
-                        //},
-                        //Edit = (o, s) => false
+                        } : ((byte)0, (byte)0, (byte)0, (byte)0),
+                        Editor = s => true
                     }))
                     {
                         hdef.Add(child);
-
-                        //child.ContextMenuBuilder = o =>
-                        //{
-                        //    var mi = new MenuItem { Header = "Test menu" };
-                        //    return new[] { mi };
-                        //};
-                        //child.Classification = o =>
-                        //{
-                        //    if (o.ToString().Equals(child.Content))
-                        //        return CellClassification.Warning;
-                        //    return CellClassification.Normal;
-                        //};
                     }
                 else
                     hdef.Frozen = true;

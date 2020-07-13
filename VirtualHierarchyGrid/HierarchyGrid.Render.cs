@@ -78,6 +78,8 @@ namespace VirtualHierarchyGrid
             Canvas.SetTop(foldAllButton, currentY);
             HierarchyGridCanvas.Children.Add(foldAllButton);
 
+            // TODO: add splitters
+
             // Draw row headers
             currentY = columnsVerticalSpan;
             for (int i = 0; i < rowDepth - 1; i++)
