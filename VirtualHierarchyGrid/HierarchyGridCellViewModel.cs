@@ -68,6 +68,8 @@ namespace VirtualHierarchyGrid
                     .Select(t =>
                     {
                         var (resultSet, isHovered) = t;
+                        if (resultSet == null)
+                            return Qualification.Empty;
                         return isHovered ? Qualification.Hovered : resultSet.Qualifier;
                     })
                     .ObserveOn(RxApp.MainThreadScheduler)
@@ -89,6 +91,13 @@ namespace VirtualHierarchyGrid
             //    {
             //        hierarchyGridCellViewModel.Result = r.Result;
             //    });
+        }
+
+        internal void Clear()
+        {
+            ResultSet = null;
+            IsHovered = false;
+            IsSelected = false;
         }
     }
 }

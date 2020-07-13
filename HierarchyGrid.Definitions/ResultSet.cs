@@ -1,4 +1,6 @@
-﻿namespace HierarchyGrid.Definitions
+﻿using LanguageExt;
+
+namespace HierarchyGrid.Definitions
 {
     public enum Qualification
     {
@@ -8,18 +10,29 @@
         Error,
         Warning,
         Remark,
+        Custom,
         Hovered
     }
 
     public class InputSet
     {
         public object Input { get; set; }
+
+        /// <summary>
+        /// Qualifier required by producer for all consumer results
+        /// </summary>
         public Qualification Qualifier { get; set; }
+
+        /// <summary>
+        /// Brush color required by producer for all consumer results
+        /// </summary>
+        public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
     }
 
     public class ResultSet
     {
         public string Result { get; set; }
         public Qualification Qualifier { get; set; }
+        public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
     }
 }

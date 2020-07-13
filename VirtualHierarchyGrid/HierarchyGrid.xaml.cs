@@ -35,6 +35,9 @@ namespace VirtualHierarchyGrid
 
         private static void PopulateFromViewModel(HierarchyGrid hierarchyGrid, HierarchyGridViewModel vm, CompositeDisposable disposables)
         {
+            hierarchyGrid.Background = (Brush)hierarchyGrid.TryFindResource("GridBackground") ?? Brushes.LightGray;
+            hierarchyGrid.Corner.Fill = (Brush)hierarchyGrid.TryFindResource("GridBackground") ?? Brushes.LightGray;
+
             hierarchyGrid.OneWayBind(vm,
                 vm => vm.Scale,
                 v => v.ScaleTransform.ScaleX)

@@ -93,6 +93,8 @@ namespace VirtualHierarchyGrid
                         Qualification.Remark => CellRemarkBackground,
                         Qualification.Hovered => CellHoverBackground,
                         Qualification.Empty => EmptyBrush,
+                        Qualification.Custom => vm.ResultSet.CustomColor.Some(c => (Brush)new SolidColorBrush(Color.FromArgb(c.a, c.r, c.g, c.b)))
+                                                                        .None(() => CellBackground),
                         _ => CellBackground
                     }
                 )

@@ -40,8 +40,8 @@
                    Orientation="Horizontal"
                    Grid.Row="1" />
 
-        <Rectangle Grid.Column="1"
+        <Rectangle x:Name="Corner"
                    Grid.Row="1"
-                   Fill="Gray" />
+                   Grid.Column="1" />
     </Grid>
 </rxui:ReactiveUserControl>

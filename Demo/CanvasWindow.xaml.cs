@@ -12,6 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using HierarchyGrid.Definitions;
 using System.Linq;
+using LanguageExt;
 
 namespace Demo
 {
@@ -105,10 +106,18 @@ namespace Demo
                         Qualify = o => int.TryParse(o.ToString(), out var i) ? i switch
                         {
                             4 => Qualification.Remark,
-                            5 => Qualification.Warning,
+                            6 => Qualification.Warning,
                             9 => Qualification.Error,
+                            17 => Qualification.Custom,
+                            18 => Qualification.Custom,
                             _ => Qualification.Normal
-                        } : Qualification.Normal
+                        } : Qualification.Normal,
+                        Colorize = o => int.TryParse(o.ToString(), out var i) ? i switch
+                        {
+                            17 => ((byte)150, (byte)100, (byte)120, (byte)0),
+                            18 => ((byte)150, (byte)0, (byte)100, (byte)120),
+                            _ => ((byte)0, (byte)0, (byte)0, (byte)0)
+                        } : ((byte)0, (byte)0, (byte)0, (byte)0)
                         //Consumer = o =>
                         //{
                         //    return string.Format("R {0} C {1}", o, x);

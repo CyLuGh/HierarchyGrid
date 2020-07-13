@@ -11,23 +11,26 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using MoreLinq;
 using DynamicData;
+using System.Diagnostics.CodeAnalysis;
 
 namespace VirtualHierarchyGrid
 {
     partial class HierarchyGrid
     {
         // Keep a cache of cells to be reused when redrawing -- it costs less to reuse than create
-        private List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
+        private readonly List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
 
-        private List<HierarchyGridHeader> _headers = new List<HierarchyGridHeader>();
-        private List<GridSplitter> _splitters = new List<GridSplitter>();
+        private readonly List<HierarchyGridHeader> _headers = new List<HierarchyGridHeader>();
+        private readonly List<GridSplitter> _splitters = new List<GridSplitter>();
 
-        private HashSet<HierarchyDefinition> _columnsParents = new HashSet<HierarchyDefinition>();
-        private HashSet<HierarchyDefinition> _rowsParents = new HashSet<HierarchyDefinition>();
+        private readonly HashSet<HierarchyDefinition> _columnsParents = new HashSet<HierarchyDefinition>();
+        private readonly HashSet<HierarchyDefinition> _rowsParents = new HashSet<HierarchyDefinition>();
 
         private void DrawGrid(Size size)
         {
             HierarchyGridCanvas.Children.Clear();
+            ViewModel.HoveredRow = -1;
+            ViewModel.HoveredColumn = -1;
 
             if (!ViewModel.IsValid)
                 return;
@@ -41,10 +44,113 @@ namespace VirtualHierarchyGrid
             var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
 
+            DrawGlobalHeaders(ref headerCount, ref splitterCount);
             DrawColumnsHeaders(colDefinitions, size.Width / ViewModel.Scale, ref headerCount, ref splitterCount);
             DrawRowsHeaders(rowDefinitions, size.Height / ViewModel.Scale, ref headerCount, ref splitterCount);
 
             DrawCells(size, rowDefinitions, colDefinitions);
+        }
+
+        private void DrawGlobalHeaders(ref int headerCount, ref int splitterCount)
+        {
+            var rowDepth = ViewModel.RowsDefinitions.TotalDepth();
+            var colDepth = ViewModel.ColumnsDefinitions.TotalDepth();
+
+            double currentX = 0, currentY = 0;
+
+            var columnsVerticalSpan = ViewModel.ColumnsHeadersHeight.Take(ViewModel.ColumnsHeadersHeight.Length - 1).Sum();
+            var rowsHorizontalSpan = ViewModel.RowsHeadersWidth.Take(ViewModel.RowsHeadersWidth.Length - 1).Sum();
+
+            var foldAllButton = BuildHeader(ref headerCount, null, rowsHorizontalSpan, columnsVerticalSpan);
+            foldAllButton.ToolTip = "Collapse all";
+            var evts = new Queue<IDisposable>();
+            evts.Enqueue(foldAllButton.Events().MouseLeftButtonDown
+                .Do(_ =>
+                {
+                    ViewModel.RowsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = false);
+                    ViewModel.ColumnsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = false);
+                })
+                .Select(_ => Unit.Default)
+                .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+            foldAllButton.Tag = evts;
+
+            Canvas.SetLeft(foldAllButton, currentX);
+            Canvas.SetTop(foldAllButton, currentY);
+            HierarchyGridCanvas.Children.Add(foldAllButton);
+
+            // Draw row headers
+            currentY = columnsVerticalSpan;
+            for (int i = 0; i < rowDepth - 1; i++)
+            {
+                var width = ViewModel.RowsHeadersWidth[i];
+                var height = ViewModel.ColumnsHeadersHeight.Last();
+                var tb = BuildHeader(ref headerCount, null, width, height);
+                var queue = new Queue<IDisposable>();
+                var idx = i; // Copy to local variable or else event will always use last value of i
+                evts.Enqueue(tb.Events().MouseLeftButtonDown
+                .Do(_ =>
+                {
+                    var defs = ViewModel.RowsDefinitions.FlatList(true)
+                                             .Where(x => x.Level == idx)
+                                             .ToArray();
+                    var desiredState = defs.AsParallel().Any(x => x.IsExpanded);
+                    defs.ForEach(x => x.IsExpanded = !desiredState);
+                })
+                .Select(_ => Unit.Default)
+                .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                tb.Tag = evts;
+
+                Canvas.SetLeft(tb, currentX);
+                Canvas.SetTop(tb, currentY);
+                HierarchyGridCanvas.Children.Add(tb);
+                currentX += width;
+            }
+
+            // Draw column headers
+            currentY = 0;
+            for (int i = 0; i < colDepth - 1; i++)
+            {
+                var width = ViewModel.RowsHeadersWidth.Last();
+                var height = ViewModel.ColumnsHeadersHeight[i];
+                var tb = BuildHeader(ref headerCount, null, width, height);
+
+                var idx = i; // Copy to local variable or else event will always use last value of i
+                evts.Enqueue(tb.Events().MouseLeftButtonDown
+                .Do(_ =>
+                {
+                    var defs = ViewModel.ColumnsDefinitions.FlatList(true)
+                                             .Where(x => x.Level == idx)
+                                             .ToArray();
+                    var desiredState = defs.AsParallel().Any(x => x.IsExpanded);
+                    defs.ForEach(x => x.IsExpanded = !desiredState);
+                })
+                .Select(_ => Unit.Default)
+                .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                tb.Tag = evts;
+
+                Canvas.SetLeft(tb, currentX);
+                Canvas.SetTop(tb, currentY);
+                HierarchyGridCanvas.Children.Add(tb);
+                currentY += height;
+            }
+
+            var expandAllButton = BuildHeader(ref headerCount, null, ViewModel.RowsHeadersWidth.Last(), ViewModel.ColumnsHeadersHeight.Last());
+
+            expandAllButton.ToolTip = "Expand all";
+            evts = new Queue<IDisposable>();
+            evts.Enqueue(expandAllButton.Events().MouseLeftButtonDown
+                .Do(_ =>
+                {
+                    ViewModel.RowsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = true);
+                    ViewModel.ColumnsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = true);
+                })
+                .Select(_ => Unit.Default)
+                .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+            expandAllButton.Tag = evts;
+
+            Canvas.SetLeft(expandAllButton, currentX);
+            Canvas.SetTop(expandAllButton, currentY);
+            HierarchyGridCanvas.Children.Add(expandAllButton);
         }
 
         private void DrawCells(Size size, HierarchyDefinition[] rowDefinitions, HierarchyDefinition[] colDefinitions)
@@ -146,6 +252,7 @@ namespace VirtualHierarchyGrid
             if (idx < _cells.Count)
             {
                 cell = _cells[idx];
+                cell.ViewModel.Clear();
             }
             else
             {
@@ -351,7 +458,7 @@ namespace VirtualHierarchyGrid
             DrawParentRowHeader(hdef, origin, row, currentPosition, ref headerCount);
         }
 
-        private HierarchyGridHeader BuildHeader(ref int headerCount, HierarchyDefinition hdef, double width, double height)
+        private HierarchyGridHeader BuildHeader(ref int headerCount, [AllowNull] HierarchyDefinition hdef, double width, double height)
         {
             HierarchyGridHeader tb = null;
             if (headerCount < _headers.Count)
@@ -369,12 +476,12 @@ namespace VirtualHierarchyGrid
                 _headers.Add(tb);
             }
 
-            tb.ViewModel.Content = hdef.Content;
+            tb.ViewModel.Content = hdef?.Content ?? string.Empty;
             tb.Height = height;
             tb.Width = width;
-            tb.ViewModel.IsChecked = hdef.HasChild && hdef.IsExpanded;
+            tb.ViewModel.IsChecked = hdef?.HasChild == true && hdef?.IsExpanded == true;
 
-            if (hdef.HasChild)
+            if (hdef?.HasChild == true)
             {
                 var evts = new Queue<IDisposable>();
                 evts.Enqueue(tb.Events().MouseLeftButtonDown

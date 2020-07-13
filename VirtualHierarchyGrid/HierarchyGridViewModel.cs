@@ -37,8 +37,8 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool IsTransposed { get; set; }
 
         [Reactive] public bool EnableCrosshair { get; set; }
-        [Reactive] public int HoveredColumn { get; set; }
-        [Reactive] public int HoveredRow { get; set; }
+        [Reactive] public int HoveredColumn { get; set; } = -1;
+        [Reactive] public int HoveredRow { get; set; } = -1;
 
         [Reactive] public bool EnableMultiSelection { get; set; }
 
@@ -163,6 +163,9 @@ namespace VirtualHierarchyGrid
 
             HorizontalOffset = 0;
             VerticalOffset = 0;
+
+            HoveredRow = -1;
+            HoveredColumn = -1;
         }
     }
 }
