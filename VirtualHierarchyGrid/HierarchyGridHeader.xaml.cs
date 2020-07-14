@@ -20,9 +20,10 @@ namespace VirtualHierarchyGrid
 {
     public partial class HierarchyGridHeader
     {
-        private static Brush HeaderBackgroundBrush { get; set; }
-        private static Brush HeaderForegroundBrush { get; set; }
-        private static Brush HeaderBorderBrush { get; set; }
+        internal static Brush HeaderBackgroundBrush { get; set; }
+        internal static Brush HeaderForegroundBrush { get; set; }
+        internal static Brush HeaderBorderBrush { get; set; }
+        internal static Brush HeaderHoverBorderBrush { get; set; }
 
         static HierarchyGridHeader()
         {
@@ -30,7 +31,8 @@ namespace VirtualHierarchyGrid
 
             HeaderBackgroundBrush = (Brush)rect.TryFindResource("HeaderBackground") ?? Brushes.Gray;
             HeaderForegroundBrush = (Brush)rect.TryFindResource("HeaderForeground") ?? Brushes.Black;
-            HeaderBorderBrush = (Brush)rect.TryFindResource("HeaderBorder") ?? Brushes.DarkGray;
+            HeaderBorderBrush = (Brush)rect.TryFindResource("HeaderBorderBrush") ?? Brushes.DarkGray;
+            HeaderHoverBorderBrush = (Brush)rect.TryFindResource("HeaderHoverBorderBrush") ?? Brushes.DarkGray;
 
             rect = null;
         }
@@ -54,6 +56,18 @@ namespace VirtualHierarchyGrid
             header.Foreground = HeaderForegroundBrush;
 
             header.OneWayBind(vm,
+                vm => vm.CanToggle,
+                v => v.StatusPresenter.Visibility,
+                b => b ? Visibility.Visible : Visibility.Collapsed)
+                .DisposeWith(disposables);
+
+            header.OneWayBind(vm,
+                vm => vm.IsChecked,
+                v => v.StatusPresenter.Content,
+                b => b ? header.TryFindResource("ExpandedIcon") : header.TryFindResource("FoldedIcon"))
+                .DisposeWith(disposables);
+
+            header.OneWayBind(vm,
                 vm => vm.Content,
                 v => v.Presenter.Content)
                 .DisposeWith(disposables);
@@ -61,23 +75,23 @@ namespace VirtualHierarchyGrid
             header.OneWayBind(vm,
                vm => vm.IsHovered,
                v => v.HeaderBorder.BorderBrush,
-               hovered => hovered ? GruvBoxBrushes.DarkBlue : HeaderBorderBrush)
+               hovered => hovered ? HeaderHoverBorderBrush : HeaderBorderBrush)
                .DisposeWith(disposables);
 
             header.OneWayBind(vm,
                vm => vm.IsHovered,
                v => v.HeaderBorder.Background,
-               hovered => hovered ? GruvBoxBrushes.LightBlue : HeaderBackgroundBrush)
+               hovered => hovered ? HierarchyGridCell.CellHoverBackground : HeaderBackgroundBrush)
                .DisposeWith(disposables);
 
             header.Events().MouseEnter
                .Subscribe(_ =>
                {
                    vm.IsHovered = true;
-                   if ( vm.RowIndex.HasValue)
-                    vm.HierarchyGridViewModel.HoveredRow = vm.RowIndex.Value;
-                   if ( vm.ColumnIndex.HasValue)
-                    vm.HierarchyGridViewModel.HoveredColumn = vm.ColumnIndex.Value;
+                   if (vm.RowIndex.HasValue)
+                       vm.HierarchyGridViewModel.HoveredRow = vm.RowIndex.Value;
+                   if (vm.ColumnIndex.HasValue)
+                       vm.HierarchyGridViewModel.HoveredColumn = vm.ColumnIndex.Value;
                })
                .DisposeWith(disposables);
 

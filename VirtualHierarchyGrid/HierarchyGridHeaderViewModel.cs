@@ -14,6 +14,8 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool IsHovered { get; set; }
         [Reactive] public bool IsSelected { get; set; }
 
+        [Reactive] public bool CanToggle { get; set; }
+
         public int? ColumnIndex { get; set; }
         public int? RowIndex { get; set; }
 

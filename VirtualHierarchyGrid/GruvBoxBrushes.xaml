@@ -42,7 +42,7 @@
 
     <!-- Read Only brushes -->
     <SolidColorBrush x:Key="CellReadOnlyBackground"
-                     Color="#FFA89984" />
+                     Color="#FF83A598" />
     <SolidColorBrush x:Key="CellReadOnlyForeground"
                      Color="#FF3C3836" />
 
@@ -69,4 +69,6 @@
                      Color="#FF928374" />
     <SolidColorBrush x:Key="HeaderForeground"
                      Color="#FF3C3836" />
+    <SolidColorBrush x:Key="HeaderHoverBorderBrush"
+                     Color="#FF458588" />
 </ResourceDictionary>

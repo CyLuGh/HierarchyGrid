@@ -123,7 +123,7 @@ namespace Demo
                         Editor = (p, c, s) =>
                         {
                             this.Log().Debug($"{p} _ {c} _ {s}");
-                            return true;
+                            return !string.IsNullOrWhiteSpace(s);
                         }
                     }))
                     {

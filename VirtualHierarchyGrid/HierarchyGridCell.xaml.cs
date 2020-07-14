@@ -18,25 +18,24 @@ namespace VirtualHierarchyGrid
 {
     public partial class HierarchyGridCell : IEnableLogger
     {
-        private static Thickness UnselectedThickness { get; } = new Thickness(1);
-        private static Thickness SelectedThickness { get; } = new Thickness(2);
+        internal static Thickness UnselectedThickness { get; } = new Thickness(1);
+        internal static Thickness SelectedThickness { get; } = new Thickness(2);
 
-        private static Brush CellBackground { get; set; }
-        private static Brush CellForeground { get; set; }
-        private static Brush CellBorderBrush { get; set; }
-        private static Brush CellSelectedBorder { get; set; }
-        private static Brush CellHoverBackground { get; set; }
-        private static Brush CellHoverForeground { get; set; }
-        private static Brush CellErrorBackground { get; set; }
-        private static Brush CellErrorForeground { get; set; }
-        private static Brush CellWarningBackground { get; set; }
-        private static Brush CellWarningForeground { get; set; }
-        private static Brush CellRemarkBackground { get; set; }
-        private static Brush CellRemarkForeground { get; set; }
-        private static Brush CellReadOnlyBackground { get; set; }
-        private static Brush CellReadOnlyForeground { get; set; }
-
-        private static Brush EmptyBrush { get; set; }
+        internal static Brush CellBackground { get; set; }
+        internal static Brush CellForeground { get; set; }
+        internal static Brush CellBorderBrush { get; set; }
+        internal static Brush CellSelectedBorder { get; set; }
+        internal static Brush CellHoverBackground { get; set; }
+        internal static Brush CellHoverForeground { get; set; }
+        internal static Brush CellErrorBackground { get; set; }
+        internal static Brush CellErrorForeground { get; set; }
+        internal static Brush CellWarningBackground { get; set; }
+        internal static Brush CellWarningForeground { get; set; }
+        internal static Brush CellRemarkBackground { get; set; }
+        internal static Brush CellRemarkForeground { get; set; }
+        internal static Brush CellReadOnlyBackground { get; set; }
+        internal static Brush CellReadOnlyForeground { get; set; }
+        internal static Brush EmptyBrush { get; set; }
 
         static HierarchyGridCell()
         {

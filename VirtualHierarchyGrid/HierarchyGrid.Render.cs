@@ -62,6 +62,7 @@ namespace VirtualHierarchyGrid
             var rowsHorizontalSpan = ViewModel.RowsHeadersWidth.Take(ViewModel.RowsHeadersWidth.Length - 1).Sum();
 
             var foldAllButton = BuildHeader(ref headerCount, null, rowsHorizontalSpan, columnsVerticalSpan);
+            foldAllButton.ViewModel.Content = TryFindResource("CollapseAllIcon");
             foldAllButton.ToolTip = "Collapse all";
             var evts = new Queue<IDisposable>();
             evts.Enqueue(foldAllButton.Events().MouseLeftButtonDown
@@ -96,10 +97,16 @@ namespace VirtualHierarchyGrid
                                              .Where(x => x.Level == idx)
                                              .ToArray();
                     var desiredState = defs.AsParallel().Any(x => x.IsExpanded);
+
                     defs.ForEach(x => x.IsExpanded = !desiredState);
                 })
                 .Select(_ => Unit.Default)
                 .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                tb.ViewModel.Content = ViewModel.RowsDefinitions
+                                            .FlatList(true)
+                                            .AsParallel()
+                                            .Where(x => x.Level == idx)
+                                            .Any(x => x.IsExpanded) ? TryFindResource("CollapseIcon") : TryFindResource("ExpandIcon");
                 tb.Tag = evts;
 
                 Canvas.SetLeft(tb, currentX);
@@ -128,6 +135,11 @@ namespace VirtualHierarchyGrid
                 })
                 .Select(_ => Unit.Default)
                 .InvokeCommand(ViewModel, x => x.DrawGridCommand));
+                tb.ViewModel.Content = ViewModel.ColumnsDefinitions
+                                            .FlatList(true)
+                                            .AsParallel()
+                                            .Where(x => x.Level == idx)
+                                            .Any(x => x.IsExpanded) ? TryFindResource("CollapseIcon") : TryFindResource("ExpandIcon");
                 tb.Tag = evts;
 
                 Canvas.SetLeft(tb, currentX);
@@ -137,6 +149,7 @@ namespace VirtualHierarchyGrid
             }
 
             var expandAllButton = BuildHeader(ref headerCount, null, ViewModel.RowsHeadersWidth.Last(), ViewModel.ColumnsHeadersHeight.Last());
+            expandAllButton.ViewModel.Content = TryFindResource("ExpandAllIcon");
 
             expandAllButton.ToolTip = "Expand all";
             evts = new Queue<IDisposable>();
@@ -359,6 +372,7 @@ namespace VirtualHierarchyGrid
             var height = ViewModel.ColumnsHeadersHeight[hdef.Level];
 
             var tb = BuildHeader(ref headerCount, hdef, width, height);
+            tb.ViewModel.CanToggle = true;
 
             var top = Enumerable.Range(0, hdef.Level).Select(x => ViewModel.ColumnsHeadersHeight[x]).Sum();
             Canvas.SetLeft(tb, currentPosition);
@@ -449,6 +463,7 @@ namespace VirtualHierarchyGrid
             var width = ViewModel.RowsHeadersWidth[hdef.Level];
 
             var tb = BuildHeader(ref headerCount, hdef, width, height);
+            tb.ViewModel.CanToggle = true;
 
             var left = Enumerable.Range(0, hdef.Level).Where(x => x < ViewModel.RowsHeadersWidth.Length).Select(x => ViewModel.RowsHeadersWidth[x]).Sum();
             Canvas.SetLeft(tb, left);
@@ -471,6 +486,7 @@ namespace VirtualHierarchyGrid
                 tb.Tag = null;
                 tb.ViewModel.RowIndex = null;
                 tb.ViewModel.ColumnIndex = null;
+                tb.ViewModel.CanToggle = false;
             }
             else
             {
@@ -485,6 +501,8 @@ namespace VirtualHierarchyGrid
 
             if (hdef?.HasChild == true)
             {
+                tb.ViewModel.CanToggle = true;
+
                 var evts = new Queue<IDisposable>();
                 evts.Enqueue(tb.Events().MouseLeftButtonDown
                     .Do(_ => hdef.IsExpanded = !hdef.IsExpanded)

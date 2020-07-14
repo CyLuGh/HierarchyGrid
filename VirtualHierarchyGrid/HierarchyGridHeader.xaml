@@ -12,9 +12,19 @@
     <Border x:Name="HeaderBorder"
             BorderThickness="1">
         <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <ContentControl x:Name="StatusPresenter"
+                            VerticalAlignment="Top"
+                            Width="16"
+                            Height="16"
+                            Margin="5" />
             <ContentPresenter x:Name="Presenter"
                               TextBlock.FontWeight="Bold"
-                              Margin="5" />
+                              Margin="5"
+                              Grid.Column="1" />
         </Grid>
     </Border>
 </rxui:ReactiveUserControl>
