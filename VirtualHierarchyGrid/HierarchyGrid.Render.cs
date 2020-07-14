@@ -12,6 +12,8 @@ using System.Windows.Media;
 using MoreLinq;
 using DynamicData;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Input;
+using Splat;
 
 namespace VirtualHierarchyGrid
 {
@@ -49,6 +51,20 @@ namespace VirtualHierarchyGrid
             DrawRowsHeaders(rowDefinitions, size.Height / ViewModel.Scale, ref headerCount, ref splitterCount);
 
             DrawCells(size, rowDefinitions, colDefinitions);
+
+            RestoreHoveredCell();
+        }
+
+        private void RestoreHoveredCell()
+        {
+            var hoveredCell = (Mouse.DirectlyOver as DependencyObject)?.GetVisualParent<HierarchyGridCell>();
+            if (hoveredCell != null)
+            {
+                this.Log().Debug(hoveredCell);
+                hoveredCell.ViewModel.IsHovered = true;
+                ViewModel.HoveredColumn = hoveredCell.ViewModel.ColumnIndex;
+                ViewModel.HoveredRow = hoveredCell.ViewModel.RowIndex;
+            }
         }
 
         private void DrawGlobalHeaders(ref int headerCount, ref int splitterCount)
@@ -508,14 +524,6 @@ namespace VirtualHierarchyGrid
                     .Do(_ => hdef.IsExpanded = !hdef.IsExpanded)
                     .Select(_ => Unit.Default)
                     .InvokeCommand(ViewModel, x => x.DrawGridCommand));
-                //evts.Enqueue(tb.Events().Checked
-                //    .Do(_ => hdef.IsExpanded = true)
-                //    .Select(_ => Unit.Default)
-                //    .InvokeCommand(ViewModel, x => x.DrawGridCommand));
-                //evts.Enqueue(tb.Events().Unchecked
-                //    .Do(_ => hdef.IsExpanded = false)
-                //    .Select(_ => Unit.Default)
-                //    .InvokeCommand(ViewModel, x => x.DrawGridCommand));
                 tb.Tag = evts;
             }
 
