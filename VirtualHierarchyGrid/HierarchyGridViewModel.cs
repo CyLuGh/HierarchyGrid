@@ -1,6 +1,5 @@
 ﻿using DynamicData;
 using HierarchyGrid.Definitions;
-using LanguageExt.Common;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -21,8 +20,8 @@ namespace VirtualHierarchyGrid
         private SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
         private SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
 
-        public ConcurrentDictionary<(int row, int col), ResultSet> ResultSets { get; }
-            = new ConcurrentDictionary<(int row, int col), ResultSet>();
+        public ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet> ResultSets { get; }
+            = new ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet>();
 
         public ObservableCollection<(int row, int col)> Selections { get; }
             = new ObservableCollection<(int row, int col)>();
@@ -51,18 +50,19 @@ namespace VirtualHierarchyGrid
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
         public ReactiveCommand<Unit, Unit> DrawGridCommand { get; private set; }
+        public ReactiveCommand<Unit, Unit> BuildResultSetsCommand { get; private set; }
 
         public Interaction<Unit, Unit> DrawGridInteraction { get; }
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
 
         public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
 
-        public ReactiveCommand<(int row, int column, ResultSet rs), Unit> EditCommand { get; }
+        public ReactiveCommand<(int row, int column, ResultSet rs), Unit> EditCommand { get; private set; }
 
         public Interaction<(int row, int column, ResultSet rs), Unit> EditInteraction { get; }
             = new Interaction<(int row, int column, ResultSet rs), Unit>(RxApp.MainThreadScheduler);
 
-        public ReactiveCommand<Unit, Unit> EndEditionCommand { get; }
+        public ReactiveCommand<Unit, Unit> EndEditionCommand { get; private set; }
 
         public Interaction<Unit, Unit> EndEditionInteraction { get; }
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
@@ -71,14 +71,8 @@ namespace VirtualHierarchyGrid
         {
             Activator = new ViewModelActivator();
 
-            DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
-            DrawGridCommand = ReactiveCommand.CreateFromObservable(() => DrawGridInteraction.Handle(Unit.Default));
-
-            EditInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
-            EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet), Unit>(t => EditInteraction.Handle(t));
-
-            EndEditionInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
-            EndEditionCommand = ReactiveCommand.CreateFromObservable(() => EndEditionInteraction.Handle(Unit.Default));
+            RegisterDefaultInteractions(this);
+            InitializeCommands(this);
 
             this.WhenActivated(disposables =>
             {
@@ -155,7 +149,36 @@ namespace VirtualHierarchyGrid
                     .Select(_ => Unit.Default)
                     .InvokeCommand(EndEditionCommand)
                     .DisposeWith(disposables);
+
+                /* Redraw grid when cache has been updated */
+                this.BuildResultSetsCommand
+                    .InvokeCommand(DrawGridCommand)
+                    .DisposeWith(disposables);
             });
+        }
+
+        private static void RegisterDefaultInteractions(HierarchyGridViewModel @this)
+        {
+            @this.DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+            @this.EditInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+            @this.EndEditionInteraction.RegisterHandler(ctx => ctx.SetOutput(Unit.Default));
+        }
+
+        private static void InitializeCommands(HierarchyGridViewModel @this)
+        {
+            @this.DrawGridCommand = ReactiveCommand.CreateFromObservable(() => @this.DrawGridInteraction.Handle(Unit.Default));
+            @this.EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet), Unit>(t => @this.EditInteraction.Handle(t));
+            @this.EndEditionCommand = ReactiveCommand.CreateFromObservable(() => @this.EndEditionInteraction.Handle(Unit.Default));
+
+            @this.BuildResultSetsCommand = ReactiveCommand.CreateFromObservable(() => Observable.Start(() =>
+            {
+                @this.ResultSets.Clear();
+
+                var consumers = @this.ConsumersCache.Items.FlatList().ToArray();
+                @this.ProducersCache.Items.FlatList().AsParallel().ForAll(producer =>
+                    consumers.ForEach(consumer => @this.ResultSets.TryAdd((producer.Position, consumer.Position), HierarchyDefinition.Resolve(producer, consumer)))
+                );
+            }));
         }
 
         public void Set(HierarchyDefinitions hierarchyDefinitions)
@@ -180,15 +203,7 @@ namespace VirtualHierarchyGrid
                 .ForEach(x => RowsHeights.Add(x, DEFAULT_ROW_HEIGHT));
 
             Observable.Return(Unit.Default)
-                .ObserveOn(RxApp.TaskpoolScheduler)
-                .Do(_ =>
-                {
-                    var consumers = hierarchyDefinitions.Consumers.FlatList().ToArray();
-                    hierarchyDefinitions.Producers.FlatList().AsParallel().ForAll(producer =>
-                        consumers.ForEach(consumer => ResultSets.TryAdd((producer.Position, consumer.Position), HierarchyDefinition.Resolve(producer, consumer)))
-                    );
-                })
-                .InvokeCommand(DrawGridCommand);
+                .InvokeCommand(BuildResultSetsCommand);
         }
 
         public void Clear()

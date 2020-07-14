@@ -13,13 +13,14 @@ using System.Windows.Shapes;
 using HierarchyGrid.Definitions;
 using System.Linq;
 using LanguageExt;
+using Splat;
 
 namespace Demo
 {
     /// <summary>
     /// Interaction logic for CanvasWindow.xaml
     /// </summary>
-    public partial class CanvasWindow : Window
+    public partial class CanvasWindow : Window, IEnableLogger
     {
         public CanvasWindow()
         {
@@ -119,7 +120,11 @@ namespace Demo
                             18 => ((byte)150, (byte)0, (byte)100, (byte)120),
                             _ => ((byte)0, (byte)0, (byte)0, (byte)0)
                         } : ((byte)0, (byte)0, (byte)0, (byte)0),
-                        Editor = s => true
+                        Editor = (p, c, s) =>
+                        {
+                            this.Log().Debug($"{p} _ {c} _ {s}");
+                            return true;
+                        }
                     }))
                     {
                         hdef.Add(child);

@@ -79,8 +79,8 @@ namespace VirtualHierarchyGrid
                         if (e.Key == Key.Enter || e.Key == Key.Return)
                             if (resultSet.Editor.Match(edt => edt(textBox.Text), () => false))
                                 Observable.Return(Unit.Default)
-                                    .Delay(TimeSpan.FromMilliseconds(200))
-                                    .InvokeCommand(vm, x => x.DrawGridCommand);
+                                    .Delay(TimeSpan.FromMilliseconds(50))
+                                    .InvokeCommand(vm, x => x.BuildResultSetsCommand);
                         if (e.Key == Key.Escape || e.Key == Key.Enter || e.Key == Key.Return)
                             vm.IsEditing = false;
                     });

@@ -13,7 +13,7 @@ namespace HierarchyGrid.Definitions
         /// <summary>
         /// Func that will be called from editing textbox, input being string from textbox and bool being the success state of the update.
         /// </summary>
-        public Func<string, bool> Editor { get; set; }
+        public Func<object, object, string, bool> Editor { get; set; }
 
         public ResultSet Process(InputSet inputSet)
         {
@@ -36,7 +36,13 @@ namespace HierarchyGrid.Definitions
                         resultSet.CustomColor = Option<(byte a, byte r, byte g, byte b)>.None;
                 });
 
-            resultSet.Editor = Editor != null ? Option<Func<string, bool>>.Some(Editor) : Option<Func<string, bool>>.None;
+            if (Editor != null)
+            {
+                Func<string, bool> edit = (string input) => Editor(inputSet.Input, data, input);
+                resultSet.Editor = Option<Func<string, bool>>.Some(edit);
+            }
+            else
+                resultSet.Editor = Option<Func<string, bool>>.None;
 
             return resultSet;
         }
