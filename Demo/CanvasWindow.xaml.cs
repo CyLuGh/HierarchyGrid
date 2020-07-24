@@ -28,19 +28,6 @@ namespace Demo
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
         }
 
-        private void GridSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
-        {
-            Console.WriteLine("Test");
-        }
-
-        private void Thumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
-        {
-        }
-
-        private void Thumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
-        {
-        }
-
         private IEnumerable<ProducerDefinition> BuildRows()
         {
             return Enumerable.Range(0, 20).Select(x =>
@@ -138,7 +125,8 @@ namespace Demo
 
         private void FillButton_Click(object sender, RoutedEventArgs e)
         {
-            HierarchyGrid.ViewModel.Set(new HierarchyDefinitions(BuildRows(), BuildColumns()));
+            var dg = new DataGenerator();
+            HierarchyGrid.ViewModel.Set(dg.GenerateSample());
         }
     }
 }
