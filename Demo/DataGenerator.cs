@@ -77,6 +77,7 @@ namespace Demo
                     prd.Add(BuildProducer(iRegion));
 
                 prd.Producer = () => innerRegions;
+                prd.IsLocked = true;
             }
             else
             {
@@ -99,11 +100,19 @@ namespace Demo
             {
                 foreach (var vhc in vehicles)
                     csr.Add(BuildConsumer(vhc));
+
+                csr.IsLocked = (_, __) => true;
             }
             else
             {
-                csr.Editor = o =>
+                csr.Editor = (data, consumed, input) =>
                 {
+                    if (Data.TryGetValue(((string)data, vehicle), out var _) && int.TryParse(input,out var newValue))
+                    {
+                        Data[((string)data, vehicle)] = newValue;
+                        return true;
+                    }
+                    return false;
                 };
             }
 

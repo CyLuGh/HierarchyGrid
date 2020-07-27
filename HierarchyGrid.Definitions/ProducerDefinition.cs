@@ -1,19 +1,25 @@
 ﻿using LanguageExt;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HierarchyGrid.Definitions
 {
     public class ProducerDefinition : HierarchyDefinition
     {
         public Func<object> Producer { get; set; }
-        public Func<Qualification> Qualify {get;set;} = () => Qualification.Unset;
+        public Func<Qualification> Qualify { get; set; } = () => Qualification.Unset;
 
-        public Option<InputSet> Produce() => Producer != null ? 
-        Option<InputSet>.Some( new InputSet {
-            Input = Producer()
-        }) 
+        /// <summary>
+        /// Indicates that entire row shouldn't be editable.
+        /// </summary>
+        public bool IsLocked { get; set; }
+
+        public Option<InputSet> Produce() => Producer != null ?
+        Option<InputSet>.Some(new InputSet
+        {
+            Input = Producer(),
+            Qualifier = Qualify != null ? Qualify() : Qualification.Unset,
+            IsLocked = IsLocked
+        })
         : Option<InputSet>.None;
     }
 }

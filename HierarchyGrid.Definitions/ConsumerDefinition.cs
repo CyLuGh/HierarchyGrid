@@ -15,6 +15,11 @@ namespace HierarchyGrid.Definitions
         /// </summary>
         public Func<object, object, string, bool> Editor { get; set; }
 
+        /// <summary>
+        /// Indicates that the cell can't be edited. First parameter is raw data from producer and second is the result from the consumer.
+        /// </summary>
+        public Func<object, object, bool> IsLocked { get; set; }
+
         public ResultSet Process(InputSet inputSet)
         {
             var resultSet = new ResultSet();
@@ -36,7 +41,9 @@ namespace HierarchyGrid.Definitions
                         resultSet.CustomColor = Option<(byte a, byte r, byte g, byte b)>.None;
                 });
 
-            if (Editor != null)
+            var locked = inputSet.IsLocked || (IsLocked != null && IsLocked(inputSet.Input, data));
+
+            if (Editor != null && !locked)
             {
                 Func<string, bool> edit = (string input) => Editor(inputSet.Input, data, input);
                 resultSet.Editor = Option<Func<string, bool>>.Some(edit);

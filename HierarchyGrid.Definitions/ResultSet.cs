@@ -29,6 +29,8 @@ namespace HierarchyGrid.Definitions
         /// Brush color required by producer for all consumer results
         /// </summary>
         public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
+
+        public bool IsLocked { get; set; }
     }
 
     public class ResultSet

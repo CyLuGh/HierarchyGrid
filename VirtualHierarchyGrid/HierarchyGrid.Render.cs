@@ -46,9 +46,11 @@ namespace VirtualHierarchyGrid
             var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
 
-            DrawGlobalHeaders(ref headerCount, ref splitterCount);
             DrawColumnsHeaders(colDefinitions, size.Width / ViewModel.Scale, ref headerCount, ref splitterCount);
             DrawRowsHeaders(rowDefinitions, size.Height / ViewModel.Scale, ref headerCount, ref splitterCount);
+            
+            // Draw global headers afterwards or last splitter will be drawn under column headers
+            DrawGlobalHeaders(ref headerCount, ref splitterCount);
 
             DrawCells(size, rowDefinitions, colDefinitions);
 
@@ -71,6 +73,14 @@ namespace VirtualHierarchyGrid
         {
             var rowDepth = ViewModel.RowsDefinitions.TotalDepth();
             var colDepth = ViewModel.ColumnsDefinitions.TotalDepth();
+
+            var splitters = new List<GridSplitter>();
+            Action<DragCompletedEventArgs> action = e =>
+            {
+                (int position, IDisposable drag) tag = ((int, IDisposable))((GridSplitter)e.Source).Tag;
+                var idx = tag.position;
+                ViewModel.RowsHeadersWidth[idx] = (double)Math.Max(ViewModel.RowsHeadersWidth[idx] + e.HorizontalChange, 10d);
+            };
 
             double currentX = 0, currentY = 0;
 
@@ -95,7 +105,6 @@ namespace VirtualHierarchyGrid
             Canvas.SetTop(foldAllButton, currentY);
             HierarchyGridCanvas.Children.Add(foldAllButton);
 
-            // TODO: add splitters
 
             // Draw row headers
             currentY = columnsVerticalSpan;
@@ -129,6 +138,12 @@ namespace VirtualHierarchyGrid
                 Canvas.SetTop(tb, currentY);
                 HierarchyGridCanvas.Children.Add(tb);
                 currentX += width;
+
+                var gSplitter = BuildSplitter(ref splitterCount, 2, height, GridResizeDirection.Columns, i, action);
+                Canvas.SetLeft(gSplitter, currentX);
+                Canvas.SetTop(gSplitter, currentY);
+                splitters.Add(gSplitter);
+
             }
 
             // Draw column headers
@@ -182,6 +197,19 @@ namespace VirtualHierarchyGrid
             Canvas.SetLeft(expandAllButton, currentX);
             Canvas.SetTop(expandAllButton, currentY);
             HierarchyGridCanvas.Children.Add(expandAllButton);
+
+            var splitter = BuildSplitter(ref splitterCount, 
+                2, 
+                ViewModel.ColumnsHeadersHeight.Last(), 
+                GridResizeDirection.Columns, 
+                ViewModel.RowsHeadersWidth.Length - 1,
+                action);
+            Canvas.SetLeft(splitter, ViewModel.RowsHeadersWidth.Sum());
+            Canvas.SetTop(splitter, currentY);
+            splitters.Add(splitter);
+
+            foreach (var gridSplitter in splitters)
+                HierarchyGridCanvas.Children.Add(gridSplitter);
         }
 
         private void DrawCells(Size size, HierarchyDefinition[] rowDefinitions, HierarchyDefinition[] colDefinitions)
