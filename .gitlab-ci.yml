@@ -1,0 +1,43 @@
+---
+# See https://gitlab.com/tobiaskoch/gitlab-ci-example-dotnetcore-windows
+
+.shared_windows_runners:
+  tags:
+    - shared-windows
+    - windows
+    - windows-1809
+
+# image: microsoft/dotnet:latest
+image: mcr.microsoft.com/dotnet/core/sdk:3.1
+
+### Define variables
+variables :
+  OBJECTS_DIRECTORY: 'obj'
+  NUGET_PACKAGES_DIRECTORY: '.nuget'
+  SOURCE_CODE_PATH: '*/*/'
+
+### Define stage list
+stages:
+  - build
+  - test
+
+cache:
+  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+  paths:
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+    - '$NUGET_PACKAGES_DIRECTORY'
+
+  policy: pull-push
+
+before_script:
+  - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY'
+
+build:
+    when: manual
+    extends:
+        - .shared_windows_runners
+    stage: build
+    script:
+        - 'dotnet build --no-restore'
+
