@@ -13,6 +13,6 @@
   <ItemGroup>
     <PackageReference Include="LanguageExt.Rx" Version="3.4.15" />
     <PackageReference Include="morelinq" Version="3.3.2" />
-    <PackageReference Include="ReactiveUI.Fody" Version="11.4.17" />
+    <PackageReference Include="ReactiveUI.Fody" Version="11.5.35" />
   </ItemGroup>
 </Project>

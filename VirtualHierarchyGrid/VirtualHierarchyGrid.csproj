@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ReactiveUI.Events.WPF" Version="11.4.17" />
-    <PackageReference Include="ReactiveUI.Fody" Version="11.4.17" />
-    <PackageReference Include="ReactiveUI.WPF" Version="11.4.17" />
+    <PackageReference Include="ReactiveUI.Events.WPF" Version="11.5.35" />
+    <PackageReference Include="ReactiveUI.Fody" Version="11.5.35" />
+    <PackageReference Include="ReactiveUI.WPF" Version="11.5.35" />
   </ItemGroup>
 
   <ItemGroup>
