@@ -34,7 +34,8 @@ before_script:
   - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY'
 
 build:
-    when: manual
+    only: 
+      - master  
     extends:
         - .shared_windows_runners
     stage: build
@@ -42,7 +43,8 @@ build:
         - 'dotnet build --no-restore'
 
 unittests:
-  when: on_success
+  only:
+    - master
   stage: test
   script:
     - 'dotnet test'
