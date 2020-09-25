@@ -18,38 +18,38 @@ variables :
 
 ### Define stage list
 stages:
-  - restore
-  - build
+# - restore
+# - build
   - test
 
-cache:
-  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
-  paths:
-    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
-    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
-    - '$NUGET_PACKAGES_DIRECTORY'
+#cache:
+#  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+#  paths:
+#    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
+#    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+#    - '$NUGET_PACKAGES_DIRECTORY'
 
-  policy: pull-push
+#  policy: pull-push
 
-restorepackages:
-  when: never
-  only:
-    - master
-  extends:
-    - .shared_windows_runners
-  stage: restore
-  script:
-    - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY'
- 
-build:
-    when: never
-    only: 
-      - master  
-    extends:
-        - .shared_windows_runners
-    stage: build
-    script:
-        - 'dotnet build --no-restore'
+#restorepackages:
+#  when: never
+#  only:
+#    - master
+#  extends:
+#    - .shared_windows_runners
+#  stage: restore
+#  script:
+#    - 'dotnet restore --packages $NUGET_PACKAGES_DIRECTORY'
+# 
+#build:
+#    when: never
+#    only: 
+#      - master  
+#    extends:
+#        - .shared_windows_runners
+#    stage: build
+#    script:
+#        - 'dotnet build --no-restore'
 
 unittests:
   only:
