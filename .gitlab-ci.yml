@@ -18,8 +18,6 @@ variables :
 
 ### Define stage list
 stages:
-  - restore
-  - build
   - test
 
 cache:
@@ -53,6 +51,8 @@ unittests:
   only:
     - master
   stage: test
+  extends:
+    - .shared_windows_runners
   script:
-    - 'dotnet test --no-restore'
+    - 'dotnet test'
 
