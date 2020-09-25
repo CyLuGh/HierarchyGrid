@@ -41,3 +41,9 @@ build:
     script:
         - 'dotnet build --no-restore'
 
+unittests:
+  when: on_success
+  stage: test
+  script:
+    - 'dotnet test'
+
