@@ -4,6 +4,14 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+
+    <Authors>Demortier Jeremy</Authors>
+    <Description>Definitions used by VirtualHierarchyGrid</Description>
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>HierarchyGrid</_Parameter1>
@@ -13,6 +21,6 @@
   <ItemGroup>
     <PackageReference Include="LanguageExt.Rx" Version="3.4.15" />
     <PackageReference Include="morelinq" Version="3.3.2" />
-    <PackageReference Include="ReactiveUI.Fody" Version="11.5.35" />
+    <PackageReference Include="ReactiveUI.Fody" Version="12.1.5" />
   </ItemGroup>
 </Project>

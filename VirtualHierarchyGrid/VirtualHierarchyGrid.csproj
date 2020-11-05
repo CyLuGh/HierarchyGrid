@@ -5,10 +5,18 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+
+    <Authors>Demortier Jeremy</Authors>
+    <Description>Double dimension hierarchy grid</Description>
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="ReactiveUI.Events.WPF" Version="11.5.35" />
-    <PackageReference Include="ReactiveUI.Fody" Version="11.5.35" />
-    <PackageReference Include="ReactiveUI.WPF" Version="11.5.35" />
+    <PackageReference Include="ReactiveUI.Events.WPF" Version="12.1.5" />
+    <PackageReference Include="ReactiveUI.Fody" Version="12.1.5" />
+    <PackageReference Include="ReactiveUI.WPF" Version="12.1.5" />
   </ItemGroup>
 
   <ItemGroup>

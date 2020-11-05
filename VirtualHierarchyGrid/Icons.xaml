@@ -2,6 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:VirtualHierarchyGrid">
     <Viewbox x:Key="ExpandAllIcon"
+             x:Shared="false"
              Stretch="Uniform">
         <Canvas Height="300"
                 Width="300">
@@ -26,6 +27,7 @@
     </Viewbox>
 
     <Viewbox x:Key="CollapseAllIcon"
+             x:Shared="false"
              Stretch="Uniform">
         <Canvas Height="300"
                 Width="300">
