@@ -13,6 +13,7 @@ namespace HierarchyGrid.Definitions
         Remark,
         Custom,
         ReadOnly,
+        Highlighted,
         Hovered
     }
 

@@ -54,7 +54,17 @@ namespace VirtualHierarchyGrid
 
             DrawCells(size, rowDefinitions, colDefinitions);
 
+            RestoreHighlightedCell();
             RestoreHoveredCell();
+        }
+
+        private void RestoreHighlightedCell()
+        {
+            var rows = ViewModel.Highlights.Items.Where(o => o.isRow).Select(o => o.pos).ToArray();
+            var columns = ViewModel.Highlights.Items.Where(o => !o.isRow).Select(o => o.pos).ToArray();
+
+            _cells.Where(c => columns.Contains(c.ViewModel.ColumnIndex) || rows.Contains(c.ViewModel.RowIndex))
+                .ForAll(c => c.ViewModel.IsHighlighted = true);
         }
 
         private void RestoreHoveredCell()
@@ -523,8 +533,8 @@ namespace VirtualHierarchyGrid
             if (headerCount < _headers.Count)
             {
                 tb = _headers[headerCount];
-                if (tb.Tag is Queue<IDisposable> evts)
-                    evts.ForEach(e => e.Dispose());
+                if (tb.Tag is Queue<IDisposable> previousEvents)
+                    previousEvents.ForEach(e => e.Dispose());
                 tb.Tag = null;
                 tb.ViewModel.RowIndex = null;
                 tb.ViewModel.ColumnIndex = null;
@@ -540,19 +550,33 @@ namespace VirtualHierarchyGrid
             tb.Height = height;
             tb.Width = width;
             tb.ViewModel.IsChecked = hdef?.HasChild == true && hdef?.IsExpanded == true;
+            tb.ViewModel.IsHighlighted = hdef?.IsHighlighted ?? false;
 
+            var evts = new Queue<IDisposable>();
             if (hdef?.HasChild == true)
             {
                 tb.ViewModel.CanToggle = true;
 
-                var evts = new Queue<IDisposable>();
                 evts.Enqueue(tb.Events().MouseLeftButtonDown
                     .Do(_ => hdef.IsExpanded = !hdef.IsExpanded)
                     .Select(_ => Unit.Default)
                     .InvokeCommand(ViewModel, x => x.DrawGridCommand));
-                tb.Tag = evts;
             }
+            else if (hdef != null)
+                // Clicking on header should add/remove from highlights
+                evts.Enqueue(tb.Events().MouseLeftButtonDown
+                    .Throttle(TimeSpan.FromMilliseconds(200))
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .Select(_ =>
+                    {
+                        hdef.IsHighlighted = !hdef.IsHighlighted;
+                        tb.ViewModel.IsHighlighted = hdef.IsHighlighted;
 
+                        return tb.ViewModel;
+                    })
+                    .InvokeCommand(ViewModel, x => x.UpdateHighlightsCommand));
+
+            tb.Tag = evts;
             headerCount++;
 
             return tb;

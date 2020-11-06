@@ -16,6 +16,12 @@
     <SolidColorBrush x:Key="CellSelectedBorder"
                      Color="#FF689D6A" />
 
+    <!-- Highlight brushes -->
+    <SolidColorBrush x:Key="CellHighlightBackground"
+                     Color="#FF458588" />
+    <SolidColorBrush x:Key="CellHighlightForeground"
+                     Color="#FFebdbb2" />
+
     <!-- Hover brushes -->
     <SolidColorBrush x:Key="CellHoverBackground"
                      Color="#FF8EC07C" />

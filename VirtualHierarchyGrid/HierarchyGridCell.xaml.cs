@@ -25,6 +25,8 @@ namespace VirtualHierarchyGrid
         internal static Brush CellForeground { get; set; }
         internal static Brush CellBorderBrush { get; set; }
         internal static Brush CellSelectedBorder { get; set; }
+        internal static Brush CellHighlightBackground { get; set; }
+        internal static Brush CellHighlightForeground { get; set; }
         internal static Brush CellHoverBackground { get; set; }
         internal static Brush CellHoverForeground { get; set; }
         internal static Brush CellErrorBackground { get; set; }
@@ -45,6 +47,9 @@ namespace VirtualHierarchyGrid
             CellBorderBrush = (Brush)rect.TryFindResource("CellBorder") ?? Brushes.DarkGray;
 
             CellSelectedBorder = (Brush)rect.TryFindResource("CellSelectedBorder") ?? Brushes.BlueViolet;
+
+            CellHighlightBackground = (Brush)rect.TryFindResource("CellHighlightBackground") ?? Brushes.LightBlue;
+            CellHighlightForeground = (Brush)rect.TryFindResource("CellHighlightForeground") ?? Brushes.Black;
 
             CellHoverBackground = (Brush)rect.TryFindResource("CellHoverBackground") ?? Brushes.LightSeaGreen;
             CellHoverForeground = (Brush)rect.TryFindResource("CellHoverForeground") ?? Brushes.Black;
@@ -97,6 +102,7 @@ namespace VirtualHierarchyGrid
                         Qualification.Warning => CellWarningBackground,
                         Qualification.Remark => CellRemarkBackground,
                         Qualification.ReadOnly => CellReadOnlyBackground,
+                        Qualification.Highlighted => CellHighlightBackground,
                         Qualification.Hovered => CellHoverBackground,
                         Qualification.Empty => EmptyBrush,
                         Qualification.Custom => vm.ResultSet.CustomColor.Some(c => (Brush)new SolidColorBrush(Color.FromArgb(c.a, c.r, c.g, c.b)))
@@ -115,6 +121,7 @@ namespace VirtualHierarchyGrid
                         Qualification.Warning => CellWarningForeground,
                         Qualification.Remark => CellRemarkForeground,
                         Qualification.ReadOnly => CellReadOnlyForeground,
+                        Qualification.Highlighted => CellHighlightForeground,
                         Qualification.Hovered => CellHoverForeground,
                         Qualification.Empty => Brushes.Transparent,
                         _ => CellForeground

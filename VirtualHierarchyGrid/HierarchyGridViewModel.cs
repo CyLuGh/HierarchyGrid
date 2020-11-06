@@ -3,6 +3,7 @@ using HierarchyGrid.Definitions;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using Splat;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
@@ -25,6 +26,9 @@ namespace VirtualHierarchyGrid
 
         public ObservableCollection<(int row, int col)> Selections { get; }
             = new ObservableCollection<(int row, int col)>();
+
+        internal SourceList<(int pos, bool isRow)> Highlights { get; }
+            = new SourceList<(int pos, bool isRow)>();
 
         [Reactive] public int HorizontalOffset { get; set; }
         [Reactive] public int VerticalOffset { get; set; }
@@ -66,6 +70,8 @@ namespace VirtualHierarchyGrid
 
         public Interaction<Unit, Unit> EndEditionInteraction { get; }
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
+
+        public ReactiveCommand<HierarchyGridHeaderViewModel, Unit> UpdateHighlightsCommand { get; private set; }
 
         public HierarchyGridViewModel()
         {
@@ -179,6 +185,18 @@ namespace VirtualHierarchyGrid
                     consumers.ForEach(consumer => @this.ResultSets.TryAdd((producer.Position, consumer.Position), HierarchyDefinition.Resolve(producer, consumer)))
                 );
             }));
+
+            @this.UpdateHighlightsCommand = ReactiveCommand.CreateFromObservable<HierarchyGridHeaderViewModel, Unit>(vModel =>
+                  Observable.Start(() =>
+                  {
+                      var pos = vModel.RowIndex ?? vModel.ColumnIndex ?? -1;
+                      var isRow = vModel.RowIndex != null;
+
+                      if (vModel.IsHighlighted)
+                          @this.Highlights.Add((pos, isRow));
+                      else
+                          @this.Highlights.Remove((pos, isRow));
+                  }));
         }
 
         public void Set(HierarchyDefinitions hierarchyDefinitions)
