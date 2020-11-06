@@ -22,6 +22,8 @@ namespace VirtualHierarchyGrid
         internal static Brush HeaderBorderBrush { get; set; }
         internal static Brush HeaderHoverBorderBrush { get; set; }
 
+        internal static Brush HeaderHighlightBorderBrush { get; set; }
+
         static HierarchyGridHeader()
         {
             var rect = new Rectangle();
@@ -76,10 +78,32 @@ namespace VirtualHierarchyGrid
                .DisposeWith(disposables);
 
             header.OneWayBind(vm,
-               vm => vm.IsHovered,
-               v => v.HeaderBorder.Background,
-               hovered => hovered ? HierarchyGridCell.CellHoverBackground : HeaderBackgroundBrush)
-               .DisposeWith(disposables);
+                vm => vm.IsHighlighted,
+                v => v.Foreground,
+                highlighted => highlighted ? HierarchyGridCell.CellHighlightForeground : HeaderForegroundBrush)
+                .DisposeWith(disposables);
+
+            header.OneWayBind(vm,
+                vm => vm.Qualification,
+                v => v.Foreground,
+                qual => qual switch
+                {
+                    Qualification.Hovered => HierarchyGridCell.CellHoverForeground,
+                    Qualification.Highlighted => HierarchyGridCell.CellHighlightForeground,
+                    _ => HeaderForegroundBrush
+                })
+                .DisposeWith(disposables);
+
+            header.OneWayBind(vm,
+                vm => vm.Qualification,
+                v => v.HeaderBorder.Background,
+                qual => qual switch
+                    {
+                        Qualification.Hovered => HierarchyGridCell.CellHoverBackground,
+                        Qualification.Highlighted => HierarchyGridCell.CellHighlightBackground,
+                        _ => HeaderBackgroundBrush
+                    })
+                .DisposeWith(disposables);
 
             header.Events().MouseEnter
                .Subscribe(_ =>

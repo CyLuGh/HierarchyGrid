@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using HierarchyGrid.Definitions;
+using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
 using System.Reactive.Disposables;
@@ -12,9 +13,11 @@ namespace VirtualHierarchyGrid
         [Reactive] public bool IsChecked { get; set; }
 
         [Reactive] public bool IsHovered { get; set; }
-        [Reactive] public bool IsSelected { get; set; }
+        [Reactive] public bool IsHighlighted { get; set; }
 
         [Reactive] public bool CanToggle { get; set; }
+
+        public Qualification Qualification { [ObservableAsProperty] get; }
 
         public int? ColumnIndex { get; set; }
         public int? RowIndex { get; set; }
@@ -40,6 +43,20 @@ namespace VirtualHierarchyGrid
                         else
                             IsHovered = false;
                     })
+                    .DisposeWith(disposables);
+
+                this.WhenAnyValue(x => x.IsHovered)
+                    .CombineLatest(this.WhenAnyValue(x => x.IsHighlighted),
+                    (isHovered, isHighlighted) =>
+                    {
+                        if (isHovered)
+                            return Qualification.Hovered;
+                        if (isHighlighted)
+                            return Qualification.Highlighted;
+
+                        return Qualification.Unset;
+                    })
+                    .ToPropertyEx(this, x => x.Qualification, scheduler: RxApp.MainThreadScheduler)
                     .DisposeWith(disposables);
             });
         }

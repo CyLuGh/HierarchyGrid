@@ -23,6 +23,7 @@ namespace VirtualHierarchyGrid
         [Reactive] public ResultSet ResultSet { get; set; }
 
         [Reactive] public bool IsHovered { get; set; }
+        [Reactive] public bool IsHighlighted { get; set; }
         [Reactive] public bool IsSelected { get; set; }
 
         public Qualification Qualifier { [ObservableAsProperty] get; }
@@ -45,7 +46,7 @@ namespace VirtualHierarchyGrid
                     .CombineLatest(HierarchyGridViewModel.WhenAnyValue(x => x.HoveredColumn),
                     hierarchyGridViewModel.WhenAnyValue(x => x.EnableCrosshair),
                     (row, col, ec) => (row, col, ec))
-                    .Subscribe(t =>
+                    .SubscribeSafe(t =>
                     {
                         var (row, col, ec) = t;
                         if (ec)
@@ -53,10 +54,19 @@ namespace VirtualHierarchyGrid
                     })
                     .DisposeWith(disposables);
 
+                hierarchyGridViewModel.Highlights.Connect()
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .SubscribeSafe(_ =>
+                    {
+                        IsHighlighted = hierarchyGridViewModel.Highlights.Items
+                                            .Any(x => (x.isRow && x.pos == RowIndex) || (!x.isRow && x.pos == ColumnIndex));
+                    })
+                    .DisposeWith(disposables);
+
                 Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
                     h => hierarchyGridViewModel.Selections.CollectionChanged += h,
                     h => hierarchyGridViewModel.Selections.CollectionChanged -= h)
-                    .SubscribeSafe(e =>
+                    .SubscribeSafe(_ =>
                     {
                         IsSelected = hierarchyGridViewModel.Selections.Any(x => x.row == RowIndex && x.col == ColumnIndex);
                     })
@@ -64,13 +74,15 @@ namespace VirtualHierarchyGrid
 
                 this.WhenAnyValue(x => x.ResultSet)
                     .CombineLatest(this.WhenAnyValue(x => x.IsHovered),
-                    (rs, ho) => (rs, ho))
+                    this.WhenAnyValue(x => x.IsHighlighted),
+                    (rs, ho, hi) => (rs, ho, hi))
                     .Select(t =>
                     {
-                        var (resultSet, isHovered) = t;
+                        var (resultSet, isHovered, isHighlighted) = t;
                         if (resultSet == null)
                             return Qualification.Empty;
-                        return isHovered ? Qualification.Hovered : resultSet.Qualifier;
+                        return isHovered ? Qualification.Hovered
+                            : (isHighlighted ? Qualification.Highlighted : resultSet.Qualifier);
                     })
                     .ObserveOn(RxApp.MainThreadScheduler)
                     .ToPropertyEx(this, x => x.Qualifier)
@@ -110,6 +122,7 @@ namespace VirtualHierarchyGrid
             ResultSet = null;
             IsHovered = false;
             IsSelected = false;
+            IsHighlighted = false;
         }
     }
 }

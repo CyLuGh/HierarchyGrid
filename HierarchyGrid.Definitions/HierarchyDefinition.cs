@@ -240,6 +240,8 @@ namespace HierarchyGrid.Definitions
 
         [Reactive] public bool CanToggle { get; set; } = true;
 
+        [Reactive] public bool IsHighlighted { get; set; }
+
         /// <summary>
         /// Sets state to expanded for current element and all its children.
         /// </summary>
