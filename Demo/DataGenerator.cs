@@ -107,7 +107,7 @@ namespace Demo
             {
                 csr.Editor = (data, consumed, input) =>
                 {
-                    if (Data.TryGetValue(((string)data, vehicle), out var _) && int.TryParse(input,out var newValue))
+                    if (Data.TryGetValue(((string)data, vehicle), out var _) && int.TryParse(input, out var newValue))
                     {
                         Data[((string)data, vehicle)] = newValue;
                         return true;
@@ -129,6 +129,17 @@ namespace Demo
                 {
                     int i => i.ToString("N0"),
                     _ => o.ToString()
+                };
+
+            csr.ContextItems = o =>
+                o switch
+                {
+                    string region => new (string description, Action<ResultSet> action)[] {
+                        ( $"Show {region}", (ResultSet rs) => {
+                            Console.WriteLine(rs.Result);
+                        })
+                    },
+                    _ => new (string description, Action<ResultSet> action)[0]
                 };
 
             return csr;

@@ -2,21 +2,17 @@
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Text;
+using System.Windows.Input;
 
 namespace VirtualHierarchyGrid
 {
     public class HierarchyGridCellViewModel : ReactiveObject, IActivatableViewModel
     {
-        //[Reactive] public ProducerDefinition Producer { get; set; }
-        //[Reactive] public ConsumerDefinition Consumer { get; set; }
-
         public int ColumnIndex { get; set; }
         public int RowIndex { get; set; }
 
@@ -33,6 +29,11 @@ namespace VirtualHierarchyGrid
 
         public HierarchyGridViewModel HierarchyGridViewModel { get; }
 
+        public ReactiveCommand<Unit, Unit> ShowContextMenuCommand { get; private set; }
+
+        public Interaction<(string, ICommand)[], Unit> ShowContextMenuInteraction { get; }
+            = new Interaction<(string, ICommand)[], Unit>(RxApp.MainThreadScheduler);
+
         public HierarchyGridCellViewModel(HierarchyGridViewModel hierarchyGridViewModel)
         {
             Activator = new ViewModelActivator();
@@ -42,7 +43,12 @@ namespace VirtualHierarchyGrid
 
             this.WhenActivated(disposables =>
             {
-                HierarchyGridViewModel.WhenAnyValue(x => x.HoveredRow)
+                ShowContextMenuInteraction
+                    .RegisterHandler(ctx => ctx.SetOutput(Unit.Default))
+                    .DisposeWith(disposables);
+
+                HierarchyGridViewModel
+                    .WhenAnyValue(x => x.HoveredRow)
                     .CombineLatest(HierarchyGridViewModel.WhenAnyValue(x => x.HoveredColumn),
                     hierarchyGridViewModel.WhenAnyValue(x => x.EnableCrosshair),
                     (row, col, ec) => (row, col, ec))
@@ -102,19 +108,15 @@ namespace VirtualHierarchyGrid
             });
         }
 
-        private static void InitializeCommands(HierarchyGridCellViewModel hierarchyGridCellViewModel)
+        private static void InitializeCommands(HierarchyGridCellViewModel @this)
         {
-            //hierarchyGridCellViewModel.ResolveCommand = ReactiveCommand.CreateFromObservable<(ProducerDefinition, ConsumerDefinition), ResultSet>(t =>
-            //     Observable.Start(() =>
-            //     {
-            //         return new ResultSet { Result = "Resolved" };
-            //     }));
-            //hierarchyGridCellViewModel.ResolveCommand
-            //    .ObserveOn(RxApp.MainThreadScheduler)
-            //    .SubscribeSafe(r =>
-            //    {
-            //        hierarchyGridCellViewModel.Result = r.Result;
-            //    });
+            @this.ShowContextMenuCommand =
+                ReactiveCommand.CreateFromObservable(() =>
+                {
+                    var commands = @this.ResultSet.ContextCommands.Some(o => o)
+                        .None(() => new (string, ICommand)[0]);
+                    return @this.ShowContextMenuInteraction.Handle(commands);
+                });
         }
 
         internal void Clear()
