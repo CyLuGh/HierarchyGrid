@@ -107,8 +107,8 @@ namespace VirtualHierarchyGrid
                     this.WhenAnyValue(x => x.Scale).DistinctUntilChanged(),
                     (ho, vo, sc) => Unit.Default)
                     .Throttle(TimeSpan.FromMilliseconds(15))
-                .InvokeCommand(DrawGridCommand)
-                .DisposeWith(disposables);
+                    .InvokeCommand(DrawGridCommand)
+                    .DisposeWith(disposables);
 
                 /* Don't allow horizontal offset to go abose max offset */
                 this.WhenAnyValue(x => x.HorizontalOffset)
@@ -147,6 +147,12 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe(_ => Selections.Clear())
                     .DisposeWith(disposables);
 
+                this.WhenAnyValue(x => x.EnableCrosshair)
+                    .Where(ec => ec == false)
+                    .Select(_ => Unit.Default)
+                    .InvokeCommand(DrawGridCommand)
+                    .DisposeWith(disposables);
+
                 /* Toggle edit mode on */
                 EditCommand.SubscribeSafe(_ => IsEditing = true)
                     .DisposeWith(disposables);
@@ -179,9 +185,9 @@ namespace VirtualHierarchyGrid
                     .DisposeWith(disposables);
 
                 CopyGridCommand
-                  .ObserveOn(RxApp.MainThreadScheduler)
-                  .InvokeCommand<object, Unit>(CopyToClipboardCommand)
-                  .DisposeWith(disposables);
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .InvokeCommand<object, Unit>(CopyToClipboardCommand)
+                    .DisposeWith(disposables);
 
                 /* Redraw grid when cache has been updated */
                 this.BuildResultSetsCommand
