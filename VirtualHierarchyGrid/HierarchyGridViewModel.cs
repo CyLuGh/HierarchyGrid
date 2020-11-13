@@ -3,14 +3,17 @@ using HierarchyGrid.Definitions;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Splat;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Text;
+using System.Windows;
 
 namespace VirtualHierarchyGrid
 {
@@ -18,8 +21,8 @@ namespace VirtualHierarchyGrid
     {
         public ViewModelActivator Activator { get; }
 
-        private SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
-        private SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
+        internal SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
+        internal SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
 
         public ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet> ResultSets { get; }
             = new ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet>();
@@ -72,6 +75,10 @@ namespace VirtualHierarchyGrid
             = new Interaction<Unit, Unit>(RxApp.MainThreadScheduler);
 
         public ReactiveCommand<HierarchyGridHeaderViewModel, Unit> UpdateHighlightsCommand { get; private set; }
+
+        public ReactiveCommand<bool, DataObject> CopyGridCommand { get; private set; }
+        public ReactiveCommand<object, Unit> CopyToClipboardCommand { get; private set; }
+        public ReactiveCommand<Unit, Unit> ExportCsvFileCommand { get; private set; }
 
         public HierarchyGridViewModel()
         {
@@ -156,6 +163,26 @@ namespace VirtualHierarchyGrid
                     .InvokeCommand(EndEditionCommand)
                     .DisposeWith(disposables);
 
+                /* When clearing highlights, definitions should be resetted too */
+                Highlights.Connect()
+                    .SubscribeSafe(c =>
+                    {
+                        if (c.Any(x => x.Reason == ListChangeReason.Clear))
+                        {
+                            ProducersCache.Items.FlatList().ForEach(x => x.IsHighlighted = false);
+                            ConsumersCache.Items.FlatList().ForEach(x => x.IsHighlighted = false);
+
+                            Observable.Return(Unit.Default)
+                                .InvokeCommand(DrawGridCommand);
+                        }
+                    })
+                    .DisposeWith(disposables);
+
+                CopyGridCommand
+                  .ObserveOn(RxApp.MainThreadScheduler)
+                  .InvokeCommand<object, Unit>(CopyToClipboardCommand)
+                  .DisposeWith(disposables);
+
                 /* Redraw grid when cache has been updated */
                 this.BuildResultSetsCommand
                     .InvokeCommand(DrawGridCommand)
@@ -197,6 +224,39 @@ namespace VirtualHierarchyGrid
                       else
                           @this.Highlights.Remove((pos, isRow));
                   }));
+
+            @this.CopyGridCommand =
+                ReactiveCommand.CreateFromObservable<bool, DataObject>(b =>
+                    Observable.Start(() =>
+                    {
+                        return @this.CopyToClipboard(string.Empty, b, @this.RowsDefinitions.Leaves(), @this.ColumnsDefinitions.Leaves());
+                    }));
+
+            @this.CopyToClipboardCommand =
+                ReactiveCommand.Create<object, Unit>(data =>
+                {
+                    Clipboard.SetDataObject(data);
+                    return Unit.Default;
+                });
+
+            @this.ExportCsvFileCommand =
+                ReactiveCommand.CreateFromObservable(() =>
+                    Observable.Start(() =>
+                    {
+                        var file = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.csv");
+                        var content = @this.ExportCsv(";");
+                        if (!string.IsNullOrWhiteSpace(content))
+                        {
+                            using (var fs = new FileStream(file, FileMode.Create))
+                            using (var sw = new StreamWriter(fs))
+                            {
+                                sw.Write(content);
+                                sw.Flush();
+                            }
+
+                            Process.Start("notepad", file);
+                        }
+                    }));
         }
 
         public void Set(HierarchyDefinitions hierarchyDefinitions)
@@ -241,6 +301,73 @@ namespace VirtualHierarchyGrid
 
             HoveredRow = -1;
             HoveredColumn = -1;
+        }
+
+        public string ExportCsv(string separator)
+        {
+            var sb = new StringBuilder();
+
+            var rowsFlat = RowsDefinitions.FlatList().ToArray();
+            var colsFlat = ColumnsDefinitions.FlatList().ToArray();
+
+            foreach (var level in colsFlat.Select(o => o.Level).Distinct().OrderBy(o => o))
+            {
+                foreach (var _ in rowsFlat.Select(o => o.Level).Distinct().OrderBy(o => o))
+                    sb.Append(separator);
+
+                foreach (var colDef in colsFlat.Where(x => x.Level == level))
+                    if (colDef.Content != "Dummy")
+                    {
+                        sb.Append(colDef.Content);
+                        sb.Append(separator);
+                        for (int i = 1; i < colDef.Span; ++i)
+                            sb.Append(separator);
+                    }
+                    else
+                        sb.Append(separator);
+                sb.Append(Environment.NewLine);
+            }
+
+            int currentLevel = -1;
+            int maxLevel = rowsFlat.Max(o => o.Depth());
+            var colLeaves = ColumnsDefinitions.Leaves().ToList();
+            foreach (var rowDef in RowsDefinitions.FlatList(false))
+            {
+                if (rowDef.Level <= currentLevel)
+                {
+                    sb.Append(Environment.NewLine);
+                    // Empty cells for hierarchy alignment
+                    for (int i = 0; i < rowDef.Level; i++)
+                        sb.Append(separator);
+                }
+
+                currentLevel = rowDef.Level;
+
+                sb.Append(rowDef.Content);
+                sb.Append(separator);
+
+                if (!rowDef.HasChild || !rowDef.IsExpanded)
+                {
+                    for (int i = 1; i < maxLevel - currentLevel; ++i)
+                        sb.Append(separator);
+                }
+
+                if (!rowDef.HasChild || !rowDef.IsExpanded)
+                {
+                    // Add data
+                    foreach (var colDef in colLeaves)
+                    {
+                        var idd = Identify(rowDef, colDef);
+
+                        var str = idd.Some(key => ResultSets.TryGetValue(key, out var resultSet) ? resultSet.Result : string.Empty)
+                           .None(() => string.Empty);
+                        sb.Append(str);
+                        sb.Append(separator);
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

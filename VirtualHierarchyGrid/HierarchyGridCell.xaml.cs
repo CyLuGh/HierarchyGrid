@@ -1,7 +1,12 @@
-﻿using HierarchyGrid.Definitions;
+﻿using DynamicData;
+using HierarchyGrid.Definitions;
+using LanguageExt;
+using MoreLinq;
 using ReactiveUI;
 using Splat;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
@@ -142,7 +147,7 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.Events().MouseEnter
-                .Subscribe(_ =>
+                .SubscribeSafe(_ =>
                 {
                     vm.IsHovered = true;
                     vm.HierarchyGridViewModel.HoveredColumn = vm.ColumnIndex;
@@ -151,7 +156,7 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.Events().MouseLeave
-                .Subscribe(_ =>
+                .SubscribeSafe(_ =>
                 {
                     vm.IsHovered = false;
                     vm.HierarchyGridViewModel.HoveredColumn = -1;
@@ -160,7 +165,7 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.Events().MouseDoubleClick
-                .Subscribe(e =>
+                .SubscribeSafe(e =>
                 {
                     if (e.ChangedButton == MouseButton.Left)
                     {
@@ -176,25 +181,173 @@ namespace VirtualHierarchyGrid
                 .DisposeWith(disposables);
 
             cell.Events().MouseLeftButtonDown
-                .Subscribe(e =>
+                .SubscribeSafe(e =>
                 {
-                    vm.HierarchyGridViewModel.IsEditing = false;
-                    if (e.ClickCount == 1)
-                    {
-                        if (vm.IsSelected)
-                        {
-                            if (Keyboard.Modifiers == ModifierKeys.Control)
-                                vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
-                        }
-                        else
-                        {
-                            if (!vm.HierarchyGridViewModel.EnableMultiSelection)
-                                vm.HierarchyGridViewModel.Selections.Clear();
-                            vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
-                        }
-                    }
+                    SelectCell(vm, e);
                 })
                 .DisposeWith(disposables);
+
+            vm.ShowContextMenuInteraction.RegisterHandler(ctx =>
+                {
+                    var contextMenu = new ContextMenu { PlacementTarget = cell };
+                    //TODO: Add custom items for cell
+                    if (ctx.Input.Length > 0)
+                    {
+                        ctx.Input.ForEach(t =>
+                        {
+                            var (header, command) = t;
+                            contextMenu.Items.Add(new MenuItem { Header = header, Command = command });
+                        });
+                        contextMenu.Items.Add(new Separator());
+                    }
+
+                    CreateDefaultContextMenuItems(vm)
+                        .ForEach(o => contextMenu.Items.Add(o));
+                    contextMenu.IsOpen = true;
+                    ctx.SetOutput(System.Reactive.Unit.Default);
+                })
+                .DisposeWith(disposables);
+
+            cell.Events().MouseRightButtonDown
+                .SubscribeSafe(e =>
+                {
+                    SelectCell(vm, e);
+                    Observable.Return(System.Reactive.Unit.Default)
+                        .InvokeCommand(vm, x => x.ShowContextMenuCommand);
+                })
+                .DisposeWith(disposables);
+        }
+
+        private static IEnumerable<object> CreateDefaultContextMenuItems(HierarchyGridCellViewModel hierarchyGridCellViewModel)
+        {
+            var enableCrosshairCommand = ReactiveCommand.Create(()
+                => hierarchyGridCellViewModel.HierarchyGridViewModel.EnableCrosshair
+                    = !hierarchyGridCellViewModel.HierarchyGridViewModel.EnableCrosshair);
+
+            /* Highlights */
+            var highlightsMenu = new MenuItem
+            {
+                Header = "Highlights",
+            };
+
+            highlightsMenu.Items.Add(new MenuItem
+            {
+                Header = "Enable crosshair",
+                Command = enableCrosshairCommand,
+                IsCheckable = true,
+                IsChecked = hierarchyGridCellViewModel.HierarchyGridViewModel.EnableCrosshair
+            });
+
+            var clearHighlightsCommand = ReactiveCommand.Create(() => hierarchyGridCellViewModel.HierarchyGridViewModel.Highlights.Clear());
+
+            highlightsMenu.Items.Add(new MenuItem
+            {
+                Header = "Clear highlights",
+                Command = clearHighlightsCommand
+            });
+
+            yield return highlightsMenu;
+
+            /* Expand all */
+            yield return new MenuItem
+            {
+                Header = "Expand all",
+                Command = ReactiveCommand.Create(() =>
+                {
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.ProducersCache.Items.FlatList().ForEach(x => x.IsExpanded = true);
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.ConsumersCache.Items.FlatList().ForEach(x => x.IsExpanded = true);
+                    Observable.Return(System.Reactive.Unit.Default).InvokeCommand(hierarchyGridCellViewModel.HierarchyGridViewModel, vm => vm.DrawGridCommand);
+                })
+            };
+
+            /* Collapse all */
+            yield return new MenuItem
+            {
+                Header = "Collapse all",
+                Command = ReactiveCommand.Create(() =>
+                {
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.ProducersCache.Items.FlatList().ForEach(x => x.IsExpanded = false);
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.ConsumersCache.Items.FlatList().ForEach(x => x.IsExpanded = false);
+                    Observable.Return(System.Reactive.Unit.Default).InvokeCommand(hierarchyGridCellViewModel.HierarchyGridViewModel, vm => vm.DrawGridCommand);
+                })
+            };
+
+            /* Reset cells to default dimensions */
+            yield return new MenuItem
+            {
+                Header = "Reset cells dimensions",
+                Command = ReactiveCommand.Create(() =>
+                {
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.RowsHeadersWidth =
+                        hierarchyGridCellViewModel.HierarchyGridViewModel.RowsHeadersWidth.Select(_ => HierarchyGridViewModel.DEFAULT_HEADER_WIDTH).ToArray();
+
+                    hierarchyGridCellViewModel.HierarchyGridViewModel.ColumnsHeadersHeight =
+                        hierarchyGridCellViewModel.HierarchyGridViewModel.ColumnsHeadersHeight.Select(_ => HierarchyGridViewModel.DEFAULT_HEADER_HEIGHT).ToArray();
+
+                    var keys = hierarchyGridCellViewModel.HierarchyGridViewModel.ColumnsWidths.Keys.ToArray();
+                    keys.ForEach(k => hierarchyGridCellViewModel.HierarchyGridViewModel.ColumnsWidths[k] = HierarchyGridViewModel.DEFAULT_COLUMN_WIDTH);
+
+                    keys = hierarchyGridCellViewModel.HierarchyGridViewModel.RowsHeights.Keys.ToArray();
+                    keys.ForEach(k => hierarchyGridCellViewModel.HierarchyGridViewModel.RowsHeights[k] = HierarchyGridViewModel.DEFAULT_ROW_HEIGHT);
+
+                    Observable.Return(System.Reactive.Unit.Default).InvokeCommand(hierarchyGridCellViewModel.HierarchyGridViewModel, vm => vm.DrawGridCommand);
+                })
+            };
+
+            yield return new Separator();
+
+            var clipboardMenuItem = new MenuItem { Header = "Copy to clipboard" };
+            clipboardMenuItem.Items.Add(new MenuItem
+            {
+                Header = "With tree structure",
+                Command = hierarchyGridCellViewModel.HierarchyGridViewModel.CopyGridCommand,
+                CommandParameter = true
+            });
+            clipboardMenuItem.Items.Add(new MenuItem
+            {
+                Header = "Without tree structure",
+                Command = hierarchyGridCellViewModel.HierarchyGridViewModel.CopyGridCommand,
+                CommandParameter = false
+            });
+
+            /*
+             * with tree structure
+             * without tree structure
+             * highlights
+             * selection
+             */
+            yield return clipboardMenuItem;
+            var exportMenuItem = new MenuItem { Header = "Export" };
+            exportMenuItem.Items.Add(new MenuItem
+            {
+                Header = "CSV temporary file",
+                Command = hierarchyGridCellViewModel.HierarchyGridViewModel.ExportCsvFileCommand
+            });
+            /*
+             * excel
+             * excel temp file
+             * csv temp file
+             */
+            yield return exportMenuItem;
+        }
+
+        private static void SelectCell(HierarchyGridCellViewModel vm, MouseButtonEventArgs e)
+        {
+            vm.HierarchyGridViewModel.IsEditing = false;
+            if (e.ClickCount == 1)
+            {
+                if (vm.IsSelected)
+                {
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                        vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
+                }
+                else
+                {
+                    if (!vm.HierarchyGridViewModel.EnableMultiSelection)
+                        vm.HierarchyGridViewModel.Selections.Clear();
+                    vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+                }
+            }
         }
     }
 }

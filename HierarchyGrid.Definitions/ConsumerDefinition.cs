@@ -1,5 +1,8 @@
 ﻿using LanguageExt;
+using ReactiveUI;
 using System;
+using System.Linq;
+using System.Windows.Input;
 
 namespace HierarchyGrid.Definitions
 {
@@ -19,6 +22,8 @@ namespace HierarchyGrid.Definitions
         /// Indicates that the cell can't be edited. First parameter is raw data from producer and second is the result from the consumer.
         /// </summary>
         public Func<object, object, bool> IsLocked { get; set; }
+
+        public Func<object, (string description, Action<ResultSet> action)[]> ContextItems { get; set; }
 
         public ResultSet Process(InputSet inputSet)
         {
@@ -50,6 +55,21 @@ namespace HierarchyGrid.Definitions
             }
             else
                 resultSet.Editor = Option<Func<string, bool>>.None;
+
+            if (ContextItems != null)
+            {
+                var cis = ContextItems(inputSet.Input);
+                if (cis.Length > 0)
+                {
+                    resultSet.ContextCommands = Option<(string, ICommand)[]>
+                        .Some(cis.Select(ci => (ci.description, (ICommand)ReactiveCommand.Create(() => ci.action(resultSet))))
+                                          .ToArray());
+                }
+                else
+                    resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
+            }
+            else
+                resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
 
             return resultSet;
         }

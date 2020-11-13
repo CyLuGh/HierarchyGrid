@@ -11,8 +11,8 @@ namespace VirtualHierarchyGrid
         public static double DEFAULT_COLUMN_WIDTH => 120;
         public static double DEFAULT_ROW_HEIGHT => 30;
 
-        public double[] RowsHeadersWidth { get; private set; }
-        public double[] ColumnsHeadersHeight { get; private set; }
+        public double[] RowsHeadersWidth { get; internal set; }
+        public double[] ColumnsHeadersHeight { get; internal set; }
 
         public Dictionary<int, double> ColumnsWidths { get; } = new Dictionary<int, double>();
         public Dictionary<int, double> RowsHeights { get; } = new Dictionary<int, double>();
