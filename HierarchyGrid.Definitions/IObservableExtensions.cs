@@ -14,15 +14,6 @@ namespace HierarchyGrid.Definitions
     public static class IObservableExtensions
     {
         /// <summary>
-        /// Convenience method for Where(x => x != null).
-        /// </summary>
-        // Credit: Kent Boogaart
-        public static IObservable<T> WhereNotNull<T>(this IObservable<T> @this)
-        {
-            return @this.Where(x => x != null);
-        }
-
-        /// <summary>
         /// Convenience method for Select(_ => Unit.Default).
         /// </summary>
         // Credit: Kent Boogaart
@@ -64,9 +55,9 @@ namespace HierarchyGrid.Definitions
         // https://github.com/kentcb/YouIandReactiveUI
         public static IDisposable SubscribeSafe<T>(
             this IObservable<T> @this,
-            [CallerMemberName]string callerMemberName = null,
-            [CallerFilePath]string callerFilePath = null,
-            [CallerLineNumber]int callerLineNumber = 0)
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null,
+            [CallerLineNumber] int callerLineNumber = 0)
         {
             return @this
                 .Subscribe(
@@ -98,9 +89,9 @@ namespace HierarchyGrid.Definitions
         public static IDisposable SubscribeSafe<T>(
             this IObservable<T> @this,
             Action<T> onNext,
-            [CallerMemberName]string callerMemberName = null,
-            [CallerFilePath]string callerFilePath = null,
-            [CallerLineNumber]int callerLineNumber = 0)
+            [CallerMemberName] string callerMemberName = null,
+            [CallerFilePath] string callerFilePath = null,
+            [CallerLineNumber] int callerLineNumber = 0)
         {
             return @this
                 .Subscribe(
