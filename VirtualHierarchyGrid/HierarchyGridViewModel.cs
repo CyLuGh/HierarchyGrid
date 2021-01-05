@@ -24,11 +24,14 @@ namespace VirtualHierarchyGrid
         internal SourceCache<ProducerDefinition, int> ProducersCache { get; } = new SourceCache<ProducerDefinition, int>(x => x.Position);
         internal SourceCache<ConsumerDefinition, int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition, int>(x => x.Position);
 
-        public ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet> ResultSets { get; }
-            = new ConcurrentDictionary<(int producerPosition, int consumerPosition), ResultSet>();
+        internal SourceCache<ResultSet, (int, int)> ResultSets { get; }
+            = new SourceCache<ResultSet, (int, int)>(x => (x.ProducerPosition, x.ConsumerPosition));
 
-        public ObservableCollection<(int row, int col)> Selections { get; }
-            = new ObservableCollection<(int row, int col)>();
+        private ReadOnlyObservableCollection<ResultSet> _selectedResultSets;
+        public ReadOnlyObservableCollection<ResultSet> SelectedResultSets => _selectedResultSets;
+
+        internal SourceCache<(int row, int col, ResultSet resultSet), (int row, int col)> SelectedPositions { get; }
+            = new SourceCache<(int row, int col, ResultSet resultSet), (int row, int col)>(x => (x.row, x.col));
 
         internal SourceList<(int pos, bool isRow)> Highlights { get; }
             = new SourceList<(int pos, bool isRow)>();
@@ -49,6 +52,8 @@ namespace VirtualHierarchyGrid
 
         [Reactive] public bool EnableMultiSelection { get; set; }
         [Reactive] public bool IsEditing { get; set; }
+
+        [Reactive] public (ProducerDefinition, ConsumerDefinition, ResultSet)[] Selections { get; set; }
 
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
@@ -144,7 +149,7 @@ namespace VirtualHierarchyGrid
 
                 /* Clear selection when changing selection mode */
                 this.WhenAnyValue(x => x.EnableMultiSelection)
-                    .SubscribeSafe(_ => Selections.Clear())
+                    .SubscribeSafe(_ => SelectedPositions.Clear())
                     .DisposeWith(disposables);
 
                 this.WhenAnyValue(x => x.EnableCrosshair)
@@ -193,6 +198,23 @@ namespace VirtualHierarchyGrid
                 this.BuildResultSetsCommand
                     .InvokeCommand(DrawGridCommand)
                     .DisposeWith(disposables);
+
+                SelectedPositions.Connect()
+                    .Transform(x => x.resultSet)
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .Bind(out _selectedResultSets)
+                    .DisposeMany()
+                    .SubscribeSafe()
+                    .DisposeWith(disposables);
+
+                SelectedPositions.Connect()
+                    .Transform(x => (ProducersCache.Lookup(x.row).Value, ConsumersCache.Lookup(x.col).Value, x.resultSet))
+                    .ObserveOn(RxApp.MainThreadScheduler)
+                    .SubscribeSafe(x =>
+                    {
+                        Selections = x.Where(o => o.Reason == ChangeReason.Add).Select(o => o.Current).ToArray();
+                    })
+                    .DisposeWith(disposables);
             });
         }
 
@@ -215,7 +237,7 @@ namespace VirtualHierarchyGrid
 
                 var consumers = @this.ConsumersCache.Items.FlatList().ToArray();
                 @this.ProducersCache.Items.FlatList().AsParallel().ForAll(producer =>
-                    consumers.ForEach(consumer => @this.ResultSets.TryAdd((producer.Position, consumer.Position), HierarchyDefinition.Resolve(producer, consumer)))
+                    consumers.ForEach(consumer => @this.ResultSets.AddOrUpdate(HierarchyDefinition.Resolve(producer, consumer)))
                 );
             }));
 
@@ -295,7 +317,7 @@ namespace VirtualHierarchyGrid
             ProducersCache.Clear();
             ConsumersCache.Clear();
 
-            Selections.Clear();
+            SelectedPositions.Clear();
 
             ResultSets.Clear();
 
@@ -365,7 +387,11 @@ namespace VirtualHierarchyGrid
                     {
                         var idd = Identify(rowDef, colDef);
 
-                        var str = idd.Some(key => ResultSets.TryGetValue(key, out var resultSet) ? resultSet.Result : string.Empty)
+                        var str = idd.Some(key =>
+                            {
+                                var lkp = ResultSets.Lookup(key);
+                                return lkp.HasValue ? lkp.Value.Result : string.Empty;
+                            })
                            .None(() => string.Empty);
                         sb.Append(str);
                         sb.Append(separator);

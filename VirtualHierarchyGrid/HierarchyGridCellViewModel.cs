@@ -69,12 +69,10 @@ namespace VirtualHierarchyGrid
                     })
                     .DisposeWith(disposables);
 
-                Observable.FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                    h => hierarchyGridViewModel.Selections.CollectionChanged += h,
-                    h => hierarchyGridViewModel.Selections.CollectionChanged -= h)
+                hierarchyGridViewModel.SelectedPositions.Connect()
                     .SubscribeSafe(_ =>
                     {
-                        IsSelected = hierarchyGridViewModel.Selections.Any(x => x.row == RowIndex && x.col == ColumnIndex);
+                        IsSelected = hierarchyGridViewModel.SelectedPositions.Lookup((RowIndex, ColumnIndex)).HasValue;
                     })
                     .DisposeWith(disposables);
 

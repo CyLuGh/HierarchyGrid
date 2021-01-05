@@ -27,7 +27,11 @@ namespace HierarchyGrid.Definitions
 
         public ResultSet Process(InputSet inputSet)
         {
-            var resultSet = new ResultSet();
+            var resultSet = new ResultSet
+            {
+                ProducerPosition = inputSet.ProducerPosition,
+                ConsumerPosition = Position
+            };
 
             var data = Consumer != null ? Consumer(inputSet.Input) : inputSet.Input;
             resultSet.Result = Formatter != null ? Formatter(data) : data.ToString();

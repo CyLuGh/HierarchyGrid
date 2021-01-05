@@ -1,4 +1,5 @@
 ﻿using LanguageExt;
+using ReactiveUI;
 using System;
 using System.Windows.Input;
 
@@ -34,6 +35,8 @@ namespace HierarchyGrid.Definitions
         public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
 
         public bool IsLocked { get; set; }
+
+        internal int ProducerPosition { get; set; }
     }
 
     public class ResultSet
@@ -43,5 +46,8 @@ namespace HierarchyGrid.Definitions
         public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
         public Option<Func<string, bool>> Editor { get; set; } = Option<Func<string, bool>>.None;
         public Option<(string, ICommand)[]> ContextCommands { get; set; } = Option<(string, ICommand)[]>.None;
+
+        public int ProducerPosition { get; set; }
+        public int ConsumerPosition { get; set; }
     }
 }

@@ -17,6 +17,7 @@ namespace HierarchyGrid.Definitions
         Option<InputSet>.Some(new InputSet
         {
             Input = Producer(),
+            ProducerPosition = Position,
             Qualifier = Qualify != null ? Qualify() : Qualification.Unset,
             IsLocked = IsLocked
         })

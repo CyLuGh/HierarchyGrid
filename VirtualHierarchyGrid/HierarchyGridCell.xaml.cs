@@ -170,8 +170,8 @@ namespace VirtualHierarchyGrid
                     if (e.ChangedButton == MouseButton.Left)
                     {
                         if (!vm.HierarchyGridViewModel.EnableMultiSelection)
-                            vm.HierarchyGridViewModel.Selections.Clear();
-                        vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+                            vm.HierarchyGridViewModel.SelectedPositions.Clear();
+                        vm.HierarchyGridViewModel.SelectedPositions.AddOrUpdate((vm.RowIndex, vm.ColumnIndex, vm.ResultSet));
 
                         if (vm.CanEdit)
                             Observable.Return((vm.RowIndex, vm.ColumnIndex, vm.ResultSet))
@@ -339,13 +339,14 @@ namespace VirtualHierarchyGrid
                 if (vm.IsSelected)
                 {
                     if (Keyboard.Modifiers == ModifierKeys.Control)
-                        vm.HierarchyGridViewModel.Selections.Remove((vm.RowIndex, vm.ColumnIndex));
+                        vm.HierarchyGridViewModel.SelectedPositions.Remove((vm.RowIndex, vm.ColumnIndex));
                 }
                 else
                 {
                     if (!vm.HierarchyGridViewModel.EnableMultiSelection)
-                        vm.HierarchyGridViewModel.Selections.Clear();
-                    vm.HierarchyGridViewModel.Selections.Add((vm.RowIndex, vm.ColumnIndex));
+                        vm.HierarchyGridViewModel.SelectedPositions.Clear();
+
+                    vm.HierarchyGridViewModel.SelectedPositions.AddOrUpdate((vm.RowIndex, vm.ColumnIndex, vm.ResultSet));
                 }
             }
         }

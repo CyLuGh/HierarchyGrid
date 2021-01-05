@@ -327,15 +327,16 @@ namespace VirtualHierarchyGrid
                 _cells.Add(cell);
             }
 
-            cell.ViewModel.IsSelected = ViewModel.Selections.Any(x => x.row == verticalIdx && x.col == horizontalIdx);
+            cell.ViewModel.IsSelected = ViewModel.SelectedPositions.Lookup((verticalIdx, horizontalIdx)).HasValue;
             cell.ViewModel.ColumnIndex = horizontalIdx;
             cell.ViewModel.RowIndex = verticalIdx;
 
             var producer = (ProducerDefinition)(!ViewModel.IsTransposed ? rowDefinitions[verticalIdx] : colDefinitions[horizontalIdx]);
             var consumer = (ConsumerDefinition)(!ViewModel.IsTransposed ? colDefinitions[horizontalIdx] : rowDefinitions[verticalIdx]);
 
-            if (ViewModel.ResultSets.TryGetValue((producer.Position, consumer.Position), out var rs))
-                cell.ViewModel.ResultSet = rs;
+            var lkp = ViewModel.ResultSets.Lookup((producer.Position, consumer.Position));
+            if (lkp.HasValue)
+                cell.ViewModel.ResultSet = lkp.Value;
 
             cell.Width = width;
             cell.Height = height;
