@@ -10,7 +10,7 @@
 
     <Authors>Demortier Jeremy</Authors>
     <Description>Double dimension hierarchy grid</Description>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

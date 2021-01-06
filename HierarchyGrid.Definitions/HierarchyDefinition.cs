@@ -14,6 +14,7 @@ namespace HierarchyGrid.Definitions
         public HierarchyDefinition Parent { get; set; }
 
         public object Content { get; set; }
+        public object Tag { get; set; }
 
         public int Position { get; internal set; }
 
