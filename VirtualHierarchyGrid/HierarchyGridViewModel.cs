@@ -208,11 +208,17 @@ namespace VirtualHierarchyGrid
                     .DisposeWith(disposables);
 
                 SelectedPositions.Connect()
-                    .Transform(x => (ProducersCache.Lookup(x.row).Value, ConsumersCache.Lookup(x.col).Value, x.resultSet))
-                    .ObserveOn(RxApp.MainThreadScheduler)
                     .SubscribeSafe(x =>
                     {
-                        Selections = x.Where(o => o.Reason == ChangeReason.Add).Select(o => o.Current).ToArray();
+                        var producers = ProducersCache.Items.FlatList().ToDictionary(x => x.Position);
+                        var consumers = ConsumersCache.Items.FlatList().ToDictionary(x => x.Position);
+                        Selections = x.Where(o => o.Reason == ChangeReason.Add)
+                            .Select(o =>
+                            {
+                                var resultSet = o.Current.resultSet;
+                                return (producers[resultSet.ProducerPosition], consumers[resultSet.ConsumerPosition], resultSet);
+                            }
+                        ).ToArray();
                     })
                     .DisposeWith(disposables);
             });

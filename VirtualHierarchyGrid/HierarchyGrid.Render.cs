@@ -104,6 +104,7 @@ namespace VirtualHierarchyGrid
             evts.Enqueue(foldAllButton.Events().MouseLeftButtonDown
                 .Do(_ =>
                 {
+                    ViewModel.SelectedPositions.Clear();
                     ViewModel.RowsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = false);
                     ViewModel.ColumnsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = false);
                 })
@@ -127,6 +128,8 @@ namespace VirtualHierarchyGrid
                 evts.Enqueue(tb.Events().MouseLeftButtonDown
                 .Do(_ =>
                 {
+                    ViewModel.SelectedPositions.Clear();
+
                     var defs = ViewModel.RowsDefinitions.FlatList(true)
                                              .Where(x => x.Level == idx)
                                              .ToArray();
@@ -166,6 +169,7 @@ namespace VirtualHierarchyGrid
                 evts.Enqueue(tb.Events().MouseLeftButtonDown
                 .Do(_ =>
                 {
+                    ViewModel.SelectedPositions.Clear();
                     var defs = ViewModel.ColumnsDefinitions.FlatList(true)
                                              .Where(x => x.Level == idx)
                                              .ToArray();
@@ -195,6 +199,7 @@ namespace VirtualHierarchyGrid
             evts.Enqueue(expandAllButton.Events().MouseLeftButtonDown
                 .Do(_ =>
                 {
+                    ViewModel.SelectedPositions.Clear();
                     ViewModel.RowsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = true);
                     ViewModel.ColumnsDefinitions.FlatList(true).ForEach(x => x.IsExpanded = true);
                 })
@@ -559,7 +564,11 @@ namespace VirtualHierarchyGrid
                 tb.ViewModel.CanToggle = true;
 
                 evts.Enqueue(tb.Events().MouseLeftButtonDown
-                    .Do(_ => hdef.IsExpanded = !hdef.IsExpanded)
+                    .Do(_ =>
+                    {
+                        ViewModel.SelectedPositions.Clear();
+                        hdef.IsExpanded = !hdef.IsExpanded;
+                    })
                     .Select(_ => Unit.Default)
                     .InvokeCommand(ViewModel, x => x.DrawGridCommand));
             }
