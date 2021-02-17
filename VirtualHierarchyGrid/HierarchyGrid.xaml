@@ -21,6 +21,7 @@
 
         <Canvas x:Name="HierarchyGridCanvas"
                 Background="Transparent"
+                ClipToBounds="True"
                 Grid.Row="0"
                 Grid.Column="0">
             <Canvas.LayoutTransform>

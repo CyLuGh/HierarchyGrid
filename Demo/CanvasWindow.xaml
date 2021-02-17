@@ -15,7 +15,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <virtualhierarchygrid:HierarchyGrid x:Name="HierarchyGrid" />
+        <virtualhierarchygrid:HierarchyGrid x:Name="HierarchyGrid"
+                                            Margin="10" />
         <Button x:Name="FillButton"
                 Click="FillButton_Click"
                 Content="Fill"
