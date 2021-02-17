@@ -92,6 +92,8 @@ namespace VirtualHierarchyGrid
             RegisterDefaultInteractions(this);
             InitializeCommands(this);
 
+            TextAlignment = TextAlignment.Right;
+
             this.WhenActivated(disposables =>
             {
                 /* Don't allow scale < 0.75 */
@@ -350,7 +352,7 @@ namespace VirtualHierarchyGrid
                     sb.Append(separator);
 
                 foreach (var colDef in colsFlat.Where(x => x.Level == level))
-                    if (colDef.Content != "Dummy")
+                    if ((string)colDef.Content != "Dummy")
                     {
                         sb.Append(colDef.Content);
                         sb.Append(separator);

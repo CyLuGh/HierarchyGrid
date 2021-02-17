@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReactiveUI.Fody.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,5 +17,7 @@ namespace VirtualHierarchyGrid
 
         public Dictionary<int, double> ColumnsWidths { get; } = new Dictionary<int, double>();
         public Dictionary<int, double> RowsHeights { get; } = new Dictionary<int, double>();
+
+        [Reactive] public System.Windows.TextAlignment TextAlignment { get; set; }
     }
 }

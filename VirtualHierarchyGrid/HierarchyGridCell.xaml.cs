@@ -90,15 +90,20 @@ namespace VirtualHierarchyGrid
             });
         }
 
-        private static void PopulateFromViewModel(HierarchyGridCell cell, HierarchyGridCellViewModel vm, CompositeDisposable disposables)
+        private static void PopulateFromViewModel(HierarchyGridCell cell, HierarchyGridCellViewModel viewModel, CompositeDisposable disposables)
         {
-            cell.OneWayBind(vm,
+            cell.OneWayBind(viewModel,
                 vm => vm.ResultSet,
                 v => v.TextBlockResult.Text,
                 r => r?.Result)
                 .DisposeWith(disposables);
 
-            cell.OneWayBind(vm,
+            cell.OneWayBind(viewModel,
+                vm => vm.HierarchyGridViewModel.TextAlignment,
+                v => v.TextBlockResult.TextAlignment)
+                .DisposeWith(disposables);
+
+            cell.OneWayBind(viewModel,
                 vm => vm.Qualifier,
                 v => v.CellBorder.Background,
                 q => q switch
@@ -110,14 +115,14 @@ namespace VirtualHierarchyGrid
                         Qualification.Highlighted => CellHighlightBackground,
                         Qualification.Hovered => CellHoverBackground,
                         Qualification.Empty => EmptyBrush,
-                        Qualification.Custom => vm.ResultSet.CustomColor.Some(c => (Brush)new SolidColorBrush(Color.FromArgb(c.a, c.r, c.g, c.b)))
+                        Qualification.Custom => viewModel.ResultSet.CustomColor.Some(c => (Brush)new SolidColorBrush(Color.FromArgb(c.a, c.r, c.g, c.b)))
                                                                         .None(() => CellBackground),
                         _ => CellBackground
                     }
                 )
                 .DisposeWith(disposables);
 
-            cell.OneWayBind(vm,
+            cell.OneWayBind(viewModel,
                 vm => vm.Qualifier,
                 v => v.Foreground,
                 q => q switch
@@ -134,13 +139,13 @@ namespace VirtualHierarchyGrid
                 )
                 .DisposeWith(disposables);
 
-            cell.OneWayBind(vm,
+            cell.OneWayBind(viewModel,
                 vm => vm.IsSelected,
                 v => v.CellBorder.BorderBrush,
                 selected => selected ? CellSelectedBorder : CellBorderBrush)
                 .DisposeWith(disposables);
 
-            cell.OneWayBind(vm,
+            cell.OneWayBind(viewModel,
                 vm => vm.IsSelected,
                 v => v.CellBorder.BorderThickness,
                 selected => selected ? SelectedThickness : UnselectedThickness)
@@ -149,18 +154,18 @@ namespace VirtualHierarchyGrid
             cell.Events().MouseEnter
                 .SubscribeSafe(_ =>
                 {
-                    vm.IsHovered = true;
-                    vm.HierarchyGridViewModel.HoveredColumn = vm.ColumnIndex;
-                    vm.HierarchyGridViewModel.HoveredRow = vm.RowIndex;
+                    viewModel.IsHovered = true;
+                    viewModel.HierarchyGridViewModel.HoveredColumn = viewModel.ColumnIndex;
+                    viewModel.HierarchyGridViewModel.HoveredRow = viewModel.RowIndex;
                 })
                 .DisposeWith(disposables);
 
             cell.Events().MouseLeave
                 .SubscribeSafe(_ =>
                 {
-                    vm.IsHovered = false;
-                    vm.HierarchyGridViewModel.HoveredColumn = -1;
-                    vm.HierarchyGridViewModel.HoveredRow = -1;
+                    viewModel.IsHovered = false;
+                    viewModel.HierarchyGridViewModel.HoveredColumn = -1;
+                    viewModel.HierarchyGridViewModel.HoveredRow = -1;
                 })
                 .DisposeWith(disposables);
 
@@ -169,13 +174,13 @@ namespace VirtualHierarchyGrid
                 {
                     if (e.ChangedButton == MouseButton.Left)
                     {
-                        if (!vm.HierarchyGridViewModel.EnableMultiSelection)
-                            vm.HierarchyGridViewModel.SelectedPositions.Clear();
-                        vm.HierarchyGridViewModel.SelectedPositions.AddOrUpdate((vm.RowIndex, vm.ColumnIndex, vm.ResultSet));
+                        if (!viewModel.HierarchyGridViewModel.EnableMultiSelection)
+                            viewModel.HierarchyGridViewModel.SelectedPositions.Clear();
+                        viewModel.HierarchyGridViewModel.SelectedPositions.AddOrUpdate((viewModel.RowIndex, viewModel.ColumnIndex, viewModel.ResultSet));
 
-                        if (vm.CanEdit)
-                            Observable.Return((vm.RowIndex, vm.ColumnIndex, vm.ResultSet))
-                                      .InvokeCommand(vm.HierarchyGridViewModel, x => x.EditCommand);
+                        if (viewModel.CanEdit)
+                            Observable.Return((viewModel.RowIndex, viewModel.ColumnIndex, viewModel.ResultSet))
+                                      .InvokeCommand(viewModel.HierarchyGridViewModel, x => x.EditCommand);
                     }
                 })
                 .DisposeWith(disposables);
@@ -183,11 +188,11 @@ namespace VirtualHierarchyGrid
             cell.Events().MouseLeftButtonDown
                 .SubscribeSafe(e =>
                 {
-                    SelectCell(vm, e);
+                    SelectCell(viewModel, e);
                 })
                 .DisposeWith(disposables);
 
-            vm.ShowContextMenuInteraction.RegisterHandler(ctx =>
+            viewModel.ShowContextMenuInteraction.RegisterHandler(ctx =>
                 {
                     var contextMenu = new ContextMenu { PlacementTarget = cell };
                     //TODO: Add custom items for cell
@@ -201,7 +206,7 @@ namespace VirtualHierarchyGrid
                         contextMenu.Items.Add(new Separator());
                     }
 
-                    CreateDefaultContextMenuItems(vm)
+                    CreateDefaultContextMenuItems(viewModel)
                         .ForEach(o => contextMenu.Items.Add(o));
                     contextMenu.IsOpen = true;
                     ctx.SetOutput(System.Reactive.Unit.Default);
@@ -211,9 +216,9 @@ namespace VirtualHierarchyGrid
             cell.Events().MouseRightButtonDown
                 .SubscribeSafe(e =>
                 {
-                    SelectCell(vm, e);
+                    SelectCell(viewModel, e);
                     Observable.Return(System.Reactive.Unit.Default)
-                        .InvokeCommand(vm, x => x.ShowContextMenuCommand);
+                        .InvokeCommand(viewModel, x => x.ShowContextMenuCommand);
                 })
                 .DisposeWith(disposables);
         }

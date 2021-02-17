@@ -10,13 +10,13 @@
 
     <Authors>Demortier Jeremy</Authors>
     <Description>Double dimension hierarchy grid</Description>
-    <Version>0.3.2</Version>
+    <Version>0.3.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ReactiveUI.Events.WPF" Version="13.0.27" />
-    <PackageReference Include="ReactiveUI.Fody" Version="13.0.27" />
-    <PackageReference Include="ReactiveUI.WPF" Version="13.0.27" />
+    <PackageReference Include="ReactiveUI.Events.WPF" Version="13.1.1" />
+    <PackageReference Include="ReactiveUI.Fody" Version="13.1.1" />
+    <PackageReference Include="ReactiveUI.WPF" Version="13.1.1" />
   </ItemGroup>
 
   <ItemGroup>

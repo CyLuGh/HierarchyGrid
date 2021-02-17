@@ -10,6 +10,7 @@
     <Border x:Name="CellBorder">
         <TextBlock x:Name="TextBlockResult"
                    VerticalAlignment="Center"
+                   HorizontalAlignment="Stretch"
                    Margin="5" />
     </Border>
 </rxui:ReactiveUserControl>
