@@ -310,11 +310,11 @@ namespace VirtualHierarchyGrid
                 .Select(_ => DEFAULT_HEADER_HEIGHT)
                 .ToArray();
 
-            ColumnsDefinitions.Leaves().Select((_, i) => i)
-                .ForEach(x => ColumnsWidths.Add(x, DEFAULT_COLUMN_WIDTH));
+            Enumerable.Range(0, ColumnsDefinitions.TotalCount( true ) )
+                .ForEach( x => ColumnsWidths.Add( x , DEFAULT_COLUMN_WIDTH ) );
 
-            RowsDefinitions.Leaves().Select((_, i) => i)
-                .ForEach(x => RowsHeights.Add(x, DEFAULT_ROW_HEIGHT));
+            Enumerable.Range( 0 , RowsDefinitions.TotalCount( true ) )
+                .ForEach( x => RowsHeights.Add( x , DEFAULT_ROW_HEIGHT ) );
 
             Observable.Return(Unit.Default)
                 .InvokeCommand(BuildResultSetsCommand);
