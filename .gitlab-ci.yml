@@ -28,6 +28,8 @@ build:
           - HierarchyGrid.Definitions/nupkg/*.nupkg
           - VirtualHierarchyGrid/nupkg/*.nupkg
   stage: build
+  extends:
+    - .shared_windows_runners
   script:
     - 'dotnet restore'
     - 'dotnet build'
