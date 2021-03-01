@@ -41,10 +41,12 @@ namespace HierarchyGrid.Definitions
 
     public class ResultSet
     {
+        public static ResultSet Default { get; } = new ResultSet { Qualifier = Qualification.Empty };
+
         public string Result { get; set; }
         public Qualification Qualifier { get; set; }
         public Option<(byte a, byte r, byte g, byte b)> CustomColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
-        public Option<Func<string, bool>> Editor { get; set; } = Option<Func<string, bool>>.None;
+        public Option<Func<string , bool>> Editor { get; set; } = Option<Func<string , bool>>.None;
         public Option<(string, ICommand)[]> ContextCommands { get; set; } = Option<(string, ICommand)[]>.None;
 
         public int ProducerPosition { get; set; }
