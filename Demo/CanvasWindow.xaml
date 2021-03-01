@@ -10,16 +10,27 @@
         Height="450"
         Width="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <virtualhierarchygrid:HierarchyGrid x:Name="HierarchyGrid"
-                                            Margin="10" />
-        <Button x:Name="FillButton"
-                Click="FillButton_Click"
-                Content="Fill"
-                Grid.Row="1" />
+        <TabControl>
+            <TabItem Header="Vehicles">
+                <DockPanel>
+                    <Button x:Name="FillButton"
+                            Click="FillButton_Click"
+                            Content="Fill"
+                            DockPanel.Dock="Bottom" />
+                    <virtualhierarchygrid:HierarchyGrid x:Name="HierarchyGrid"
+                                                        Margin="10" />
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Folded">
+                <DockPanel>
+                    <Button x:Name="FillFoldedSampleButton"
+                            Content="Fill grid with folded elements"
+                            Click="FillFoldedGrid_Click"
+                            DockPanel.Dock="Bottom"/>
+                    <virtualhierarchygrid:HierarchyGrid x:Name="FoldedSampleHierarchyGrid"
+                                                        Margin="10" />
+                </DockPanel>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
