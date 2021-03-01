@@ -9,7 +9,7 @@
 
     <Authors>Demortier Jeremy</Authors>
     <Description>Definitions used by VirtualHierarchyGrid</Description>
-    <Version>0.3.2</Version>
+    <Version>0.3.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
