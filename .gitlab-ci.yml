@@ -19,6 +19,7 @@ variables :
 ### Define stage list
 stages:
   - build
+  - deploy
 
 build:
   only:
@@ -35,3 +36,11 @@ build:
     - 'dotnet build'
     - 'dotnet pack'
 
+deploy:
+  only:
+      - master
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/core/sdk:3.1
+  script:
+    - dotnet nuget push HierarchyGrid.Definitions/nupkg/*.nupkg -k $Nuget_Key -s https://api.nuget.org/v3/index.json
+    - dotnet nuget push VirtualHierarchyGrid/nupkg/*.nupkg -k $Nuget_Key -s https://api.nuget.org/v3/index.json
