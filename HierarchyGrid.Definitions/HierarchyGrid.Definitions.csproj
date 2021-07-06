@@ -1,33 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
+	<PropertyGroup>
+		<PackageOutputPath>./nupkg</PackageOutputPath>
 
-    <Authors>Demortier Jeremy</Authors>
-    <Description>Definitions used by VirtualHierarchyGrid</Description>
-    <Version>0.3.4</Version>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-  </PropertyGroup>
+		<Authors>Demortier Jeremy</Authors>
+		<Description>Definitions used by VirtualHierarchyGrid</Description>
+		<Version>0.4.0</Version>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="nupkg\**" />
-    <EmbeddedResource Remove="nupkg\**" />
-    <None Remove="nupkg\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="nupkg\**" />
+		<EmbeddedResource Remove="nupkg\**" />
+		<None Remove="nupkg\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>HierarchyGrid</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>HierarchyGrid</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="LanguageExt.Rx" Version="3.4.15" />
-    <PackageReference Include="morelinq" Version="3.3.2" />
-    <PackageReference Include="ReactiveUI.Fody" Version="13.1.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="LanguageExt.Rx" Version="3.4.15" />
+		<PackageReference Include="morelinq" Version="3.3.2" />
+		<PackageReference Include="ReactiveUI.Fody" Version="13.1.1" />
+	</ItemGroup>
 </Project>

@@ -1,26 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
+	<PropertyGroup>
+		<PackageOutputPath>./nupkg</PackageOutputPath>
 
-    <Authors>Demortier Jeremy</Authors>
-    <Description>Double dimension hierarchy grid</Description>
-    <Version>0.3.7</Version>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-  </PropertyGroup>
+		<Authors>Demortier Jeremy</Authors>
+		<Description>Double dimension hierarchy grid</Description>
+		<Version>0.4.0</Version>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ReactiveUI.Events.WPF" Version="13.1.1" />
-    <PackageReference Include="ReactiveUI.Fody" Version="13.1.1" />
-    <PackageReference Include="ReactiveUI.WPF" Version="13.1.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="ReactiveUI.Events.WPF" Version="13.1.1" />
+		<PackageReference Include="ReactiveUI.Fody" Version="13.1.1" />
+		<PackageReference Include="ReactiveUI.WPF" Version="13.1.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+	</ItemGroup>
 </Project>
