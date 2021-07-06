@@ -116,7 +116,7 @@ namespace VirtualHierarchyGrid
                                break;
 
                            case Qualification.Custom:
-                               resultSet.CustomColor
+                               resultSet.BackgroundColor
                                    .Some(cl =>
                                    {
                                        var (a, r, g, b) = cl;
@@ -254,7 +254,7 @@ namespace VirtualHierarchyGrid
             string scol;
 
             // Custom
-            foreach (var col in ResultSets.Items.Select(o => o.CustomColor)
+            foreach (var col in ResultSets.Items.Select(o => o.BackgroundColor)
                                                  .Where(c => c.IsSome)
                                                  .Select(c => c)
                                                  .Distinct())

@@ -37,20 +37,20 @@ namespace Demo
                     var hpd = new ProducerDefinition
                     {
                         Content = x.ToString() ,
-                    //Producer = () => x,
-                    IsExpanded = true
+                        //Producer = () => x,
+                        IsExpanded = true
                     };
 
                     if ( x == 0 )
                     {
-                    //hpd.ContextMenuBuilder = () =>
-                    //{
-                    //    var mi = new MenuItem { Header = "Freeze" };
-                    //    mi.Click += (s, a) => hpd.Freeze(!hpd.Frozen);
-                    //    return new[] { mi };
-                    //};
+                        //hpd.ContextMenuBuilder = () =>
+                        //{
+                        //    var mi = new MenuItem { Header = "Freeze" };
+                        //    mi.Click += (s, a) => hpd.Freeze(!hpd.Frozen);
+                        //    return new[] { mi };
+                        //};
 
-                    hpd.Frozen = true;
+                        hpd.Frozen = true;
                     }
                     else
                         AddChildRows( hpd , 3 );
@@ -105,10 +105,10 @@ namespace Demo
                             } : Qualification.Normal ,
                             Colorize = o => int.TryParse( o.ToString() , out var i ) ? i switch
                             {
-                                17 => ((byte) 150, (byte) 100, (byte) 120, (byte) 0),
-                                18 => ((byte) 150, (byte) 0, (byte) 100, (byte) 120),
-                                _ => ((byte) 0, (byte) 0, (byte) 0, (byte) 0)
-                            } : ((byte) 0, (byte) 0, (byte) 0, (byte) 0) ,
+                                17 => (((byte) 150, (byte) 100, (byte) 120, (byte) 0), ((byte) 255, (byte) 0, (byte) 0, (byte) 0)),
+                                18 => (((byte) 150, (byte) 0, (byte) 100, (byte) 120), ((byte) 255, (byte) 255, (byte) 0, (byte) 0)),
+                                _ => (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 255, (byte) 0, (byte) 0))
+                            } : (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 0, (byte) 0, (byte) 0)) ,
                             Editor = ( p , c , s ) =>
                             {
                                 this.Log().Debug( $"{p} _ {c} _ {s}" );
