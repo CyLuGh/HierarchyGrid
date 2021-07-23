@@ -13,6 +13,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace VirtualHierarchyGrid
@@ -436,6 +437,59 @@ namespace VirtualHierarchyGrid
             }
 
             return sb.ToString();
+        }
+
+        public HierarchyGridState GridState
+        {
+            get
+            {
+                try
+                {
+                    return new HierarchyGridState
+                    {
+                        VerticalOffset = VerticalOffset ,
+                        HorizontalOffset = HorizontalOffset ,
+                        RowToggles = RowsDefinitions.FlatList().Select( o => o.Path.All( x => x.IsExpanded ) ).ToArray() ,
+                        ColumnToggles = ColumnsDefinitions.FlatList().Select( o => o.Path.All( x => x.IsExpanded ) ).ToArray()
+                    };
+                }
+                catch ( Exception )
+                {
+                    return default;
+                }
+            }
+
+            set
+            {
+                if ( value.Equals( default( HierarchyGridState ) ) )
+                    return;
+
+                try
+                {
+                    var rowsFlat = RowsDefinitions.FlatList().ToArray();
+                    if ( rowsFlat.Length == value.RowToggles.Length )
+                        Parallel.For( 0 , value.RowToggles.Length , i => rowsFlat[i].IsExpanded = value.RowToggles[i] );
+                    else
+                        rowsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+
+                    var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
+                    if ( columnsFlat.Length == value.ColumnToggles.Length )
+                        Parallel.For( 0 , value.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = value.ColumnToggles[i] );
+                    else
+                        columnsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+
+                    VerticalOffset = value.VerticalOffset;
+                    HorizontalOffset = value.HorizontalOffset;
+                }
+                catch ( Exception )
+                {
+                    VerticalOffset = 0;
+                    HorizontalOffset = 0;
+                }
+
+                Observable.Return( Unit.Default )
+                    .InvokeCommand( DrawGridCommand );
+            }
         }
     }
 }
