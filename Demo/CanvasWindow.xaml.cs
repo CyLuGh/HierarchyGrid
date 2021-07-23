@@ -23,6 +23,8 @@ namespace Demo
     /// </summary>
     public partial class CanvasWindow : Window, IEnableLogger
     {
+        private HierarchyGridState _gridState;
+
         public CanvasWindow()
         {
             InitializeComponent();
@@ -138,6 +140,17 @@ namespace Demo
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions );
             FoldedSampleHierarchyGrid.ViewModel.ColumnsWidths.ToArray()
                 .ForEach( kvp => FoldedSampleHierarchyGrid.ViewModel.ColumnsWidths[kvp.Key] = 50 );
+        }
+
+
+        private void SaveStateClick( object sender , RoutedEventArgs e )
+        {
+            _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
+        }
+
+        private void RestoreStateClick( object sender , RoutedEventArgs e )
+        {
+            FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
         }
     }
 }

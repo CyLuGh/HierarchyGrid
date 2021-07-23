@@ -13,6 +13,7 @@
         <TabControl>
             <TabItem Header="Vehicles">
                 <DockPanel>
+
                     <Button x:Name="FillButton"
                             Click="FillButton_Click"
                             Content="Fill"
@@ -23,10 +24,17 @@
             </TabItem>
             <TabItem Header="Folded">
                 <DockPanel>
-                    <Button x:Name="FillFoldedSampleButton"
-                            Content="Fill grid with folded elements"
-                            Click="FillFoldedGrid_Click"
-                            DockPanel.Dock="Bottom"/>
+                    <UniformGrid Rows="1"
+                                 DockPanel.Dock="Bottom">
+                        <Button x:Name="FillFoldedSampleButton"
+                                Content="Fill grid with folded elements"
+                                Click="FillFoldedGrid_Click" />
+                        <Button Content="Save state"
+                                Click="SaveStateClick"/>
+                        <Button Content="RestoreState"
+                                Click="RestoreStateClick"/>
+                    </UniformGrid>
+                    
                     <virtualhierarchygrid:HierarchyGrid x:Name="FoldedSampleHierarchyGrid"
                                                         Margin="10" />
                 </DockPanel>
