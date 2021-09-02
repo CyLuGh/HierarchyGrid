@@ -157,6 +157,8 @@ namespace Demo
                     (Brushes.IndianRed.Color.A, Brushes.IndianRed.Color.R, Brushes.IndianRed.Color.G, Brushes.IndianRed.Color.B))
                 };
 
+            csr.TooltipCreator = ( p , c ) => $"{p} x {c}";
+
             return csr;
         }
     }

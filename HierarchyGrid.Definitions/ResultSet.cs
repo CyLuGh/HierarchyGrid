@@ -48,6 +48,7 @@ namespace HierarchyGrid.Definitions
         public Qualification Qualifier { get; set; }
         public Option<(byte a, byte r, byte g, byte b)> BackgroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
         public Option<(byte a, byte r, byte g, byte b)> ForegroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
+        public Option<string> TooltipText { get; set; }
 
         public Option<Func<string , bool>> Editor { get; set; } = Option<Func<string , bool>>.None;
         public Option<(string, ICommand)[]> ContextCommands { get; set; } = Option<(string, ICommand)[]>.None;

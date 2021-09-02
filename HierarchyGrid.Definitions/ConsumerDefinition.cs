@@ -12,6 +12,7 @@ namespace HierarchyGrid.Definitions
         public Func<object , string> Formatter { get; set; } = o => o.ToString();
         public Func<object , Qualification> Qualify { get; set; } = _ => Qualification.Normal;
         public Func<object , ((byte a, byte r, byte g, byte b), (byte a, byte r, byte g, byte b))> Colorize { get; set; }
+        public Func<object , object , string> TooltipCreator { get; set; }
 
         /// <summary>
         /// Func that will be called from editing textbox, input being string from textbox and bool being the success state of the update.
@@ -86,6 +87,9 @@ namespace HierarchyGrid.Definitions
             }
             else
                 resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
+
+            resultSet.TooltipText =
+                TooltipCreator != null ? Option<string>.Some( TooltipCreator( inputSet.Input , data ) ) : Option<string>.None;
 
             return resultSet;
         }
