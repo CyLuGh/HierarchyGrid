@@ -13,6 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using ReactiveMarbles.ObservableEvents;
+
 namespace VirtualHierarchyGrid
 {
     public partial class HierarchyGridHeader

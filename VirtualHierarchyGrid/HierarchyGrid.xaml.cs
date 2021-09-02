@@ -16,6 +16,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 
+using ReactiveMarbles.ObservableEvents;
+
 namespace VirtualHierarchyGrid
 {
     public partial class HierarchyGrid : IEnableLogger

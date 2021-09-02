@@ -15,6 +15,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using Splat;
 
+using ReactiveMarbles.ObservableEvents;
+
 namespace VirtualHierarchyGrid
 {
     partial class HierarchyGrid
