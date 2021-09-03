@@ -33,15 +33,15 @@ jobs:
         working-directory: src
 
       - name: Build
-        run: dotnet build --configuration=$({env.configuration}) --verbosity=minimal --no-restore
+        run: dotnet build --configuration=$({ env.configuration }) --verbosity=minimal --no-restore
         working-directory: src
 
       - name: Unit tests
-        run: dotnet test --configuration=$({env.configuration}) --verbosity=minimal --no-restore
+        run: dotnet test --configuration=$({ env.configuration }) --verbosity=minimal --no-restore
         working-directory: src
 
       - name: Pack
-        run: dotnet pack --configuration=$({env.configuration}) --verbosity=minimal --no-restore
+        run: dotnet pack --configuration=$({ env.configuration }) --verbosity=minimal --no-restore
         working-directory: src
 
       - name: Create NuGet Artifacts
