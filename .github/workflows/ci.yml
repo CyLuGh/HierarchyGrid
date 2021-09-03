@@ -50,10 +50,10 @@ jobs:
         working-directory: src
 
       - name: Push to nuget
-        run: dotnet nuget push HierarchyGrid.Definitions/nupkg/*.nupkg -k ${{ secrets.SuperSecret }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push HierarchyGrid.Definitions/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
         working-directory: src
 
       - name: Push to nuget
-        run: dotnet nuget push VirtualHierarchyGrid/nupkg/*.nupkg -k ${{ secrets.SuperSecret }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push VirtualHierarchyGrid/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
         working-directory: src
     
