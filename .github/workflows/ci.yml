@@ -26,7 +26,7 @@ jobs:
       - name: Install .NET Core
         uses: actions/setup-dotnet@v1.8.0
         with:
-          dotnet-version: 3.1.x
+          dotnet-version: 5.0.x
 
       - name: NuGet restore
         run: dotnet restore
