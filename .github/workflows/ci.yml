@@ -49,9 +49,11 @@ jobs:
         run: dotnet pack --configuration=Release --verbosity=minimal --no-restore
         working-directory: src
 
-      - name: Create NuGet Artifacts
-        uses: actions/upload-artifact@master
-        with:
-          name: nuget
-          path: '**/*.nupkg'
+      - name: Push to nuget
+        run: dotnet nuget push HierarchyGrid.Definitions/nupkg/*.nupkg -k ${{ secrets.SuperSecret }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        working-directory: src
+
+      - name: Push to nuget
+        run: dotnet nuget push VirtualHierarchyGrid/nupkg/*.nupkg -k ${{ secrets.SuperSecret }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        working-directory: src
     
