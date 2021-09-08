@@ -96,6 +96,12 @@ namespace VirtualHierarchyGrid
 
         private static void PopulateFromViewModel( HierarchyGridCell cell , HierarchyGridCellViewModel viewModel , CompositeDisposable disposables )
         {
+            cell.OneWayBind( viewModel ,
+                    vm => vm.ResultSet ,
+                    v => v.ToolTip ,
+                    rs => rs?.TooltipText.MatchUnsafe( s => !string.IsNullOrEmpty( s ) ? s : null , () => null ) )
+                .DisposeWith( disposables );
+
             viewModel.ResultSet.TooltipText.Match( s =>
             {
                 cell.ToolTip = s;
