@@ -15,7 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-
+using Accessibility;
 using ReactiveMarbles.ObservableEvents;
 
 namespace VirtualHierarchyGrid
@@ -44,6 +44,13 @@ namespace VirtualHierarchyGrid
                 view.DrawGrid( view.RenderSize );
                 ctx.SetOutput( Unit.Default );
             } )
+                .DisposeWith( disposables );
+
+            viewModel.DrawCellsInteraction.RegisterHandler( ctx =>
+                {
+                    view.DrawCells( ctx.Input );
+                    ctx.SetOutput( Unit.Default );
+                } )
                 .DisposeWith( disposables );
 
             viewModel.EndEditionInteraction.RegisterHandler( ctx =>
@@ -108,6 +115,15 @@ namespace VirtualHierarchyGrid
                 .DisposeWith( disposables );
 
             view.HierarchyGridCanvas.Events()
+                .LayoutUpdated
+                .Throttle( TimeSpan.FromMilliseconds( 75 ) )
+                .SubscribeSafe( _ =>
+                {
+                    viewModel.Height = view.HierarchyGridCanvas.ActualHeight;
+                    viewModel.Width = view.HierarchyGridCanvas.ActualWidth;
+                } );
+
+            view.HierarchyGridCanvas.Events()
                 .SizeChanged
                 .Throttle( TimeSpan.FromMilliseconds( 75 ) )
                 .ObserveOn( RxApp.MainThreadScheduler )
@@ -164,7 +180,7 @@ namespace VirtualHierarchyGrid
 
             view.OneWayBind( viewModel ,
                     vm => vm.StatusMessage ,
-                    v => v.MessageTextBlock.Text  )
+                    v => v.MessageTextBlock.Text )
                 .DisposeWith( disposables );
         }
     }

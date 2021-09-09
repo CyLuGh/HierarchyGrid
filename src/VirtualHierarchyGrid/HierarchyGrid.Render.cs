@@ -24,20 +24,44 @@ namespace VirtualHierarchyGrid
         // Keep a cache of cells to be reused when redrawing -- it costs less to reuse than create
         private readonly List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
 
+        private readonly List<(ProducerDefinition, ConsumerDefinition, HierarchyGridCell)> _drawnCells =
+            new List<(ProducerDefinition, ConsumerDefinition, HierarchyGridCell)>();
+
         private readonly List<HierarchyGridHeader> _headers = new List<HierarchyGridHeader>();
         private readonly List<GridSplitter> _splitters = new List<GridSplitter>();
 
         private readonly HashSet<HierarchyDefinition> _columnsParents = new HashSet<HierarchyDefinition>();
         private readonly HashSet<HierarchyDefinition> _rowsParents = new HashSet<HierarchyDefinition>();
 
+        private void DrawCells( PositionedCell[] cells )
+        {
+            Console.WriteLine( "Test" );
+
+            foreach ( var cell in cells )
+                DrawCell( cell.Width , cell.Height , cell.Top , cell.Left , cell.ProducerDefinition ,
+                    cell.ConsumerDefinition );
+
+        }
+
         private void DrawGrid( Size size )
         {
-            HierarchyGridCanvas.Children.Clear();
             ViewModel.HoveredRow = -1;
             ViewModel.HoveredColumn = -1;
 
             if ( !ViewModel.IsValid )
+            {
+                HierarchyGridCanvas.Children.Clear();
                 return;
+            }
+
+            var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
+            var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
+
+            foreach ( var hdr in HierarchyGridCanvas.Children.OfType<HierarchyGridHeader>().ToArray() )
+                HierarchyGridCanvas.Children.Remove( hdr );
+
+            foreach ( var gs in HierarchyGridCanvas.Children.OfType<GridSplitter>().ToArray() )
+                HierarchyGridCanvas.Children.Remove( gs );
 
             _columnsParents.Clear();
             _rowsParents.Clear();
@@ -45,16 +69,13 @@ namespace VirtualHierarchyGrid
             int headerCount = 0;
             int splitterCount = 0;
 
-            var rowDefinitions = ViewModel.RowsDefinitions.Leaves().ToArray();
-            var colDefinitions = ViewModel.ColumnsDefinitions.Leaves().ToArray();
-
             DrawColumnsHeaders( colDefinitions , size.Width / ViewModel.Scale , ref headerCount , ref splitterCount );
             DrawRowsHeaders( rowDefinitions , size.Height / ViewModel.Scale , ref headerCount , ref splitterCount );
 
             // Draw global headers afterwards or last splitter will be drawn under column headers
             DrawGlobalHeaders( ref headerCount , ref splitterCount );
 
-            DrawCells( size , rowDefinitions , colDefinitions );
+            //DrawCells( size , rowDefinitions , colDefinitions );
 
             RestoreHighlightedCell();
             RestoreHoveredCell();
@@ -318,6 +339,23 @@ namespace VirtualHierarchyGrid
 
             if ( idx < _cells.Count )
                 _cells.RemoveRange( idx , _cells.Count - idx );
+        }
+
+        private void DrawCell( double width , double height , double top , double left ,
+            ProducerDefinition producerDefinition , ConsumerDefinition consumerDefinition )
+        {
+            var vm = new HierarchyGridCellViewModel( ViewModel );
+            var cell = new HierarchyGridCell { ViewModel = vm };
+
+            vm.ResultSet = ResultSet.Default;
+
+            cell.Width = width;
+            cell.Height = height;
+
+            Canvas.SetLeft( cell , left );
+            Canvas.SetTop( cell , top );
+
+            HierarchyGridCanvas.Children.Add( cell );
         }
 
         private void DrawCell( ref int idx , int verticalIdx , int horizontalIdx , double width , double height , double horizontalPosition , double verticalPosition , HierarchyDefinition[] rowDefinitions , HierarchyDefinition[] colDefinitions )

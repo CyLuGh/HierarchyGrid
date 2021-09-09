@@ -1,4 +1,5 @@
-﻿using DynamicData;
+﻿using System;
+using DynamicData;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace HierarchyGrid.Definitions
     public abstract class HierarchyDefinition : ReactiveObject, IActivatableViewModel
     {
         public ViewModelActivator Activator { get; }
+        public Guid Guid { get; }
 
         public HierarchyDefinition Parent { get; set; }
 
@@ -100,6 +102,7 @@ namespace HierarchyGrid.Definitions
 
         protected HierarchyDefinition()
         {
+            Guid = Guid.NewGuid();
             Activator = new ViewModelActivator();
 
             this.WhenAnyValue( o => o.Parent )

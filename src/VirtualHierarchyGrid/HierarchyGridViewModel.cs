@@ -1,10 +1,14 @@
-﻿using DynamicData;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Runtime.CompilerServices;
+using System.Globalization;
+using DynamicData;
 using HierarchyGrid.Definitions;
 using MoreLinq;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -21,6 +25,8 @@ namespace VirtualHierarchyGrid
     public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewModel
     {
         public ViewModelActivator Activator { get; }
+
+        private PositionedCell[] _positionedCells;
 
         internal SourceCache<ProducerDefinition , int> ProducersCache { get; } = new SourceCache<ProducerDefinition , int>( x => x.Position );
         internal SourceCache<ConsumerDefinition , int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition , int>( x => x.Position );
@@ -45,6 +51,9 @@ namespace VirtualHierarchyGrid
 
         [Reactive] public double Scale { get; set; } = 1d;
 
+        [Reactive] public double Width { get; set; } = double.NaN;
+        [Reactive] public double Height { get; set; } = double.NaN;
+
         [Reactive] public int MaxHorizontalOffset { get; set; }
         [Reactive] public int MaxVerticalOffset { get; set; }
 
@@ -65,11 +74,16 @@ namespace VirtualHierarchyGrid
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
+
+        public ReactiveCommand<(int, int, double, double, double) , PositionedCell[]> FindCellsToDrawCommand { get; private set; }
+        public ReactiveCommand<PositionedCell[] , Unit> DrawCellsCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> DrawGridCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> BuildResultSetsCommand { get; private set; }
 
         public Interaction<Unit , Unit> DrawGridInteraction { get; }
             = new Interaction<Unit , Unit>( RxApp.MainThreadScheduler );
+        public Interaction<PositionedCell[] , Unit> DrawCellsInteraction { get; }
+            = new Interaction<PositionedCell[] , Unit>( RxApp.MainThreadScheduler );
 
         public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
 
@@ -138,15 +152,21 @@ namespace VirtualHierarchyGrid
                     .DisposeWith( disposables );
 
                 /* Redraw grid when scrolling or changing scale */
-                this.WhenAnyValue( x => x.HorizontalOffset )
-                    .CombineLatest( this.WhenAnyValue( x => x.VerticalOffset ) ,
-                    this.WhenAnyValue( x => x.Scale ).DistinctUntilChanged() ,
-                    ( ho , vo , sc ) => Unit.Default )
+                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Scale )
+                    .DistinctUntilChanged()
+                    .Select( _ => Unit.Default )
                     .Throttle( TimeSpan.FromMilliseconds( 15 ) )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
-                /* Don't allow horizontal offset to go abose max offset */
+                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Width , x => x.Height ,
+                        x => x.Scale )
+                    .Throttle( TimeSpan.FromMilliseconds( 15 ) )
+                    .DistinctUntilChanged()
+                    .InvokeCommand( FindCellsToDrawCommand )
+                    .DisposeWith( disposables );
+
+                /* Don't allow horizontal offset to go above max offset */
                 this.WhenAnyValue( x => x.HorizontalOffset )
                     .CombineLatest( this.WhenAnyValue( x => x.MaxHorizontalOffset ) ,
                     ( ho , m ) => ho > m && m > 0 )
@@ -156,7 +176,7 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe( _ => HorizontalOffset = MaxHorizontalOffset )
                     .DisposeWith( disposables );
 
-                /* Don't allow vertical offset to go abose max offset */
+                /* Don't allow vertical offset to go above max offset */
                 this.WhenAnyValue( x => x.VerticalOffset )
                     .CombineLatest( this.WhenAnyValue( x => x.MaxVerticalOffset ) ,
                     ( vo , m ) => vo > m && m > 0 )
@@ -225,6 +245,14 @@ namespace VirtualHierarchyGrid
                     .InvokeCommand<object , Unit>( CopyToClipboardCommand )
                     .DisposeWith( disposables );
 
+                FindCellsToDrawCommand
+                    .Do( cells =>
+                    {
+                        _positionedCells = cells;
+                    } )
+                    .InvokeCommand( DrawCellsCommand )
+                    .DisposeWith( disposables );
+
                 /* Redraw grid when cache has been updated */
                 this.BuildResultSetsCommand
                     .InvokeCommand( DrawGridCommand )
@@ -258,6 +286,7 @@ namespace VirtualHierarchyGrid
         private static void RegisterDefaultInteractions( HierarchyGridViewModel @this )
         {
             @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
+            @this.DrawCellsInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.EditInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
         }
@@ -265,6 +294,7 @@ namespace VirtualHierarchyGrid
         private static void InitializeCommands( HierarchyGridViewModel @this )
         {
             @this.DrawGridCommand = ReactiveCommand.CreateFromObservable( () => @this.DrawGridInteraction.Handle( Unit.Default ) );
+            @this.DrawCellsCommand = ReactiveCommand.CreateFromObservable( ( PositionedCell[] cells ) => @this.DrawCellsInteraction.Handle( cells ) );
             @this.EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet) , Unit>( t => @this.EditInteraction.Handle( t ) );
             @this.EndEditionCommand = ReactiveCommand.CreateFromObservable( () => @this.EndEditionInteraction.Handle( Unit.Default ) );
 
@@ -322,6 +352,15 @@ namespace VirtualHierarchyGrid
                               Process.Start( "notepad" , file );
                           }
                       } ) );
+
+            @this.FindCellsToDrawCommand =
+                ReactiveCommand.CreateFromObservable( ( (int, int, double, double, double) t ) =>
+                    Observable.Start( () =>
+                    {
+                        var (hIndex, vIndex, width, height, scale) = t;
+                        var cells = @this.ChooseDrawnCells( hIndex , vIndex , width , height , scale );
+                        return cells;
+                    } ) );
         }
 
         public void Set( HierarchyDefinitions hierarchyDefinitions )
@@ -367,6 +406,56 @@ namespace VirtualHierarchyGrid
             HoveredRow = -1;
             HoveredColumn = -1;
         }
+
+        private PositionedCell[] ChooseDrawnCells( int hIndex , int vIndex , double width , double height , double scale )
+        {
+            IEnumerable<(double coord, double size, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
+                Dictionary<int , double> sizes , T[] definitions ) where T : HierarchyDefinition
+            {
+                int index = 0;
+                double space = offset;
+
+                var frozens = definitions.Where( x => x.Frozen ).ToArray();
+
+                foreach ( var frozen in frozens )
+                {
+                    var size = sizes[frozen.Position];
+                    yield return (space, size, frozen);
+                    space += size;
+                }
+
+                while ( space < maxSpace && startIndex + index < definitions.Length )
+                {
+                    var size = sizes[startIndex + index];
+                    yield return (space, size, definitions[startIndex + index]);
+                    space += size;
+                    index++;
+                }
+            }
+
+            var rowDefinitions = RowsDefinitions.Leaves().ToArray();
+            var colDefinitions = ColumnsDefinitions.Leaves().ToArray();
+            // Determine which cells can be drawn.
+            var firstColumn = hIndex;
+            var firstRow = vIndex;
+
+            var availableWidth = width / scale;
+            var availableHeight = height / scale;
+
+            var columns = FindCells( firstColumn , RowsHeadersWidth?.Sum() ?? 0d , availableWidth , ColumnsWidths , colDefinitions ).ToArray();
+            var rows = FindCells( firstRow , ColumnsHeadersHeight?.Sum() ?? 0d , availableHeight , RowsHeights , rowDefinitions ).ToArray();
+
+            return columns.SelectMany( c => rows.Select( r => new PositionedCell
+            {
+                Left = c.coord ,
+                Width = c.size ,
+                Top = r.coord ,
+                Height = r.size ,
+                ConsumerDefinition = ( IsTransposed ? r.definition : c.definition ) as ConsumerDefinition ,
+                ProducerDefinition = ( IsTransposed ? c.definition : r.definition ) as ProducerDefinition
+            } ) ).ToArray();
+        }
+
 
         public string ExportCsv( string separator )
         {
