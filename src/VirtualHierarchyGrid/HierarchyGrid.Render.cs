@@ -24,8 +24,8 @@ namespace VirtualHierarchyGrid
         // Keep a cache of cells to be reused when redrawing -- it costs less to reuse than create
         private readonly List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
 
-        private readonly List<(ProducerDefinition, ConsumerDefinition, HierarchyGridCell)> _drawnCells =
-            new List<(ProducerDefinition, ConsumerDefinition, HierarchyGridCell)>();
+        private readonly List<(Guid, Guid, HierarchyGridCell)> _drawnCells =
+            new List<(Guid, Guid, HierarchyGridCell)>();
 
         private readonly List<HierarchyGridHeader> _headers = new List<HierarchyGridHeader>();
         private readonly List<GridSplitter> _splitters = new List<GridSplitter>();
@@ -33,14 +33,37 @@ namespace VirtualHierarchyGrid
         private readonly HashSet<HierarchyDefinition> _columnsParents = new HashSet<HierarchyDefinition>();
         private readonly HashSet<HierarchyDefinition> _rowsParents = new HashSet<HierarchyDefinition>();
 
-        private void DrawCells( PositionedCell[] cells )
+        private void DrawCells( PositionedCell[] pCells , bool invalidate )
         {
-            Console.WriteLine( "Test" );
+            // Find cells that were previously drawn
+            var commonCells = _drawnCells.Join( pCells ,
+                o => new { pId = o.Item1 , cId = o.Item2 } ,
+                p => new { pId = p.ProducerDefinition.Guid , cId = p.ConsumerDefinition.Guid } ,
+                ( o , p ) => (drawn: o, pos: p) )
+                .ToArray();
+
+            commonCells.ForEach( t =>
+                {
+                    var cell = t.drawn.Item3;
+
+                    cell.Width = t.pos.Width;
+                    cell.Height = t.pos.Height;
+                    Canvas.SetLeft( cell , t.pos.Left );
+                    Canvas.SetTop( cell , t.pos.Top );
+                } );
+
+            _drawnCells.Where( x => !commonCells.Select( c => c.drawn.Item3 ).Contains( x.Item3 ) )
+                .ForEach( c => HierarchyGridCanvas.Children.Remove( c.Item3 ) );
+
+            var cells = pCells.Where( x => !commonCells.Select( t => t.pos ).Contains( x ) )
+                .Select( pCell => (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid, CreateCell( pCell )) )
+                .ToArray();
 
             foreach ( var cell in cells )
-                DrawCell( cell.Width , cell.Height , cell.Top , cell.Left , cell.ProducerDefinition ,
-                    cell.ConsumerDefinition );
+                HierarchyGridCanvas.Children.Add( cell.Item3 );
 
+            _drawnCells.Clear();
+            _drawnCells.AddRange( cells.Concat( commonCells.Select( t => t.drawn ) ) );
         }
 
         private void DrawGrid( Size size )
@@ -341,21 +364,31 @@ namespace VirtualHierarchyGrid
                 _cells.RemoveRange( idx , _cells.Count - idx );
         }
 
-        private void DrawCell( double width , double height , double top , double left ,
-            ProducerDefinition producerDefinition , ConsumerDefinition consumerDefinition )
+        private HierarchyGridCell CreateCell( PositionedCell pCell )
         {
             var vm = new HierarchyGridCellViewModel( ViewModel );
             var cell = new HierarchyGridCell { ViewModel = vm };
 
             vm.ResultSet = ResultSet.Default;
 
-            cell.Width = width;
-            cell.Height = height;
+            cell.ViewModel.IsSelected = ViewModel.SelectedPositions.Lookup( (pCell.VerticalPosition, pCell.HorizontalPosition) ).HasValue;
 
-            Canvas.SetLeft( cell , left );
-            Canvas.SetTop( cell , top );
+            cell.ViewModel.ColumnIndex = pCell.HorizontalPosition;
+            cell.ViewModel.RowIndex = pCell.VerticalPosition;
 
-            HierarchyGridCanvas.Children.Add( cell );
+            cell.Width = pCell.Width;
+            cell.Height = pCell.Height;
+
+            var lkp = ViewModel.ResultSets.Lookup( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) );
+            if ( lkp.HasValue )
+                cell.ViewModel.ResultSet = lkp.Value;
+            else
+                cell.ViewModel.ResultSet = ResultSet.Default;
+
+            Canvas.SetLeft( cell , pCell.Left );
+            Canvas.SetTop( cell , pCell.Top );
+
+            return cell;
         }
 
         private void DrawCell( ref int idx , int verticalIdx , int horizontalIdx , double width , double height , double horizontalPosition , double verticalPosition , HierarchyDefinition[] rowDefinitions , HierarchyDefinition[] colDefinitions )
@@ -379,12 +412,11 @@ namespace VirtualHierarchyGrid
             var producer = (ProducerDefinition) ( !ViewModel.IsTransposed ? rowDefinitions[verticalIdx] : colDefinitions[horizontalIdx] );
             var consumer = (ConsumerDefinition) ( !ViewModel.IsTransposed ? colDefinitions[horizontalIdx] : rowDefinitions[verticalIdx] );
 
-            var lkp = ViewModel.ResultSets.Lookup( (producer.Position, consumer.Position) );
+            var lkp = ViewModel.ResultSets.Lookup( (producer.Guid, consumer.Guid) );
             if ( lkp.HasValue )
                 cell.ViewModel.ResultSet = lkp.Value;
             else
                 cell.ViewModel.ResultSet = ResultSet.Default;
-
 
             cell.Width = width;
             cell.Height = height;

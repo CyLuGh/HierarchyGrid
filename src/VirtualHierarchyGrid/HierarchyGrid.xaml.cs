@@ -48,7 +48,8 @@ namespace VirtualHierarchyGrid
 
             viewModel.DrawCellsInteraction.RegisterHandler( ctx =>
                 {
-                    view.DrawCells( ctx.Input );
+                    var (pCells, invalidate) = ctx.Input;
+                    view.DrawCells( pCells , invalidate );
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );

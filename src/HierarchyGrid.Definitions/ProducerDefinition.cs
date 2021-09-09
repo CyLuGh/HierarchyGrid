@@ -14,13 +14,13 @@ namespace HierarchyGrid.Definitions
         public bool IsLocked { get; set; }
 
         public Option<InputSet> Produce() => Producer != null ?
-        Option<InputSet>.Some(new InputSet
+        Option<InputSet>.Some( new InputSet
         {
-            Input = Producer(),
-            ProducerPosition = Position,
-            Qualifier = Qualify?.Invoke() ?? Qualification.Unset,
+            Input = Producer() ,
+            ProducerId = Guid ,
+            Qualifier = Qualify?.Invoke() ?? Qualification.Unset ,
             IsLocked = IsLocked
-        })
+        } )
         : Option<InputSet>.None;
     }
 }

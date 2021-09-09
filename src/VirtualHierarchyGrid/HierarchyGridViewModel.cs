@@ -26,13 +26,11 @@ namespace VirtualHierarchyGrid
     {
         public ViewModelActivator Activator { get; }
 
-        private PositionedCell[] _positionedCells;
-
         internal SourceCache<ProducerDefinition , int> ProducersCache { get; } = new SourceCache<ProducerDefinition , int>( x => x.Position );
         internal SourceCache<ConsumerDefinition , int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition , int>( x => x.Position );
 
-        internal SourceCache<ResultSet , (int, int)> ResultSets { get; }
-            = new SourceCache<ResultSet , (int, int)>( x => (x.ProducerPosition, x.ConsumerPosition) );
+        internal SourceCache<ResultSet , (Guid, Guid)> ResultSets { get; }
+            = new SourceCache<ResultSet , (Guid, Guid)>( x => (x.ProducerId, x.ConsumerId) );
 
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
@@ -74,16 +72,16 @@ namespace VirtualHierarchyGrid
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
-
         public ReactiveCommand<(int, int, double, double, double) , PositionedCell[]> FindCellsToDrawCommand { get; private set; }
-        public ReactiveCommand<PositionedCell[] , Unit> DrawCellsCommand { get; private set; }
+        public ReactiveCommand<(PositionedCell[], bool) , Unit> DrawCellsCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> DrawGridCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> BuildResultSetsCommand { get; private set; }
 
         public Interaction<Unit , Unit> DrawGridInteraction { get; }
             = new Interaction<Unit , Unit>( RxApp.MainThreadScheduler );
-        public Interaction<PositionedCell[] , Unit> DrawCellsInteraction { get; }
-            = new Interaction<PositionedCell[] , Unit>( RxApp.MainThreadScheduler );
+
+        public Interaction<(PositionedCell[], bool) , Unit> DrawCellsInteraction { get; }
+            = new Interaction<(PositionedCell[], bool) , Unit>( RxApp.MainThreadScheduler );
 
         public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
 
@@ -114,7 +112,6 @@ namespace VirtualHierarchyGrid
 
             this.WhenActivated( disposables =>
             {
-
                 StatusMessage = ResultSets.Items.Any() ? string.Empty : "No data";
 
                 ResultSets.Connect()
@@ -246,10 +243,7 @@ namespace VirtualHierarchyGrid
                     .DisposeWith( disposables );
 
                 FindCellsToDrawCommand
-                    .Do( cells =>
-                    {
-                        _positionedCells = cells;
-                    } )
+                    .Select( pCells => (pCells, false) )
                     .InvokeCommand( DrawCellsCommand )
                     .DisposeWith( disposables );
 
@@ -269,13 +263,13 @@ namespace VirtualHierarchyGrid
                 SelectedPositions.Connect()
                     .SubscribeSafe( x =>
                     {
-                        var producers = ProducersCache.Items.FlatList().ToDictionary( x => x.Position );
-                        var consumers = ConsumersCache.Items.FlatList().ToDictionary( x => x.Position );
+                        var producers = ProducersCache.Items.FlatList().ToDictionary( x => x.Guid );
+                        var consumers = ConsumersCache.Items.FlatList().ToDictionary( x => x.Guid );
                         Selections = x.Where( o => o.Reason == ChangeReason.Add )
                             .Select( o =>
                             {
                                 var resultSet = o.Current.resultSet;
-                                return (producers[resultSet.ProducerPosition], consumers[resultSet.ConsumerPosition], resultSet);
+                                return (producers[resultSet.ProducerId], consumers[resultSet.ConsumerId], resultSet);
                             }
                         ).ToArray();
                     } )
@@ -294,7 +288,7 @@ namespace VirtualHierarchyGrid
         private static void InitializeCommands( HierarchyGridViewModel @this )
         {
             @this.DrawGridCommand = ReactiveCommand.CreateFromObservable( () => @this.DrawGridInteraction.Handle( Unit.Default ) );
-            @this.DrawCellsCommand = ReactiveCommand.CreateFromObservable( ( PositionedCell[] cells ) => @this.DrawCellsInteraction.Handle( cells ) );
+            @this.DrawCellsCommand = ReactiveCommand.CreateFromObservable( ( (PositionedCell[], bool) t ) => @this.DrawCellsInteraction.Handle( t ) );
             @this.EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet) , Unit>( t => @this.EditInteraction.Handle( t ) );
             @this.EndEditionCommand = ReactiveCommand.CreateFromObservable( () => @this.EndEditionInteraction.Handle( Unit.Default ) );
 
@@ -409,7 +403,7 @@ namespace VirtualHierarchyGrid
 
         private PositionedCell[] ChooseDrawnCells( int hIndex , int vIndex , double width , double height , double scale )
         {
-            IEnumerable<(double coord, double size, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
+            IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
                 Dictionary<int , double> sizes , T[] definitions ) where T : HierarchyDefinition
             {
                 int index = 0;
@@ -417,17 +411,18 @@ namespace VirtualHierarchyGrid
 
                 var frozens = definitions.Where( x => x.Frozen ).ToArray();
 
+                int cnt = 0;
                 foreach ( var frozen in frozens )
                 {
                     var size = sizes[frozen.Position];
-                    yield return (space, size, frozen);
+                    yield return (space, size, cnt++, frozen);
                     space += size;
                 }
 
                 while ( space < maxSpace && startIndex + index < definitions.Length )
                 {
                     var size = sizes[startIndex + index];
-                    yield return (space, size, definitions[startIndex + index]);
+                    yield return (space, size, startIndex + index, definitions[startIndex + index]);
                     space += size;
                     index++;
                 }
@@ -451,11 +446,12 @@ namespace VirtualHierarchyGrid
                 Width = c.size ,
                 Top = r.coord ,
                 Height = r.size ,
+                HorizontalPosition = c.index ,
+                VerticalPosition = r.index ,
                 ConsumerDefinition = ( IsTransposed ? r.definition : c.definition ) as ConsumerDefinition ,
                 ProducerDefinition = ( IsTransposed ? c.definition : r.definition ) as ProducerDefinition
             } ) ).ToArray();
         }
-
 
         public string ExportCsv( string separator )
         {
