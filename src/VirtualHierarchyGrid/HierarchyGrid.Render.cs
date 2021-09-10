@@ -297,106 +297,10 @@ namespace VirtualHierarchyGrid
                 HierarchyGridCanvas.Children.Add( gridSplitter );
         }
 
-        private void DrawCells( Size size , HierarchyDefinition[] rowDefinitions , HierarchyDefinition[] colDefinitions )
-        {
-            var frozenRows = rowDefinitions.Where( x => x.Frozen ).ToArray();
-            var frozenCols = colDefinitions.Where( x => x.Frozen ).ToArray();
-
-            double horizontalPosition = ViewModel.RowsHeadersWidth.Sum();
-            double verticalPosition = 0d;
-            int idx = 0;
-
-            // Draw intersection for frozen rows & columns
-            foreach ( var fCol in frozenCols )
-            {
-                int colIdx = colDefinitions.IndexOf( fCol );
-                var width = ViewModel.ColumnsWidths[colIdx];
-                verticalPosition = ViewModel.ColumnsHeadersHeight.Sum();
-
-                foreach ( var fRow in frozenRows )
-                {
-                    int rowIdx = rowDefinitions.IndexOf( fRow );
-                    var height = ViewModel.RowsHeights[rowIdx];
-                    DrawCell( ref idx , rowIdx , colIdx , width , height , horizontalPosition , verticalPosition , rowDefinitions , colDefinitions );
-                    verticalPosition += height;
-                }
-
-                horizontalPosition += width;
-            }
-
-            // Draw rows for frozen columns
-            horizontalPosition = ViewModel.RowsHeadersWidth.Sum();
-            foreach ( var fCol in frozenCols )
-            {
-                int colIdx = colDefinitions.IndexOf( fCol );
-                var width = ViewModel.ColumnsWidths[colIdx];
-                int rowIdx = ViewModel.VerticalOffset + frozenRows.Length;
-
-                verticalPosition = ViewModel.ColumnsHeadersHeight.Sum() + frozenRows.Sum( f => ViewModel.RowsHeights[rowDefinitions.IndexOf( f )] );
-                while ( rowIdx < rowDefinitions.Length && verticalPosition < size.Height / ViewModel.Scale )
-                {
-                    var height = ViewModel.RowsHeights[rowIdx];
-                    DrawCell( ref idx , rowIdx , colIdx , width , height , horizontalPosition , verticalPosition , rowDefinitions , colDefinitions );
-                    verticalPosition += height;
-                    rowIdx++;
-                }
-
-                horizontalPosition += width;
-            }
-
-            // Draw columns for frozen rows
-            verticalPosition = ViewModel.ColumnsHeadersHeight.Sum();
-            foreach ( var fRow in frozenRows )
-            {
-                int rowIdx = rowDefinitions.IndexOf( fRow );
-                var height = ViewModel.RowsHeights[rowIdx];
-                int colIdx = ViewModel.HorizontalOffset + frozenCols.Length;
-
-                horizontalPosition = ViewModel.RowsHeadersWidth.Sum() + frozenCols.Sum( f => ViewModel.ColumnsWidths[colDefinitions.IndexOf( f )] );
-                while ( colIdx < colDefinitions.Length && horizontalPosition < size.Width / ViewModel.Scale )
-                {
-                    var width = ViewModel.ColumnsWidths[colIdx];
-                    DrawCell( ref idx , rowIdx , colIdx , width , height , horizontalPosition , verticalPosition , rowDefinitions , colDefinitions );
-                    horizontalPosition += width;
-                    colIdx++;
-                }
-
-                verticalPosition += height;
-            }
-
-            // Draw non frozen elements
-            int horizontalIdx = ViewModel.HorizontalOffset + frozenCols.Length;
-            horizontalPosition = ViewModel.RowsHeadersWidth.Sum() + frozenCols.Sum( f => ViewModel.ColumnsWidths[colDefinitions.IndexOf( f )] );
-            while ( horizontalIdx < colDefinitions.Length && horizontalPosition < size.Width / ViewModel.Scale )
-            {
-                var width = ViewModel.ColumnsWidths[horizontalIdx];
-
-                verticalPosition = ViewModel.ColumnsHeadersHeight.Sum() + frozenRows.Sum( f => ViewModel.RowsHeights[rowDefinitions.IndexOf( f )] );
-                int verticalIdx = ViewModel.VerticalOffset + frozenRows.Length;
-
-                while ( verticalIdx < rowDefinitions.Length && verticalPosition < size.Height / ViewModel.Scale )
-                {
-                    var height = ViewModel.RowsHeights[verticalIdx];
-                    DrawCell( ref idx , verticalIdx , horizontalIdx , width , height , horizontalPosition , verticalPosition , rowDefinitions , colDefinitions );
-                    verticalPosition += height;
-                    verticalIdx++;
-                }
-
-                horizontalPosition += width;
-                horizontalIdx++;
-            }
-
-            if ( idx < _cells.Count )
-                _cells.RemoveRange( idx , _cells.Count - idx );
-        }
-
         private void InvalidateCell( PositionedCell pCell , HierarchyGridCell cell )
         {
-            var lkp = ViewModel.ResultSets.Lookup( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) );
-            if ( lkp.HasValue )
-                cell.ViewModel.ResultSet = lkp.Value;
-            else
-                cell.ViewModel.ResultSet = ResultSet.Default;
+            cell.ViewModel.ResultSet =
+                HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition );
         }
 
         private HierarchyGridCell CreateCell( PositionedCell pCell )
@@ -414,53 +318,13 @@ namespace VirtualHierarchyGrid
             cell.Width = pCell.Width;
             cell.Height = pCell.Height;
 
-            var lkp = ViewModel.ResultSets.Lookup( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) );
-            if ( lkp.HasValue )
-                cell.ViewModel.ResultSet = lkp.Value;
-            else
-                cell.ViewModel.ResultSet = ResultSet.Default;
+            cell.ViewModel.ResultSet =
+                HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition );
 
             Canvas.SetLeft( cell , pCell.Left );
             Canvas.SetTop( cell , pCell.Top );
 
             return cell;
-        }
-
-        private void DrawCell( ref int idx , int verticalIdx , int horizontalIdx , double width , double height , double horizontalPosition , double verticalPosition , HierarchyDefinition[] rowDefinitions , HierarchyDefinition[] colDefinitions )
-        {
-            HierarchyGridCell cell;
-            if ( idx < _cells.Count )
-            {
-                cell = _cells[idx];
-                cell.ViewModel.Clear();
-            }
-            else
-            {
-                cell = new HierarchyGridCell { ViewModel = new HierarchyGridCellViewModel( ViewModel ) };
-                _cells.Add( cell );
-            }
-
-            cell.ViewModel.IsSelected = ViewModel.SelectedPositions.Lookup( (verticalIdx, horizontalIdx) ).HasValue;
-            cell.ViewModel.ColumnIndex = horizontalIdx;
-            cell.ViewModel.RowIndex = verticalIdx;
-
-            var producer = (ProducerDefinition) ( !ViewModel.IsTransposed ? rowDefinitions[verticalIdx] : colDefinitions[horizontalIdx] );
-            var consumer = (ConsumerDefinition) ( !ViewModel.IsTransposed ? colDefinitions[horizontalIdx] : rowDefinitions[verticalIdx] );
-
-            var lkp = ViewModel.ResultSets.Lookup( (producer.Guid, consumer.Guid) );
-            if ( lkp.HasValue )
-                cell.ViewModel.ResultSet = lkp.Value;
-            else
-                cell.ViewModel.ResultSet = ResultSet.Default;
-
-            cell.Width = width;
-            cell.Height = height;
-
-            Canvas.SetLeft( cell , horizontalPosition );
-            Canvas.SetTop( cell , verticalPosition );
-
-            HierarchyGridCanvas.Children.Add( cell );
-            idx++;
         }
 
         private void DrawColumnsHeaders( HierarchyDefinition[] hdefs , double availableWidth , ref int headerCount , ref int splitterCount )

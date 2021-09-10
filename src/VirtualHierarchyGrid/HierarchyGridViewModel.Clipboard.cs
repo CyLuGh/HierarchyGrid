@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml;
+using MoreLinq;
 
 namespace VirtualHierarchyGrid
 {
@@ -81,67 +82,72 @@ namespace VirtualHierarchyGrid
             return Option<(Guid, Guid)>.None;
         }
 
+        private Option<ResultSet> Resolve( HierarchyDefinition rowDef , HierarchyDefinition colDef )
+        {
+            if ( rowDef is ProducerDefinition p && colDef is ConsumerDefinition c )
+                return Option<ResultSet>.Some( HierarchyDefinition.Resolve( p , c ) );
+            else if ( rowDef is ConsumerDefinition cr && colDef is ProducerDefinition pr )
+                return Option<ResultSet>.Some( HierarchyDefinition.Resolve( pr , cr ) );
+
+            return Option<ResultSet>.None;
+        }
+
         private void WriteXMLData( XmlTextWriter writer , HierarchyDefinition[] colDefs , HierarchyDefinition rowDef )
         {
             foreach ( var colDef in colDefs )
             {
-                var idd = Identify( colDef , rowDef );
+                var opt = Resolve( colDef , rowDef );
 
-                idd.Some( key =>
+                opt.Some( resultSet =>
                 {
-                    var lkp = ResultSets.Lookup( key );
-                    if ( lkp.HasValue )
+                    var qualification = resultSet.Qualifier;
+
+                    writer.WriteStartElement( "Cell" );
+
+                    switch ( qualification )
                     {
-                        var resultSet = lkp.Value;
-                        var qualification = resultSet.Qualifier;
+                        case Qualification.Computed:
+                            writer.WriteAttributeString( "ss:StyleID" , "Computed" );
+                            break;
 
-                        writer.WriteStartElement( "Cell" );
+                        case Qualification.Error:
+                            writer.WriteAttributeString( "ss:StyleID" , "Error" );
+                            break;
 
-                        switch ( qualification )
-                        {
-                            case Qualification.Computed:
-                                writer.WriteAttributeString( "ss:StyleID" , "Computed" );
-                                break;
+                        case Qualification.Warning:
+                            writer.WriteAttributeString( "ss:StyleID" , "Warning" );
+                            break;
 
-                            case Qualification.Error:
-                                writer.WriteAttributeString( "ss:StyleID" , "Error" );
-                                break;
+                        case Qualification.Remark:
+                            writer.WriteAttributeString( "ss:StyleID" , "Remark" );
+                            break;
 
-                            case Qualification.Warning:
-                                writer.WriteAttributeString( "ss:StyleID" , "Warning" );
-                                break;
+                        case Qualification.Custom:
+                            resultSet.BackgroundColor
+                                .Some( cl =>
+                                {
+                                    var (a, r, g, b) = cl;
+                                    writer.WriteAttributeString( "ss:StyleID" , string.Concat( "Custom" , FormatExcelColor( a , r , g , b ) ) );
+                                } );
+                            break;
+                    }
 
-                            case Qualification.Remark:
-                                writer.WriteAttributeString( "ss:StyleID" , "Remark" );
-                                break;
+                    writer.WriteStartElement( "Data" );
+                    var str = resultSet.Result;
 
-                            case Qualification.Custom:
-                                resultSet.BackgroundColor
-                                    .Some( cl =>
-                                    {
-                                        var (a, r, g, b) = cl;
-                                        writer.WriteAttributeString( "ss:StyleID" , string.Concat( "Custom" , FormatExcelColor( a , r , g , b ) ) );
-                                    } );
-                                break;
-                        }
+                    if ( double.TryParse( str , out var val ) )
+                    {
+                        writer.WriteAttributeString( "ss:Type" , "Number" );
+                        str = val.ToString( System.Globalization.NumberFormatInfo.InvariantInfo );
+                    }
+                    else
+                    {
+                        writer.WriteAttributeString( "ss:Type" , "String" );
+                    }
 
-                        writer.WriteStartElement( "Data" );
-                        var str = resultSet.Result;
-
-                        if ( double.TryParse( str , out var val ) )
-                        {
-                            writer.WriteAttributeString( "ss:Type" , "Number" );
-                            str = val.ToString( System.Globalization.NumberFormatInfo.InvariantInfo );
-                        }
-                        else
-                        {
-                            writer.WriteAttributeString( "ss:Type" , "String" );
-                        }
-
-                        writer.WriteString( str );
-                        writer.WriteEndElement(); //data
-                       writer.WriteEndElement(); //cell
-                   }
+                    writer.WriteString( str );
+                    writer.WriteEndElement(); //data
+                    writer.WriteEndElement(); //cell
                 } )
                     .None( () => { /* Do nothing if there are no data */ } );
             }
@@ -253,24 +259,26 @@ namespace VirtualHierarchyGrid
             // Add color management
             string scol;
 
-            // Custom
-            foreach ( var col in ResultSets.Items.Select( o => o.BackgroundColor )
-                                                 .Where( c => c.IsSome )
-                                                 .Select( c => c )
-                                                 .Distinct() )
-            {
-                var (a, r, g, b) = col.Some( c => c )
-                                      .None( () => (255, 255, 255, 255) );
+            //// Custom
+            //ProducersCache.Items.AsParallel()
+            //    .SelectMany( p => ConsumersCache.Items.Select( c => HierarchyDefinition.Resolve( p , c ) ) )
+            //    .Select( o => o.BackgroundColor )
+            //    .Where( c => c.IsSome )
+            //    .Distinct()
+            //    .ForEach( col =>
+            //    {
+            //        var (a, r, g, b) = col.Some( c => c )
+            //            .None( () => (255, 255, 255, 255) );
 
-                scol = FormatExcelColor( a , r , g , b );
-                writer.WriteStartElement( "Style" );
-                writer.WriteAttributeString( "ss:ID" , string.Concat( "Custom" , scol ) );
-                writer.WriteStartElement( "Interior" );
-                writer.WriteAttributeString( "ss:Color" , scol );
-                writer.WriteAttributeString( "ss:Pattern" , "Solid" );
-                writer.WriteEndElement();//Interior
-                writer.WriteEndElement();//Style
-            }
+            //        scol = FormatExcelColor( a , r , g , b );
+            //        writer.WriteStartElement( "Style" );
+            //        writer.WriteAttributeString( "ss:ID" , string.Concat( "Custom" , scol ) );
+            //        writer.WriteStartElement( "Interior" );
+            //        writer.WriteAttributeString( "ss:Color" , scol );
+            //        writer.WriteAttributeString( "ss:Pattern" , "Solid" );
+            //        writer.WriteEndElement();//Interior
+            //        writer.WriteEndElement();//Style
+            //    } );
 
             // Computed
             writer.WriteStartElement( "Style" );

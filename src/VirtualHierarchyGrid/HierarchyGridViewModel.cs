@@ -30,9 +30,6 @@ namespace VirtualHierarchyGrid
         internal SourceCache<ProducerDefinition , int> ProducersCache { get; } = new SourceCache<ProducerDefinition , int>( x => x.Position );
         internal SourceCache<ConsumerDefinition , int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition , int>( x => x.Position );
 
-        internal SourceCache<ResultSet , (Guid, Guid)> ResultSets { get; }
-            = new SourceCache<ResultSet , (Guid, Guid)>( x => (x.ProducerId, x.ConsumerId) );
-
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
 
@@ -76,7 +73,6 @@ namespace VirtualHierarchyGrid
         public ReactiveCommand<(int, int, double, double, double, bool) , (PositionedCell[], bool)> FindCellsToDrawCommand { get; private set; }
         public ReactiveCommand<(PositionedCell[], bool) , Unit> DrawCellsCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> DrawGridCommand { get; private set; }
-        public ReactiveCommand<Unit , Unit> BuildResultSetsCommand { get; private set; }
 
         public Interaction<Unit , Unit> DrawGridInteraction { get; }
             = new Interaction<Unit , Unit>( RxApp.MainThreadScheduler );
@@ -111,44 +107,20 @@ namespace VirtualHierarchyGrid
 
             TextAlignment = TextAlignment.Right;
 
-            DrawGridCommand.IsExecuting
-                .Subscribe( b => this.Log().Debug( "DrawGridCommand running: {0}" , b ) );
-            FindCellsToDrawCommand.IsExecuting
-                .Subscribe( b => this.Log().Debug( "FindCellsToDrawCommand running: {0}" , b ) );
-            DrawCellsCommand.IsExecuting
-                .Subscribe( b => this.Log().Debug( "DrawCellsCommand running: {0}" , b ) );
-
-            //DrawGridCommand.CanExecute
-            //    .Subscribe( b => this.Log().Debug( "DrawGridCommand CanExecute: {0}" , b ) );
-            //FindCellsToDrawCommand.CanExecute
-            //    .Subscribe( b => this.Log().Debug( "FindCellsToDrawCommand CanExecute: {0}" , b ) );
-            //DrawCellsCommand.CanExecute
-            //    .Subscribe( b => this.Log().Debug( "DrawCellsCommand CanExecute: {0}" , b ) );
-
             this.WhenActivated( disposables =>
             {
-                StatusMessage = ResultSets.Items.Any() ? string.Empty : "No data";
+                StatusMessage = ProducersCache.Items.Any() || ConsumersCache.Items.Any() ? string.Empty : "No data";
 
-                ResultSets.Connect()
-                     .DisposeMany()
-                     .Select( _ => ResultSets.Items.Any() )
-                     .ObserveOn( RxApp.MainThreadScheduler )
-                     .Do( b =>
-                     {
-                         if ( !b )
-                             StatusMessage = "No data";
-                     } )
-                     .CombineLatest( BuildResultSetsCommand.IsExecuting.Select( x => !x ) )
-                     .Select( bs => new[] { bs.First , bs.Second }.All( x => x ) )
-                     .ToPropertyEx( this , x => x.HasData , scheduler: RxApp.MainThreadScheduler )
-                     .DisposeWith( disposables );
-
-                BuildResultSetsCommand.IsExecuting
-                    .Subscribe( b =>
+                ProducersCache.Connect().DisposeMany().Select( _ => ProducersCache.Items.Any() )
+                    .CombineLatest( ConsumersCache.Connect().DisposeMany().Select( _ => ConsumersCache.Items.Any() ) )
+                    .Select( t => t.First | t.Second )
+                    .ObserveOn( RxApp.MainThreadScheduler )
+                    .Do( b =>
                     {
-                        if ( b )
-                            StatusMessage = "Building grid";
+                        if ( !b )
+                            StatusMessage = "No data";
                     } )
+                    .ToPropertyEx( this , x => x.HasData , scheduler: RxApp.MainThreadScheduler )
                     .DisposeWith( disposables );
 
                 /* Don't allow scale < 0.75 */
@@ -264,16 +236,6 @@ namespace VirtualHierarchyGrid
                     .InvokeCommand( DrawCellsCommand )
                     .DisposeWith( disposables );
 
-                /* Redraw grid when cache has been updated */
-                BuildResultSetsCommand
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                BuildResultSetsCommand
-                    .Select( _ => (HorizontalOffset, VerticalOffset, Width, Height, Scale, true) )
-                    .InvokeCommand( FindCellsToDrawCommand )
-                    .DisposeWith( disposables );
-
                 SelectedPositions.Connect()
                     .Transform( x => x.resultSet )
                     .ObserveOn( RxApp.MainThreadScheduler )
@@ -316,16 +278,6 @@ namespace VirtualHierarchyGrid
             @this.DrawCellsCommand = ReactiveCommand.CreateFromObservable( ( (PositionedCell[], bool) t ) => @this.DrawCellsInteraction.Handle( t ) );
             @this.EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet) , Unit>( t => @this.EditInteraction.Handle( t ) );
             @this.EndEditionCommand = ReactiveCommand.CreateFromObservable( () => @this.EndEditionInteraction.Handle( Unit.Default ) );
-
-            @this.BuildResultSetsCommand = ReactiveCommand.CreateFromObservable( () => Observable.Start( () =>
-              {
-                  @this.ResultSets.Clear();
-
-                  var consumers = @this.ConsumersCache.Items.FlatList().ToArray();
-                  @this.ProducersCache.Items.FlatList().AsParallel().ForAll( producer =>
-                     consumers.ForEach( consumer => @this.ResultSets.AddOrUpdate( HierarchyDefinition.Resolve( producer , consumer ) ) )
-                  );
-              } ) );
 
             @this.UpdateHighlightsCommand = ReactiveCommand.CreateFromObservable<HierarchyGridHeaderViewModel , Unit>( vModel =>
                     Observable.Start( () =>
@@ -404,7 +356,10 @@ namespace VirtualHierarchyGrid
                 .ForEach( x => RowsHeights.Add( x , DEFAULT_ROW_HEIGHT ) );
 
             Observable.Return( Unit.Default )
-                .InvokeCommand( BuildResultSetsCommand );
+                .InvokeCommand( DrawGridCommand );
+
+            Observable.Return( (HorizontalOffset, VerticalOffset, Width, Height, Scale, true) )
+                .InvokeCommand( FindCellsToDrawCommand );
         }
 
         public void Clear()
@@ -413,8 +368,6 @@ namespace VirtualHierarchyGrid
             ConsumersCache.Clear();
 
             SelectedPositions.Clear();
-
-            ResultSets.Clear();
 
             ColumnsWidths.Clear();
             RowsHeights.Clear();
@@ -532,13 +485,8 @@ namespace VirtualHierarchyGrid
                     // Add data
                     foreach ( var colDef in colLeaves )
                     {
-                        var idd = Identify( rowDef , colDef );
-
-                        var str = idd.Some( key =>
-                             {
-                                 var lkp = ResultSets.Lookup( key );
-                                 return lkp.HasValue ? lkp.Value.Result : string.Empty;
-                             } )
+                        var resultSet = Resolve( rowDef , colDef );
+                        var str = resultSet.Some( rs => rs.Result )
                            .None( () => string.Empty );
                         sb.Append( str );
                         sb.Append( separator );
