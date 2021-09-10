@@ -30,8 +30,8 @@ namespace HierarchyGrid.Definitions
         {
             var resultSet = new ResultSet
             {
-                ProducerPosition = inputSet.ProducerPosition ,
-                ConsumerPosition = Position
+                ProducerId = inputSet.ProducerId ,
+                ConsumerId = Guid
             };
 
             var data = Consumer != null ? Consumer( inputSet.Input ) : inputSet.Input;

@@ -5,6 +5,9 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using NLog.Targets;
+using Splat;
+using Splat.NLog;
 
 namespace Demo
 {
@@ -16,6 +19,7 @@ namespace Demo
         public App()
         {
             ConfigureLogs();
+            Locator.CurrentMutable.UseNLogWithWrappingFullLogger();
         }
 
         private void ConfigureLogs()
@@ -23,16 +27,17 @@ namespace Demo
             var config = new NLog.Config.LoggingConfiguration();
 
             // Targets where to log to: File and Console
-            var logfile = new NLog.Targets.FileTarget("logfile")
+            var logfile = new NLog.Targets.FileTarget( "logfile" )
             {
-                FileName = "hierarchygrid.log",
+                FileName = "hierarchygrid.log" ,
+                AutoFlush = true ,
                 DeleteOldFileOnStartup = true
             };
-            var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
+            var logconsole = new NLog.Targets.ConsoleTarget( "logconsole" );
 
             // Rules for mapping loggers to targets
-            config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, logconsole);
-            config.AddRule(NLog.LogLevel.Debug, NLog.LogLevel.Fatal, logfile);
+            config.AddRule( NLog.LogLevel.Info , NLog.LogLevel.Fatal , logconsole );
+            config.AddRule( NLog.LogLevel.Debug , NLog.LogLevel.Fatal , logfile );
 
             // Apply config
             NLog.LogManager.Configuration = config;
