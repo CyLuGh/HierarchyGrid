@@ -138,8 +138,7 @@ namespace Demo
             var calendarBuilder = new CalendarBuilder( "#1" , "#2" , "#3" );
             var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions );
-            FoldedSampleHierarchyGrid.ViewModel.ColumnsWidths.ToArray()
-                .ForEach( kvp => FoldedSampleHierarchyGrid.ViewModel.ColumnsWidths[kvp.Key] = 50 );
+            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
         }
 
 
