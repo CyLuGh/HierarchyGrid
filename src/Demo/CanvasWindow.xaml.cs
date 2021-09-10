@@ -137,7 +137,7 @@ namespace Demo
         {
             var calendarBuilder = new CalendarBuilder( "#1" , "#2" , "#3" );
             var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
-            FoldedSampleHierarchyGrid.ViewModel.Set( definitions );
+            FoldedSampleHierarchyGrid.ViewModel.Set( definitions, true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
         }
 

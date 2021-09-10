@@ -334,9 +334,9 @@ namespace VirtualHierarchyGrid
                     } ) );
         }
 
-        public void Set( HierarchyDefinitions hierarchyDefinitions )
+        public void Set( HierarchyDefinitions hierarchyDefinitions , bool preserveSizes = false )
         {
-            Clear();
+            Clear( preserveSizes );
 
             ProducersCache.AddOrUpdate( hierarchyDefinitions.Producers );
             ConsumersCache.AddOrUpdate( hierarchyDefinitions.Consumers );
@@ -348,12 +348,22 @@ namespace VirtualHierarchyGrid
             ColumnsHeadersHeight = Enumerable.Range( 0 , ColumnsDefinitions.TotalDepth( true ) )
                 .Select( _ => DEFAULT_HEADER_HEIGHT )
                 .ToArray();
+                
+            var columnsCount = ColumnsDefinitions.TotalCount( true );
+            if ( !preserveSizes || columnsCount != ColumnsWidths.Count )
+            {
+                ColumnsWidths.Clear();
+                Enumerable.Range( 0 , columnsCount )
+                    .ForEach( x => ColumnsWidths.Add( x , DEFAULT_COLUMN_WIDTH ) );
+            }
 
-            Enumerable.Range( 0 , ColumnsDefinitions.TotalCount( true ) )
-                .ForEach( x => ColumnsWidths.Add( x , DEFAULT_COLUMN_WIDTH ) );
-
-            Enumerable.Range( 0 , RowsDefinitions.TotalCount( true ) )
-                .ForEach( x => RowsHeights.Add( x , DEFAULT_ROW_HEIGHT ) );
+            var rowsCount = RowsDefinitions.TotalCount( true );
+            if ( !preserveSizes || rowsCount != RowsHeights.Count )
+            {
+                RowsHeights.Clear();
+                Enumerable.Range( 0 , rowsCount )
+                    .ForEach( x => RowsHeights.Add( x , DEFAULT_ROW_HEIGHT ) );
+            }
 
             Observable.Return( Unit.Default )
                 .InvokeCommand( DrawGridCommand );
@@ -362,15 +372,18 @@ namespace VirtualHierarchyGrid
                 .InvokeCommand( FindCellsToDrawCommand );
         }
 
-        public void Clear()
+        public void Clear( bool preserveSizes = false )
         {
             ProducersCache.Clear();
             ConsumersCache.Clear();
 
             SelectedPositions.Clear();
 
-            ColumnsWidths.Clear();
-            RowsHeights.Clear();
+            if ( !preserveSizes )
+            {
+                ColumnsWidths.Clear();
+                RowsHeights.Clear();
+            }
 
             HorizontalOffset = 0;
             VerticalOffset = 0;

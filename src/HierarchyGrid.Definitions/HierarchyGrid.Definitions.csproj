@@ -9,7 +9,7 @@
 
 		<Authors>Demortier Jeremy</Authors>
 		<Description>Definitions used by VirtualHierarchyGrid</Description>
-		<Version>0.5.2</Version>
+		<Version>0.5.3</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
