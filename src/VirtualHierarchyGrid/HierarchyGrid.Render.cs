@@ -12,6 +12,7 @@ using System.Windows.Media;
 using MoreLinq;
 using DynamicData;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Forms;
 using System.Windows.Input;
 using Splat;
 
@@ -50,6 +51,11 @@ namespace VirtualHierarchyGrid
                     cell.Height = t.pos.Height;
                     Canvas.SetLeft( cell , t.pos.Left );
                     Canvas.SetTop( cell , t.pos.Top );
+
+                    if ( invalidate )
+                    {
+                        InvalidateCell( t.pos , cell );
+                    }
                 } );
 
             _drawnCells.Where( x => !commonCells.Select( c => c.drawn.Item3 ).Contains( x.Item3 ) )
@@ -136,6 +142,10 @@ namespace VirtualHierarchyGrid
                 (int position, IDisposable drag) tag = ((int, IDisposable)) ( (GridSplitter) e.Source ).Tag;
                 var idx = tag.position;
                 ViewModel.RowsHeadersWidth[idx] = (double) Math.Max( ViewModel.RowsHeadersWidth[idx] + e.HorizontalChange , 10d );
+
+                Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                        ViewModel.Height, ViewModel.Scale, false) )
+                    .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
             };
 
             double currentX = 0, currentY = 0;
@@ -153,6 +163,10 @@ namespace VirtualHierarchyGrid
                      ViewModel.SelectedPositions.Clear();
                      ViewModel.RowsDefinitions.FlatList( true ).ForEach( x => x.IsExpanded = false );
                      ViewModel.ColumnsDefinitions.FlatList( true ).ForEach( x => x.IsExpanded = false );
+
+                     Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                             ViewModel.Height, ViewModel.Scale, false) )
+                         .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
                  } )
                 .Select( _ => Unit.Default )
                 .InvokeCommand( ViewModel , x => x.DrawGridCommand ) );
@@ -182,6 +196,10 @@ namespace VirtualHierarchyGrid
                      var desiredState = defs.AsParallel().Any( x => x.IsExpanded );
 
                      defs.ForEach( x => x.IsExpanded = !desiredState );
+
+                     Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                             ViewModel.Height, ViewModel.Scale, false) )
+                         .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
                  } )
                 .Select( _ => Unit.Default )
                 .InvokeCommand( ViewModel , x => x.DrawGridCommand ) );
@@ -221,6 +239,10 @@ namespace VirtualHierarchyGrid
                                               .ToArray();
                      var desiredState = defs.AsParallel().Any( x => x.IsExpanded );
                      defs.ForEach( x => x.IsExpanded = !desiredState );
+
+                     Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                             ViewModel.Height, ViewModel.Scale, false) )
+                         .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
                  } )
                 .Select( _ => Unit.Default )
                 .InvokeCommand( ViewModel , x => x.DrawGridCommand ) );
@@ -248,6 +270,10 @@ namespace VirtualHierarchyGrid
                      ViewModel.SelectedPositions.Clear();
                      ViewModel.RowsDefinitions.FlatList( true ).ForEach( x => x.IsExpanded = true );
                      ViewModel.ColumnsDefinitions.FlatList( true ).ForEach( x => x.IsExpanded = true );
+
+                     Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                             ViewModel.Height, ViewModel.Scale, false) )
+                         .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
                  } )
                 .Select( _ => Unit.Default )
                 .InvokeCommand( ViewModel , x => x.DrawGridCommand ) );
@@ -364,6 +390,15 @@ namespace VirtualHierarchyGrid
                 _cells.RemoveRange( idx , _cells.Count - idx );
         }
 
+        private void InvalidateCell( PositionedCell pCell , HierarchyGridCell cell )
+        {
+            var lkp = ViewModel.ResultSets.Lookup( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) );
+            if ( lkp.HasValue )
+                cell.ViewModel.ResultSet = lkp.Value;
+            else
+                cell.ViewModel.ResultSet = ResultSet.Default;
+        }
+
         private HierarchyGridCell CreateCell( PositionedCell pCell )
         {
             var vm = new HierarchyGridCellViewModel( ViewModel );
@@ -478,6 +513,10 @@ namespace VirtualHierarchyGrid
                 (int position, IDisposable drag) tag = ((int, IDisposable)) ( (GridSplitter) e.Source ).Tag;
                 var currentColumn = tag.position;
                 ViewModel.ColumnsWidths[currentColumn] = (double) Math.Max( ViewModel.ColumnsWidths[currentColumn] + e.HorizontalChange , 10d );
+
+                Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                        ViewModel.Height, ViewModel.Scale, false) )
+                    .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
             };
             var gridSplitter = BuildSplitter( ref splitterCount , 2 , height , GridResizeDirection.Columns , column , action );
 
@@ -568,6 +607,10 @@ namespace VirtualHierarchyGrid
                 (int position, IDisposable drag) tag = ((int, IDisposable)) ( (GridSplitter) e.Source ).Tag;
                 var currentRow = tag.position;
                 ViewModel.RowsHeights[currentRow] = (double) Math.Max( ViewModel.RowsHeights[currentRow] + e.VerticalChange , 10d );
+
+                Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                        ViewModel.Height, ViewModel.Scale, false) )
+                    .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
             };
             var gridSplitter = BuildSplitter( ref splitterCount , width , 2 , GridResizeDirection.Rows , row , action );
 
@@ -643,6 +686,10 @@ namespace VirtualHierarchyGrid
                      {
                          ViewModel.SelectedPositions.Clear();
                          hdef.IsExpanded = !hdef.IsExpanded;
+
+                         Observable.Return( (ViewModel.HorizontalOffset, ViewModel.VerticalOffset, ViewModel.Width,
+                                 ViewModel.Height, ViewModel.Scale, false) )
+                             .InvokeCommand( ViewModel , x => x.FindCellsToDrawCommand );
                      } )
                     .Select( _ => Unit.Default )
                     .InvokeCommand( ViewModel , x => x.DrawGridCommand ) );

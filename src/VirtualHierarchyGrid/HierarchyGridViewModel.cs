@@ -19,6 +19,7 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using Splat;
 
 namespace VirtualHierarchyGrid
 {
@@ -72,7 +73,7 @@ namespace VirtualHierarchyGrid
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
-        public ReactiveCommand<(int, int, double, double, double) , PositionedCell[]> FindCellsToDrawCommand { get; private set; }
+        public ReactiveCommand<(int, int, double, double, double, bool) , (PositionedCell[], bool)> FindCellsToDrawCommand { get; private set; }
         public ReactiveCommand<(PositionedCell[], bool) , Unit> DrawCellsCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> DrawGridCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> BuildResultSetsCommand { get; private set; }
@@ -109,6 +110,20 @@ namespace VirtualHierarchyGrid
             InitializeCommands( this );
 
             TextAlignment = TextAlignment.Right;
+
+            DrawGridCommand.IsExecuting
+                .Subscribe( b => this.Log().Debug( "DrawGridCommand running: {0}" , b ) );
+            FindCellsToDrawCommand.IsExecuting
+                .Subscribe( b => this.Log().Debug( "FindCellsToDrawCommand running: {0}" , b ) );
+            DrawCellsCommand.IsExecuting
+                .Subscribe( b => this.Log().Debug( "DrawCellsCommand running: {0}" , b ) );
+
+            //DrawGridCommand.CanExecute
+            //    .Subscribe( b => this.Log().Debug( "DrawGridCommand CanExecute: {0}" , b ) );
+            //FindCellsToDrawCommand.CanExecute
+            //    .Subscribe( b => this.Log().Debug( "FindCellsToDrawCommand CanExecute: {0}" , b ) );
+            //DrawCellsCommand.CanExecute
+            //    .Subscribe( b => this.Log().Debug( "DrawCellsCommand CanExecute: {0}" , b ) );
 
             this.WhenActivated( disposables =>
             {
@@ -149,17 +164,17 @@ namespace VirtualHierarchyGrid
                     .DisposeWith( disposables );
 
                 /* Redraw grid when scrolling or changing scale */
-                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Scale )
+                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Scale , x => x.Width , x => x.Height )
+                    .Throttle( TimeSpan.FromMilliseconds( 15 ) )
                     .DistinctUntilChanged()
                     .Select( _ => Unit.Default )
-                    .Throttle( TimeSpan.FromMilliseconds( 15 ) )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
-                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Width , x => x.Height ,
-                        x => x.Scale )
+                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Width , x => x.Height , x => x.Scale )
                     .Throttle( TimeSpan.FromMilliseconds( 15 ) )
                     .DistinctUntilChanged()
+                    .Select( t => (t.Item1, t.Item2, t.Item3, t.Item4, t.Item5, false) )
                     .InvokeCommand( FindCellsToDrawCommand )
                     .DisposeWith( disposables );
 
@@ -211,8 +226,11 @@ namespace VirtualHierarchyGrid
                     .DisposeWith( disposables );
 
                 /* Toggle edit mode off */
-                DrawGridCommand.SubscribeSafe( _ => IsEditing = false )
+                DrawGridCommand
+                    .SubscribeSafe( _ => IsEditing = false )
                     .DisposeWith( disposables );
+
+
 
                 /* Clear textbox when exiting edition mode */
                 this.WhenAnyValue( x => x.IsEditing )
@@ -222,7 +240,7 @@ namespace VirtualHierarchyGrid
                     .InvokeCommand( EndEditionCommand )
                     .DisposeWith( disposables );
 
-                /* When clearing highlights, definitions should be resetted too */
+                /* When clearing highlights, definitions should be reset too */
                 Highlights.Connect()
                     .SubscribeSafe( c =>
                     {
@@ -243,13 +261,17 @@ namespace VirtualHierarchyGrid
                     .DisposeWith( disposables );
 
                 FindCellsToDrawCommand
-                    .Select( pCells => (pCells, false) )
                     .InvokeCommand( DrawCellsCommand )
                     .DisposeWith( disposables );
 
                 /* Redraw grid when cache has been updated */
-                this.BuildResultSetsCommand
+                BuildResultSetsCommand
                     .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
+                BuildResultSetsCommand
+                    .Select( _ => (HorizontalOffset, VerticalOffset, Width, Height, Scale, true) )
+                    .InvokeCommand( FindCellsToDrawCommand )
                     .DisposeWith( disposables );
 
                 SelectedPositions.Connect()
@@ -288,6 +310,9 @@ namespace VirtualHierarchyGrid
         private static void InitializeCommands( HierarchyGridViewModel @this )
         {
             @this.DrawGridCommand = ReactiveCommand.CreateFromObservable( () => @this.DrawGridInteraction.Handle( Unit.Default ) );
+            @this.DrawGridCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
             @this.DrawCellsCommand = ReactiveCommand.CreateFromObservable( ( (PositionedCell[], bool) t ) => @this.DrawCellsInteraction.Handle( t ) );
             @this.EditCommand = ReactiveCommand.CreateFromObservable<(int, int, ResultSet) , Unit>( t => @this.EditInteraction.Handle( t ) );
             @this.EndEditionCommand = ReactiveCommand.CreateFromObservable( () => @this.EndEditionInteraction.Handle( Unit.Default ) );
@@ -348,12 +373,12 @@ namespace VirtualHierarchyGrid
                       } ) );
 
             @this.FindCellsToDrawCommand =
-                ReactiveCommand.CreateFromObservable( ( (int, int, double, double, double) t ) =>
+                ReactiveCommand.CreateFromObservable( ( (int, int, double, double, double, bool) t ) =>
                     Observable.Start( () =>
                     {
-                        var (hIndex, vIndex, width, height, scale) = t;
+                        var (hIndex, vIndex, width, height, scale, invalidate) = t;
                         var cells = @this.ChooseDrawnCells( hIndex , vIndex , width , height , scale );
-                        return cells;
+                        return (cells, invalidate);
                     } ) );
         }
 

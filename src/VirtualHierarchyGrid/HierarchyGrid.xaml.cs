@@ -43,16 +43,14 @@ namespace VirtualHierarchyGrid
                 viewModel.Log().Debug( "Drawing grid" );
                 view.DrawGrid( view.RenderSize );
                 ctx.SetOutput( Unit.Default );
-            } )
-                .DisposeWith( disposables );
+            } ).DisposeWith( disposables );
 
             viewModel.DrawCellsInteraction.RegisterHandler( ctx =>
-                {
-                    var (pCells, invalidate) = ctx.Input;
-                    view.DrawCells( pCells , invalidate );
-                    ctx.SetOutput( Unit.Default );
-                } )
-                .DisposeWith( disposables );
+            {
+                var (pCells, invalidate) = ctx.Input;
+                view.DrawCells( pCells , invalidate );
+                ctx.SetOutput( Unit.Default );
+            } ).DisposeWith( disposables );
 
             viewModel.EndEditionInteraction.RegisterHandler( ctx =>
             {
@@ -124,15 +122,15 @@ namespace VirtualHierarchyGrid
                     viewModel.Width = view.HierarchyGridCanvas.ActualWidth;
                 } );
 
-            view.HierarchyGridCanvas.Events()
-                .SizeChanged
-                .Throttle( TimeSpan.FromMilliseconds( 75 ) )
-                .ObserveOn( RxApp.MainThreadScheduler )
-                .SubscribeSafe( e =>
-                {
-                    view.DrawGrid( e.NewSize );
-                } )
-                .DisposeWith( disposables );
+            //view.HierarchyGridCanvas.Events()
+            //    .SizeChanged
+            //    .Throttle( TimeSpan.FromMilliseconds( 75 ) )
+            //    .ObserveOn( RxApp.MainThreadScheduler )
+            //    .SubscribeSafe( e =>
+            //    {
+            //        view.DrawGrid( e.NewSize );
+            //    } )
+            //    .DisposeWith( disposables );
 
             view.HierarchyGridCanvas.Events()
                 .MouseWheel
