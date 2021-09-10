@@ -102,15 +102,6 @@ namespace VirtualHierarchyGrid
                     rs => rs?.TooltipText.MatchUnsafe( s => !string.IsNullOrEmpty( s ) ? s : null , () => null ) )
                 .DisposeWith( disposables );
 
-            viewModel.ResultSet.TooltipText.Match( s =>
-            {
-                cell.ToolTip = s;
-            } , 
-                () =>
-            {
-                cell.ToolTip = null;
-            } );
-
             cell.OneWayBind( viewModel ,
                 vm => vm.ResultSet ,
                 v => v.TextBlockResult.Text ,
