@@ -33,6 +33,9 @@ namespace VirtualHierarchyGrid
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
 
+        internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; }
+            = new ConcurrentDictionary<(Guid, Guid) , ResultSet>();
+
         private ReadOnlyObservableCollection<ResultSet> _selectedResultSets;
         public ReadOnlyObservableCollection<ResultSet> SelectedResultSets => _selectedResultSets;
 
@@ -202,8 +205,6 @@ namespace VirtualHierarchyGrid
                     .SubscribeSafe( _ => IsEditing = false )
                     .DisposeWith( disposables );
 
-
-
                 /* Clear textbox when exiting edition mode */
                 this.WhenAnyValue( x => x.IsEditing )
                     .DistinctUntilChanged()
@@ -329,7 +330,7 @@ namespace VirtualHierarchyGrid
                     Observable.Start( () =>
                     {
                         var (hIndex, vIndex, width, height, scale, invalidate) = t;
-                        var cells = @this.ChooseDrawnCells( hIndex , vIndex , width , height , scale );
+                        var cells = @this.ChooseDrawnCells( hIndex , vIndex , width , height , scale , invalidate );
                         return (cells, invalidate);
                     } ) );
         }
@@ -348,7 +349,7 @@ namespace VirtualHierarchyGrid
             ColumnsHeadersHeight = Enumerable.Range( 0 , ColumnsDefinitions.TotalDepth( true ) )
                 .Select( _ => DEFAULT_HEADER_HEIGHT )
                 .ToArray();
-                
+
             var columnsCount = ColumnsDefinitions.TotalCount( true );
             if ( !preserveSizes || columnsCount != ColumnsWidths.Count )
             {
@@ -392,9 +393,9 @@ namespace VirtualHierarchyGrid
             HoveredColumn = -1;
         }
 
-        private PositionedCell[] ChooseDrawnCells( int hIndex , int vIndex , double width , double height , double scale )
+        private PositionedCell[] ChooseDrawnCells( int hIndex , int vIndex , double width , double height , double scale , bool invalidate )
         {
-            IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
+            static IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
                 Dictionary<int , double> sizes , T[] definitions ) where T : HierarchyDefinition
             {
                 int index = 0;
@@ -419,6 +420,9 @@ namespace VirtualHierarchyGrid
                 }
             }
 
+            if ( invalidate )
+                ResultSets.Clear();
+
             var rowDefinitions = RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ColumnsDefinitions.Leaves().ToArray();
             // Determine which cells can be drawn.
@@ -431,17 +435,35 @@ namespace VirtualHierarchyGrid
             var columns = FindCells( firstColumn , RowsHeadersWidth?.Sum() ?? 0d , availableWidth , ColumnsWidths , colDefinitions ).ToArray();
             var rows = FindCells( firstRow , ColumnsHeadersHeight?.Sum() ?? 0d , availableHeight , RowsHeights , rowDefinitions ).ToArray();
 
-            return columns.SelectMany( c => rows.Select( r => new PositionedCell
+            var pCells = columns.AsParallel().SelectMany( c => rows.Select( r =>
             {
-                Left = c.coord ,
-                Width = c.size ,
-                Top = r.coord ,
-                Height = r.size ,
-                HorizontalPosition = c.index ,
-                VerticalPosition = r.index ,
-                ConsumerDefinition = ( IsTransposed ? r.definition : c.definition ) as ConsumerDefinition ,
-                ProducerDefinition = ( IsTransposed ? c.definition : r.definition ) as ProducerDefinition
+                var pCell = new PositionedCell
+                {
+                    Left = c.coord ,
+                    Width = c.size ,
+                    Top = r.coord ,
+                    Height = r.size ,
+                    HorizontalPosition = c.index ,
+                    VerticalPosition = r.index ,
+                    ConsumerDefinition = ( IsTransposed ? r.definition : c.definition ) as ConsumerDefinition ,
+                    ProducerDefinition = ( IsTransposed ? c.definition : r.definition ) as ProducerDefinition
+                };
+
+                if ( !ResultSets.TryGetValue( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) , out var rSet ) )
+                {
+                    rSet = HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition );
+                }
+                pCell.ResultSet = rSet;
+
+                return pCell;
             } ) ).ToArray();
+
+            ResultSets.Clear();
+            pCells
+                .AsParallel()
+                .ForAll( pCell => ResultSets.TryAdd( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) , pCell.ResultSet ) );
+
+            return pCells;
         }
 
         public string ExportCsv( string separator )

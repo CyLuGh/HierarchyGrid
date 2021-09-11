@@ -14,6 +14,7 @@ namespace VirtualHierarchyGrid
         public double Left { get; set; }
         public double Height { get; set; }
         public double Width { get; set; }
+        public ResultSet ResultSet { get; set; }
 
         public bool Equals( [AllowNull] PositionedCell other )
         {

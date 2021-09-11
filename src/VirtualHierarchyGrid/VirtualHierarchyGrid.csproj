@@ -15,7 +15,7 @@
 
 		<Authors>Demortier Jeremy</Authors>
 		<Description>Double dimension hierarchy grid</Description>
-		<Version>0.5.4</Version>
+		<Version>0.5.5</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 

@@ -299,8 +299,7 @@ namespace VirtualHierarchyGrid
 
         private void InvalidateCell( PositionedCell pCell , HierarchyGridCell cell )
         {
-            cell.ViewModel.ResultSet =
-                HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition );
+            cell.ViewModel.ResultSet = pCell.ResultSet;
         }
 
         private HierarchyGridCell CreateCell( PositionedCell pCell )
