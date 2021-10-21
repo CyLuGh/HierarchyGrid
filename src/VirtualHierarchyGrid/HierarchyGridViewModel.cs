@@ -192,6 +192,7 @@ namespace VirtualHierarchyGrid
 
                 this.WhenAnyValue( x => x.EnableCrosshair )
                     .Where( ec => ec == false )
+                    .Do( _ => ClearCrosshair() )
                     .Select( _ => Unit.Default )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
@@ -335,6 +336,12 @@ namespace VirtualHierarchyGrid
                     } ) );
         }
 
+        public void ClearCrosshair()
+        {
+            HoveredColumn = -1;
+            HoveredRow = -1;
+        }
+
         public void Set( HierarchyDefinitions hierarchyDefinitions , bool preserveSizes = false )
         {
             Clear( preserveSizes );
@@ -389,8 +396,7 @@ namespace VirtualHierarchyGrid
             HorizontalOffset = 0;
             VerticalOffset = 0;
 
-            HoveredRow = -1;
-            HoveredColumn = -1;
+            ClearCrosshair();
         }
 
         private PositionedCell[] ChooseDrawnCells( int hIndex , int vIndex , double width , double height , double scale , bool invalidate )
