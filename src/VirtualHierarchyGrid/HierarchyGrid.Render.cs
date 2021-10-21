@@ -126,8 +126,16 @@ namespace VirtualHierarchyGrid
             {
                 this.Log().Debug( hoveredCell );
                 hoveredCell.ViewModel.IsHovered = true;
-                ViewModel.HoveredColumn = hoveredCell.ViewModel.ColumnIndex;
-                ViewModel.HoveredRow = hoveredCell.ViewModel.RowIndex;
+
+                if ( ViewModel.EnableCrosshair )
+                {
+                    ViewModel.HoveredColumn = hoveredCell.ViewModel.ColumnIndex;
+                    ViewModel.HoveredRow = hoveredCell.ViewModel.RowIndex;
+                }
+                else
+                {
+                    ViewModel.ClearCrosshair();
+                }
             }
         }
 

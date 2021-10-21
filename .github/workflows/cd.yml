@@ -1,10 +1,9 @@
 name: VirtualHierarchyGrid integration
 
 on:
-  pull_request:
+  push:
     branches:
       - main
-      
 env:
   configuration: Release
 
@@ -40,3 +39,14 @@ jobs:
       - name: Unit tests
         run: dotnet test --configuration=Release --verbosity=minimal --no-restore
         working-directory: src
+
+      - name: Pack
+        run: dotnet pack --configuration=Release --verbosity=minimal --no-restore
+        working-directory: src
+
+      - name: Push to nuget
+        run: dotnet nuget push **/HierarchyGrid.Definitions/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Push to nuget
+        run: dotnet nuget push **/VirtualHierarchyGrid/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+    

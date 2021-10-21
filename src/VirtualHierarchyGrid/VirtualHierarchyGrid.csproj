@@ -15,7 +15,7 @@
 
 		<Authors>Demortier Jeremy</Authors>
 		<Description>Double dimension hierarchy grid</Description>
-		<Version>0.5.5</Version>
+		<Version>0.5.6</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
@@ -24,8 +24,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="ReactiveUI.Fody" Version="16.2.1" />
-		<PackageReference Include="ReactiveUI.WPF" Version="16.2.1" />
+		<PackageReference Include="ReactiveUI.Fody" Version="16.2.6" />
+		<PackageReference Include="ReactiveUI.WPF" Version="16.2.6" />
 	</ItemGroup>
 
 	<ItemGroup>
