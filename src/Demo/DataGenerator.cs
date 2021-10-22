@@ -136,9 +136,9 @@ namespace Demo
                 o switch
                 {
                     string region => new (string description, Action<ResultSet> action)[] {
-                        ( $"Show {region}", (ResultSet rs) => {
-                            Console.WriteLine(rs.Result);
-                        })
+                        ( $"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                        ($"First|Second|Hide {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                        ($"First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
                     },
                     _ => new (string description, Action<ResultSet> action)[0]
                 };

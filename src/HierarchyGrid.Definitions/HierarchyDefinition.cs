@@ -61,8 +61,7 @@ namespace HierarchyGrid.Definitions
         internal ImmutableList<HierarchyDefinition> Children
             => _children.ToImmutableList();
 
-        protected LinkedList<HierarchyDefinition> _children
-            = new LinkedList<HierarchyDefinition>();
+        protected LinkedList<HierarchyDefinition> _children = new();
 
         /// <summary>
         /// True if there is at least a child element, false otherwise.
@@ -78,10 +77,14 @@ namespace HierarchyGrid.Definitions
             int cnt = 0;
 
             if ( HasChild && ( IsExpanded || ignoreState ) )
+            {
                 foreach ( var hdef in _children )
                     cnt += hdef.Count( ignoreState );
+            }
             else
+            {
                 cnt = 1;
+            }
 
             return cnt;
         }

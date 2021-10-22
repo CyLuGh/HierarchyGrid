@@ -71,7 +71,9 @@ namespace HierarchyGrid.Definitions
                 resultSet.Editor = Option<Func<string , bool>>.Some( edit );
             }
             else
+            {
                 resultSet.Editor = Option<Func<string , bool>>.None;
+            }
 
             if ( ContextItems != null )
             {
@@ -83,10 +85,14 @@ namespace HierarchyGrid.Definitions
                                           .ToArray() );
                 }
                 else
+                {
                     resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
+                }
             }
             else
+            {
                 resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
+            }
 
             resultSet.TooltipText =
                 TooltipCreator != null ? Option<string>.Some( TooltipCreator( inputSet.Input , data ) ) : Option<string>.None;

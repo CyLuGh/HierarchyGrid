@@ -205,24 +205,59 @@ namespace VirtualHierarchyGrid
                 .DisposeWith( disposables );
 
             viewModel.ShowContextMenuInteraction.RegisterHandler( ctx =>
-                 {
-                     var contextMenu = new ContextMenu { PlacementTarget = cell };
-                     //TODO: Add custom items for cell
-                     if ( ctx.Input.Length > 0 )
-                     {
-                         ctx.Input.ForEach( t =>
-                         {
-                             var (header, command) = t;
-                             contextMenu.Items.Add( new MenuItem { Header = header , Command = command } );
-                         } );
-                         contextMenu.Items.Add( new Separator() );
-                     }
+            {
+                var contextMenu = new ContextMenu { PlacementTarget = cell };
+                //TODO: Add custom items for cell
+                if ( ctx.Input.Length > 0 )
+                {
+                    var items = new Dictionary<(int, string) , MenuItem>();
 
-                     CreateDefaultContextMenuItems( viewModel )
-                         .ForEach( o => contextMenu.Items.Add( o ) );
-                     contextMenu.IsOpen = true;
-                     ctx.SetOutput( System.Reactive.Unit.Default );
-                 } )
+                    ctx.Input.ForEach( t =>
+                    {
+                        var (header, command) = t;
+                        var splits = header.Split( '|' );
+
+                        if ( splits.Length == 1 )
+                        {
+                            contextMenu.Items.Add( new MenuItem { Header = header , Command = command } );
+                        }
+                        else
+                        {
+                            MenuItem parent = null;
+                            for ( int i = 0 ; i < splits.Length ; i++ )
+                            {
+                                if ( i == splits.Length - 1 && parent != null )
+                                {
+                                    parent.Items.Add( new MenuItem { Header = splits[i] , Command = command } );
+                                }
+                                else
+                                {
+                                    if ( items.TryGetValue( (0, splits[i]) , out var mi ) )
+                                    {
+                                        parent = mi;
+                                    }
+                                    else
+                                    {
+                                        var menuItem = new MenuItem { Header = splits[i] };
+                                        if ( parent == null )
+                                            contextMenu.Items.Add( menuItem );
+                                        else parent.Items.Add( menuItem );
+
+                                        parent = menuItem;
+                                        items.Add( (i, splits[i]) , menuItem );
+                                    }
+                                }
+                            }
+                        }
+                    } );
+                    contextMenu.Items.Add( new Separator() );
+                }
+
+                CreateDefaultContextMenuItems( viewModel )
+                    .ForEach( o => contextMenu.Items.Add( o ) );
+                contextMenu.IsOpen = true;
+                ctx.SetOutput( System.Reactive.Unit.Default );
+            } )
                 .DisposeWith( disposables );
 
             cell.Events().MouseRightButtonDown
