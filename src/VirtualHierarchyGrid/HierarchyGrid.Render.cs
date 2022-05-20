@@ -12,7 +12,6 @@ using System.Windows.Media;
 using MoreLinq;
 using DynamicData;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Forms;
 using System.Windows.Input;
 using Splat;
 
@@ -20,7 +19,7 @@ using ReactiveMarbles.ObservableEvents;
 
 namespace VirtualHierarchyGrid
 {
-    partial class HierarchyGrid
+    public partial class HierarchyGrid
     {
         // Keep a cache of cells to be reused when redrawing -- it costs less to reuse than create
         private readonly List<HierarchyGridCell> _cells = new List<HierarchyGridCell>();
