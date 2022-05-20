@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Demo"
-        xmlns:virtualhierarchygrid="clr-namespace:VirtualHierarchyGrid;assembly=VirtualHierarchyGrid"
+        xmlns:hierarchyGrid="clr-namespace:HierarchyGrid;assembly=HierarchyGrid"
         mc:Ignorable="d"
         Title="CanvasWindow"
         Height="450"
@@ -13,12 +13,11 @@
         <TabControl>
             <TabItem Header="Vehicles">
                 <DockPanel>
-
                     <Button x:Name="FillButton"
                             Click="FillButton_Click"
                             Content="Fill"
                             DockPanel.Dock="Bottom" />
-                    <virtualhierarchygrid:HierarchyGrid x:Name="HierarchyGrid"
+                    <hierarchyGrid:Grid x:Name="HierarchyGrid"
                                                         Margin="10" />
                 </DockPanel>
             </TabItem>
@@ -30,12 +29,12 @@
                                 Content="Fill grid with folded elements"
                                 Click="FillFoldedGrid_Click" />
                         <Button Content="Save state"
-                                Click="SaveStateClick"/>
+                                Click="SaveStateClick" />
                         <Button Content="RestoreState"
-                                Click="RestoreStateClick"/>
+                                Click="RestoreStateClick" />
                     </UniformGrid>
-                    
-                    <virtualhierarchygrid:HierarchyGrid x:Name="FoldedSampleHierarchyGrid"
+
+                    <hierarchyGrid:Grid  x:Name="FoldedSampleHierarchyGrid"
                                                         Margin="10" />
                 </DockPanel>
             </TabItem>

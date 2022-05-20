@@ -23,7 +23,7 @@ using Splat;
 
 namespace VirtualHierarchyGrid
 {
-    public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewModel
+    public partial class PloufHierarchyGridViewModel : ReactiveObject, IActivatableViewModel
     {
         public ViewModelActivator Activator { get; }
 
@@ -101,7 +101,7 @@ namespace VirtualHierarchyGrid
         public ReactiveCommand<object , Unit> CopyToClipboardCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> ExportCsvFileCommand { get; private set; }
 
-        public HierarchyGridViewModel()
+        public PloufHierarchyGridViewModel()
         {
             Activator = new ViewModelActivator();
 
@@ -263,7 +263,7 @@ namespace VirtualHierarchyGrid
             } );
         }
 
-        private static void RegisterDefaultInteractions( HierarchyGridViewModel @this )
+        private static void RegisterDefaultInteractions( PloufHierarchyGridViewModel @this )
         {
             @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.DrawCellsInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
@@ -271,7 +271,7 @@ namespace VirtualHierarchyGrid
             @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
         }
 
-        private static void InitializeCommands( HierarchyGridViewModel @this )
+        private static void InitializeCommands( PloufHierarchyGridViewModel @this )
         {
             @this.DrawGridCommand = ReactiveCommand.CreateFromObservable( () => @this.DrawGridInteraction.Handle( Unit.Default ) );
             @this.DrawGridCommand.ThrownExceptions
@@ -293,12 +293,12 @@ namespace VirtualHierarchyGrid
                              @this.Highlights.Remove( (pos, isRow) );
                      } ) );
 
-            @this.CopyGridCommand =
-                ReactiveCommand.CreateFromObservable<bool , DataObject>( b =>
-                      Observable.Start( () =>
-                       {
-                           return @this.CopyToClipboard( string.Empty , b , @this.RowsDefinitions.Leaves() , @this.ColumnsDefinitions.Leaves() );
-                       } ) );
+            //@this.CopyGridCommand =
+            //    ReactiveCommand.CreateFromObservable<bool , DataObject>( b =>
+            //          Observable.Start( () =>
+            //           {
+            //               return @this.CopyToClipboard( string.Empty , b , @this.RowsDefinitions.Leaves() , @this.ColumnsDefinitions.Leaves() );
+            //           } ) );
 
             @this.CopyToClipboardCommand =
                 ReactiveCommand.Create<object , Unit>( data =>
@@ -526,10 +526,10 @@ namespace VirtualHierarchyGrid
                     // Add data
                     foreach ( var colDef in colLeaves )
                     {
-                        var resultSet = Resolve( rowDef , colDef );
-                        var str = resultSet.Some( rs => rs.Result )
-                           .None( () => string.Empty );
-                        sb.Append( str );
+                        //var resultSet = Resolve( rowDef , colDef );
+                        //var str = resultSet.Some( rs => rs.Result )
+                        //   .None( () => string.Empty );
+                        //sb.Append( str );
                         sb.Append( separator );
                     }
                 }

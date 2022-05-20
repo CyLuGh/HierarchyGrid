@@ -6,8 +6,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/VirtualHierarchyGrid;component/Icons.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/VirtualHierarchyGrid;component/GruvBoxBrushes.xaml" />
+                <!--<ResourceDictionary Source="pack://application:,,,/VirtualHierarchyGrid;component/Icons.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/VirtualHierarchyGrid;component/GruvBoxBrushes.xaml" />-->
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

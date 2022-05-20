@@ -26,9 +26,11 @@
 		</PackageReference>
 		<PackageReference Include="ReactiveUI.Fody" Version="18.0.10" />
 		<PackageReference Include="ReactiveUI.WPF" Version="18.0.10" />
+		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.80.3" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+		<ProjectReference Include="..\HierarchyGrid.Skia\HierarchyGrid.Skia.csproj" />
 	</ItemGroup>
 </Project>

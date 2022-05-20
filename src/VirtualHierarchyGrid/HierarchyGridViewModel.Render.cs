@@ -10,7 +10,7 @@ using ReactiveUI;
 
 namespace VirtualHierarchyGrid
 {
-    partial class HierarchyGridViewModel
+    public partial class PloufHierarchyGridViewModel
     {
         public static double DEFAULT_HEADER_WIDTH => 80;
         public static double DEFAULT_HEADER_HEIGHT => 30;

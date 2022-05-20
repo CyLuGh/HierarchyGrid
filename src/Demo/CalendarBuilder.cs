@@ -10,7 +10,7 @@ namespace Demo
     {
         private string[] _users;
 
-        public CalendarBuilder(params string[] users)
+        public CalendarBuilder( params string[] users )
         {
             _users = users;
         }
@@ -34,38 +34,38 @@ namespace Demo
                                         Producer = () => (year, month, user)
                                     } );
                                 } );
-                            monthlyProducer.IsExpanded = year == DateTime.Today.Year && month == DateTime.Today.Month;
+                            //monthlyProducer.IsExpanded = year == DateTime.Today.Year && month == DateTime.Today.Month;
                         } );
 
-                    yearlyProducer.IsExpanded = year == DateTime.Today.Year;
+                    //yearlyProducer.IsExpanded = year == DateTime.Today.Year;
                     return yearlyProducer;
-                });
+                } );
 
-        public IEnumerable<ConsumerDefinition> GetConsumers() 
-            => Enumerable.Range(1,31)
-                .Select ( day =>
-                {
-                    var consumer = new ConsumerDefinition
-                    {
-                        Content = $"{day}",
-                        Consumer = o =>
-                        {
-                            if ( o is ValueTuple<int , int , string> tuple )
-                            {
-                                var (year, month, user) = tuple;
-                                
-                                if ( day <= DateTime.DaysInMonth( year , month ) ) 
-                                {
-                                    var date = new DateTime( year , month , day );
-                                    return (date,user);
-                                }
-                            }
+        public IEnumerable<ConsumerDefinition> GetConsumers()
+            => Enumerable.Range( 1 , 31 )
+                .Select( day =>
+               {
+                   var consumer = new ConsumerDefinition
+                   {
+                       Content = $"{day}" ,
+                       Consumer = o =>
+                       {
+                           if ( o is ValueTuple<int , int , string> tuple )
+                           {
+                               var (year, month, user) = tuple;
 
-                            return string.Empty;
-                        }
-                    };
+                               if ( day <= DateTime.DaysInMonth( year , month ) )
+                               {
+                                   var date = new DateTime( year , month , day );
+                                   return (date, user);
+                               }
+                           }
 
-                    return consumer;
-                });
+                           return string.Empty;
+                       }
+                   };
+
+                   return consumer;
+               } );
     }
 }

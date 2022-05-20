@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.80.3" />
+    <PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+  </ItemGroup>
+
+</Project>

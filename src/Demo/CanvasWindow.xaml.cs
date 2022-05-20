@@ -1,5 +1,4 @@
-﻿using VirtualHierarchyGrid;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -137,19 +136,18 @@ namespace Demo
         {
             var calendarBuilder = new CalendarBuilder( "#1" , "#2" , "#3" );
             var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
-            FoldedSampleHierarchyGrid.ViewModel.Set( definitions, true );
+            FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
         }
 
-
         private void SaveStateClick( object sender , RoutedEventArgs e )
         {
-            _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
+            //_gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
         }
 
         private void RestoreStateClick( object sender , RoutedEventArgs e )
         {
-            FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
+            //FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
         }
     }
 }

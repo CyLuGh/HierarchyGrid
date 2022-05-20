@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VirtualHierarchyGrid\VirtualHierarchyGrid.csproj" />
+    <ProjectReference Include="..\HierarchyGrid\HierarchyGrid.csproj" />
   </ItemGroup>
 </Project>
