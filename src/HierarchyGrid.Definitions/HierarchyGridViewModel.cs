@@ -274,6 +274,7 @@ namespace HierarchyGrid.Definitions
                 {
                     var size = sizes[frozen.Position];
                     yield return (space, size, cnt++, frozen);
+                    index++;
                     space += size;
                 }
 

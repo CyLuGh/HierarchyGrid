@@ -45,7 +45,7 @@ namespace HierarchyGrid.Definitions
         public static ResultSet Default { get; } = new ResultSet { Qualifier = Qualification.Empty };
 
         public string Result { get; set; }
-        public Qualification Qualifier { get; set; }
+        public Qualification Qualifier { get; init; }
         public Option<(byte a, byte r, byte g, byte b)> BackgroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
         public Option<(byte a, byte r, byte g, byte b)> ForegroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
         public Option<string> TooltipText { get; set; }

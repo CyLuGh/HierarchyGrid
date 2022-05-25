@@ -36,7 +36,6 @@ namespace HierarchyGrid
             viewModel.DrawGridInteraction
                 .RegisterHandler( ctx =>
                 {
-                    //view.Canvas.Children.Clear();
                     view.SkiaElement.InvalidateVisual();
                     ctx.SetOutput( Unit.Default );
                 } )
@@ -49,11 +48,13 @@ namespace HierarchyGrid
 
                     cell.ResultSet.Editor.IfSome( editor =>
                     {
-                        view.Canvas.Children.Clear();
+                        ClearTextBoxes( view );
                         var textBox = new TextBox
                         {
                             Width = cell.Width ,
-                            Height = cell.Height
+                            Height = cell.Height ,
+                            VerticalContentAlignment = System.Windows.VerticalAlignment.Center ,
+                            TextAlignment = System.Windows.TextAlignment.Right
                         };
 
                         Canvas.SetLeft( textBox , cell.Left );
@@ -91,7 +92,7 @@ namespace HierarchyGrid
             viewModel.EndEditionInteraction
                 .RegisterHandler( ctx =>
                 {
-                    view.Canvas.Children.Clear();
+                    ClearTextBoxes( view );
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -180,6 +181,13 @@ namespace HierarchyGrid
                 .DisposeWith( disposables );
 
             view.SkiaElement.InvalidateVisual();
+        }
+
+        private static void ClearTextBoxes( Grid view )
+        {
+            var textBoxes = view.Canvas.Children.OfType<TextBox>().ToArray();
+            foreach ( var textBox in textBoxes )
+                view.Canvas.Children.Remove( textBox );
         }
     }
 }

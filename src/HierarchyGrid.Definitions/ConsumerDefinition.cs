@@ -26,21 +26,22 @@ namespace HierarchyGrid.Definitions
 
         public Func<object , (string description, Action<ResultSet> action)[]> ContextItems { get; set; }
 
+        private Qualification GetQualification( InputSet inputSet , object data )
+            => inputSet.Qualifier != Qualification.Unset
+                ? inputSet.Qualifier
+                : Qualify != null ? Qualify( data ) : Qualification.Normal;
+
         public ResultSet Process( InputSet inputSet )
         {
+            var data = Consumer != null ? Consumer( inputSet.Input ) : inputSet.Input;
+
             var resultSet = new ResultSet
             {
                 ProducerId = inputSet.ProducerId ,
-                ConsumerId = Guid
+                ConsumerId = Guid ,
+                Qualifier = GetQualification( inputSet , data ) ,
+                Result = Formatter != null ? Formatter( data ) : data.ToString()
             };
-
-            var data = Consumer != null ? Consumer( inputSet.Input ) : inputSet.Input;
-            resultSet.Result = Formatter != null ? Formatter( data ) : data.ToString();
-
-            if ( inputSet.Qualifier != Qualification.Unset )
-                resultSet.Qualifier = inputSet.Qualifier;
-            else
-                resultSet.Qualifier = Qualify != null ? Qualify( data ) : Qualification.Normal;
 
             inputSet.CustomColors.Match( c =>
                 {

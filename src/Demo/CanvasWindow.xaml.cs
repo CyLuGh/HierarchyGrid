@@ -29,6 +29,8 @@ namespace Demo
             InitializeComponent();
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
+            TestGrid.ViewModel = new HierarchyGridViewModel();
+            TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
@@ -38,7 +40,7 @@ namespace Demo
                     var hpd = new ProducerDefinition
                     {
                         Content = x.ToString() ,
-                        //Producer = () => x,
+                        Producer = () => x ,
                         IsExpanded = true
                     };
 
@@ -68,7 +70,7 @@ namespace Demo
                 {
                     Content = idx.ToString() ,
                     Producer = () => idx ,
-                    //Classification = () => idx == 3 ? CellClassification.Remark : CellClassification.Normal
+                    //Qualify = () => idx == 3 ? Qualification.Remark : Qualification.Normal
                 } );
 
                 if ( addChild )

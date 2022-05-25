@@ -1,4 +1,5 @@
 ﻿using HierarchyGrid.Definitions;
+using LanguageExt;
 using SkiaSharp;
 using SkiaSharp.HarfBuzz;
 using System.Data.Common;
@@ -67,9 +68,11 @@ namespace HierarchyGrid.Skia
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
 
+            var renderInfo = RenderInfo.FindRender( viewModel , default( HierarchyDefinition ) );
+
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
-            paint.Color = SKColors.Violet;
+            paint.Color = renderInfo.BackgroundColor;
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
@@ -235,25 +238,64 @@ namespace HierarchyGrid.Skia
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
 
+            var renderInfo = RenderInfo.FindRender( viewModel , hdef );
+
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
-            paint.Color = FindColor( viewModel , hdef );
+            paint.Color = renderInfo.BackgroundColor;
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
             paint.Color = SKColors.SlateGray;
             canvas.DrawRect( rect , paint );
 
+            GetHeaderDecorator( hdef , left , top )
+                .IfSome( decorator =>
+                {
+                    paint.Style = SKPaintStyle.StrokeAndFill;
+                    canvas.DrawPath( decorator , paint );
+                } );
+
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
-            TextDrawer.AddText( hdef.Content.ToString() , new Style { FontSize = TextSize , TextColor = SKColors.DarkSlateGray } );
-            TextDrawer.MaxHeight = (float) height;
-            TextDrawer.MaxWidth = (float) width;
+            TextDrawer.AddText( hdef.Content.ToString() , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
+            TextDrawer.MaxHeight = (float) height - 10;
+            TextDrawer.MaxWidth = (float) width - 22;
 
-            TextDrawer.Paint( canvas , new SKPoint( (float) left + 2 , (float) top + 2 ) , TextPaintOptions );
+            TextDrawer.Paint( canvas , new SKPoint( (float) left + 20 , (float) top + 6 ) , TextPaintOptions );
             viewModel.HeadersCoordinates.Add( new( new( left , top , left + width , top + height ) , hdef ) );
 
             headerCount++;
+        }
+
+        private static Option<SKPath> GetHeaderDecorator( HierarchyDefinition hdef , double left , double top )
+        {
+            if ( !hdef.HasChild )
+                return Option<SKPath>.None;
+
+            return hdef.IsExpanded ? BuildExpandedPath( left , top ) : BuildFoldedPath( left , top );
+        }
+
+        private static SKPath BuildFoldedPath( double left , double top )
+        {
+            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            var startPoint = new SKPoint( 3f + (float) left , 5f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 8f , startPoint.Y + 8f );
+            path.LineTo( startPoint.X , startPoint.Y + 16f );
+            path.Close();
+            return path;
+        }
+
+        private static SKPath BuildExpandedPath( double left , double top )
+        {
+            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            var startPoint = new SKPoint( 3f + (float) left , 9f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 16f , startPoint.Y );
+            path.LineTo( startPoint.X + 8f , startPoint.Y + 8f );
+            path.Close();
+            return path;
         }
 
         internal static void DrawCells( this SKCanvas canvas , HierarchyGridViewModel viewModel , PositionedCell[] cells )
@@ -266,9 +308,11 @@ namespace HierarchyGrid.Skia
         {
             var rect = SKRect.Create( (float) cell.Left , (float) cell.Top , (float) cell.Width , (float) cell.Height );
 
+            var renderInfo = RenderInfo.FindRender( viewModel , cell );
+
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
-            paint.Color = FindColor( viewModel , cell );
+            paint.Color = renderInfo.BackgroundColor;
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
@@ -276,54 +320,18 @@ namespace HierarchyGrid.Skia
             paint.Color = SKColors.SlateGray;
             canvas.DrawRect( rect , paint );
 
+            var textHPadding = 6f;
+            var textVPadding = (float) cell.Height - TextSize;
+
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Right;
-            TextDrawer.AddText( cell.ResultSet.Result , new Style { FontSize = TextSize , TextColor = SKColors.DarkSlateGray } );
+            TextDrawer.AddText( cell.ResultSet.Result , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
             TextDrawer.MaxHeight = (float) cell.Height;
-            TextDrawer.MaxWidth = (float) cell.Width;
+            TextDrawer.MaxWidth = (float) cell.Width - textHPadding;
 
-            TextDrawer.Paint( canvas , new SKPoint( (float) cell.Left , (float) cell.Top + 2 ) , TextPaintOptions );
+            TextDrawer.Paint( canvas , new SKPoint( (float) cell.Left + ( textHPadding / 2 ) , (float) cell.Top + ( textVPadding / 2 ) ) , TextPaintOptions );
             viewModel.CellsCoordinates.Add( (new( cell ), cell) );
         }
-
-        private static SKColor FindColor( HierarchyGridViewModel viewModel , PositionedCell cell )
-        {
-            if ( cell.VerticalPosition == viewModel.HoveredRow
-                && cell.HorizontalPosition == viewModel.HoveredColumn )
-            {
-                return SKColors.IndianRed;
-            }
-
-            if ( viewModel.EnableCrosshair
-                && ( cell.VerticalPosition == viewModel.HoveredRow
-                    || cell.HorizontalPosition == viewModel.HoveredColumn ) )
-            {
-                return SKColors.IndianRed;
-            }
-
-            if ( cell.ProducerDefinition.IsHighlighted || cell.ConsumerDefinition.IsHighlighted )
-                return SKColors.Firebrick;
-
-            return SKColors.LightYellow;
-        }
-
-        private static SKColor FindColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
-        {
-            var hoveredCell = viewModel.FindHoveredCell();
-            return hoveredCell.Match( cell =>
-            {
-                if ( ( hdef is ConsumerDefinition consumer && cell.ConsumerDefinition.Equals( consumer ) )
-                    || ( hdef is ProducerDefinition producer && cell.ProducerDefinition.Equals( producer ) ) )
-                {
-                    return SKColors.Blue;
-                }
-
-                return FindColor( hdef );
-            } , () => FindColor( hdef ) );
-        }
-
-        private static SKColor FindColor( HierarchyDefinition hdef )
-            => hdef.IsHighlighted ? SKColors.Brown : SKColors.LightBlue;
 
         private static TextBlock TextDrawer { get; } = new TextBlock();
         private static TextPaintOptions TextPaintOptions { get; } = new TextPaintOptions { Edging = SKFontEdging.Antialias };

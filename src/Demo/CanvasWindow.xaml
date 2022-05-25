@@ -38,6 +38,9 @@
                                                         Margin="10" />
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Test">
+                <hierarchyGrid:Grid x:Name="TestGrid" Margin="10" />
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>
