@@ -1,4 +1,6 @@
-﻿namespace HierarchyGrid.Definitions
+﻿using System;
+
+namespace HierarchyGrid.Definitions
 {
     public record ElementCoordinates
     {
@@ -15,5 +17,8 @@
 
         public bool Contains( double x , double y )
             => Left <= x && x <= Right && Top <= y && y <= Bottom;
+
+        public double Height => Math.Abs( Top - Bottom );
+        public double Width => Math.Abs( Right - Left );
     }
 }

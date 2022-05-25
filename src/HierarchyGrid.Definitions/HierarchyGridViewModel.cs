@@ -78,6 +78,8 @@ namespace HierarchyGrid.Definitions
         public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public CombinedReactiveCommand<bool , Unit> EndAndDrawCommand { get; private set; }
 
+        public Queue<IDisposable> ResizeObservables { get; } = new();
+
         public HierarchyGridViewModel()
         {
             Activator = new ViewModelActivator();

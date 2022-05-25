@@ -5,12 +5,16 @@ using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
@@ -37,6 +41,8 @@ namespace HierarchyGrid
                 .RegisterHandler( ctx =>
                 {
                     view.SkiaElement.InvalidateVisual();
+                    DrawSplitters( view , viewModel );
+
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -48,7 +54,7 @@ namespace HierarchyGrid
 
                     cell.ResultSet.Editor.IfSome( editor =>
                     {
-                        ClearTextBoxes( view );
+                        Clear<TextBox>( view );
                         var textBox = new TextBox
                         {
                             Width = cell.Width ,
@@ -92,7 +98,7 @@ namespace HierarchyGrid
             viewModel.EndEditionInteraction
                 .RegisterHandler( ctx =>
                 {
-                    ClearTextBoxes( view );
+                    Clear<TextBox>( view );
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -183,11 +189,109 @@ namespace HierarchyGrid
             view.SkiaElement.InvalidateVisual();
         }
 
-        private static void ClearTextBoxes( Grid view )
+        private static void DrawSplitters( Grid view , HierarchyGridViewModel viewModel )
         {
-            var textBoxes = view.Canvas.Children.OfType<TextBox>().ToArray();
-            foreach ( var textBox in textBoxes )
-                view.Canvas.Children.Remove( textBox );
+            foreach ( var disposables in viewModel.ResizeObservables )
+                disposables.Dispose();
+
+            viewModel.ResizeObservables.Clear();
+
+            //Clear<GridSplitter>( view );
+            var splitters = view.Canvas.Children.OfType<GridSplitter>().ToArray();
+
+            GridSplitter GetSplitter( int idx )
+            {
+                if ( idx < splitters.Length )
+                {
+                    return splitters[idx];
+                }
+                else
+                {
+                    var splitter = new GridSplitter
+                    {
+                        BorderThickness = new Thickness( 1d ) ,
+                        BorderBrush = Brushes.Red ,
+                    };
+                    view.Canvas.Children.Add( splitter );
+                    return splitter;
+                }
+            }
+
+            int splitterCount = 0;
+
+            var headers = viewModel.HeadersCoordinates
+                                    .Where( x => x.Definition.Count() == 1 )
+                                    .ToArray();
+
+            foreach ( var c in headers.Where( t => t.Definition is ConsumerDefinition ) )
+            {
+                var coord = c.Coord;
+                var splitter = GetSplitter( splitterCount++ );
+                splitter.Height = coord.Height;
+                splitter.Width = 2;
+                splitter.ResizeDirection = GridResizeDirection.Columns;
+                //splitter.Events()
+                //    .DragCompleted
+                //    .Subscribe( args => { } );
+                Canvas.SetTop( splitter , coord.Top );
+                Canvas.SetLeft( splitter , coord.Right );
+            }
+
+            foreach ( var p in headers.Where( t => t.Definition is ProducerDefinition ) )
+            {
+                var coord = p.Coord;
+                var splitter = GetSplitter( splitterCount++ );
+                splitter.Height = 2;
+                splitter.Width = coord.Width;
+                splitter.ResizeDirection = GridResizeDirection.Rows;
+                Canvas.SetTop( splitter , coord.Bottom );
+                Canvas.SetLeft( splitter , coord.Left );
+            }
+
+            var currentX = 0d;
+            var currentY =
+                viewModel.ColumnsHeadersHeight != null
+                ? viewModel.ColumnsHeadersHeight.Take( viewModel.ColumnsHeadersHeight.Length - 1 ).Sum()
+                : 0d;
+            var height = viewModel.ColumnsHeadersHeight?.LastOrDefault( 0d ) ?? 0d;
+            for ( int i = 0 ; i < viewModel.RowsHeadersWidth?.Length ; i++ )
+            {
+                var currentIndex = i;
+                var width = viewModel.RowsHeadersWidth[currentIndex];
+                var splitter = GetSplitter( splitterCount++ );
+                splitter.Height = height;
+                splitter.Width = 2;
+                splitter.ResizeDirection = GridResizeDirection.Columns;
+                currentX += width;
+
+                var dsp = splitter.Events().DragCompleted
+                    .Do( args =>
+                    {
+                        viewModel.RowsHeadersWidth[currentIndex] =
+                            Math.Max( viewModel.RowsHeadersWidth[currentIndex] + args.HorizontalChange , 10d );
+                    } )
+                    .Select( _ => false )
+                    .InvokeCommand( viewModel , x => x.DrawGridCommand );
+                viewModel.ResizeObservables.Enqueue( dsp );
+
+                Canvas.SetTop( splitter , currentY );
+                Canvas.SetLeft( splitter , currentX );
+            }
+
+            var exceeding = splitters.Skip( splitterCount ).ToArray();
+            Clear( view , exceeding );
+        }
+
+        private static void Clear<T>( Grid view ) where T : UIElement
+        {
+            foreach ( var o in view.Canvas.Children.OfType<T>().ToArray() )
+                view.Canvas.Children.Remove( o );
+        }
+
+        private static void Clear<T>( Grid view , IEnumerable<T> items ) where T : UIElement
+        {
+            foreach ( var o in items )
+                view.Canvas.Children.Remove( o );
         }
     }
 }
