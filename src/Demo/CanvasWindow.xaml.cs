@@ -140,6 +140,7 @@ namespace Demo
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
+            FoldedSampleHierarchyGrid.ViewModel.EnableMultiSelection = true;
         }
 
         private void SaveStateClick( object sender , RoutedEventArgs e )

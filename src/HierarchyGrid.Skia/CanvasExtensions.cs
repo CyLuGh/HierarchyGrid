@@ -272,6 +272,7 @@ namespace HierarchyGrid.Skia
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
+            paint.StrokeWidth = viewModel.Selections.Contains( cell ) ? 2f : 1f;
             paint.Color = SKColors.SlateGray;
             canvas.DrawRect( rect , paint );
 

@@ -31,14 +31,15 @@ namespace HierarchyGrid.Definitions
         internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; }
             = new ConcurrentDictionary<(Guid, Guid) , ResultSet>();
 
+        internal ObservableCollection<PositionedCell> SelectedCells { get; } = new();
+
+        public ReadOnlyObservableCollection<PositionedCell> Selections => new( SelectedCells );
+
         //private ReadOnlyObservableCollection<ResultSet> _selectedResultSets;
         //public ReadOnlyObservableCollection<ResultSet> SelectedResultSets => _selectedResultSets;
 
         //internal SourceCache<(int row, int col, ResultSet resultSet) , (int row, int col)> SelectedPositions { get; }
         //    = new SourceCache<(int row, int col, ResultSet resultSet) , (int row, int col)>( x => (x.row, x.col) );
-
-        //internal SourceList<(int pos, bool isRow)> Highlights { get; }
-        //    = new SourceList<(int pos, bool isRow)>();
 
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
@@ -63,8 +64,6 @@ namespace HierarchyGrid.Definitions
 
         [Reactive] public bool EnableMultiSelection { get; set; }
         [Reactive] public bool IsEditing { get; set; }
-
-        [Reactive] public (ProducerDefinition, ConsumerDefinition, ResultSet)[] Selections { get; set; }
 
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
@@ -165,9 +164,6 @@ namespace HierarchyGrid.Definitions
             @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.StartEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            //@this.DrawCellsInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            //@this.EditInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            //@this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
         }
 
         private static void InitializeCommands( HierarchyGridViewModel @this )
@@ -369,9 +365,20 @@ namespace HierarchyGrid.Definitions
             else
             {
                 var element = FindCoordinates( x , y );
-                element.Match( cell => { } ,
+                element.Match( o => { o.Match( cell => CellClick( cell ) , () => { } ); } ,
                     o => { o.Match( hdef => HeaderClick( hdef ) , () => { } ); } );
             }
+        }
+
+        private void CellClick( PositionedCell cell )
+        {
+            if ( !EnableMultiSelection )
+                SelectedCells.Clear();
+
+            SelectedCells.Add( cell );
+
+            Observable.Return( false )
+                .InvokeCommand( DrawGridCommand );
         }
 
         private void HeaderClick( HierarchyDefinition hdef )
