@@ -22,6 +22,8 @@
 
         <skia:SKElement x:Name="SkiaElement" Grid.Row="0" Grid.Column="0" />
 
+        <Canvas x:Name="Canvas" Grid.Row="0" Grid.Column="0" />
+
         <ScrollBar x:Name="VerticalScrollBar"
                    Minimum="0"
                    SmallChange="1"

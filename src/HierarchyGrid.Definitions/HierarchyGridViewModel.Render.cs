@@ -28,7 +28,7 @@ namespace HierarchyGrid.Definitions
             foreach ( var kvp in ColumnsWidths )
                 ColumnsWidths[kvp.Key] = width;
 
-            Observable.Return( Unit.Default )
+            Observable.Return( false )
                 .InvokeCommand( DrawGridCommand );
 
             //Observable.Return( (HorizontalOffset, VerticalOffset, Width, Height, Scale, true) )
@@ -40,7 +40,7 @@ namespace HierarchyGrid.Definitions
             foreach ( var kvp in RowsHeights )
                 RowsHeights[kvp.Key] = height;
 
-            Observable.Return( Unit.Default )
+            Observable.Return( false )
                 .InvokeCommand( DrawGridCommand );
 
             //Observable.Return( (HorizontalOffset, VerticalOffset, Width, Height, Scale, true) )

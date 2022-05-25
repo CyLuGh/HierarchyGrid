@@ -10,7 +10,7 @@ namespace HierarchyGrid.Skia
 {
     public static class HierarchyGridDrawer
     {
-        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height )
+        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height , bool invalidate )
         {
             canvas.Clear();
 
@@ -20,7 +20,8 @@ namespace HierarchyGrid.Skia
 
                 viewModel.ClearCoordinates();
 
-                canvas.DrawCells( viewModel , viewModel.DrawnCells( width , height , false ) );
+                canvas.DrawGlobalHeaders( viewModel );
+                canvas.DrawCells( viewModel , viewModel.DrawnCells( width , height , invalidate ) );
                 canvas.DrawColumnHeaders( viewModel , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount );
                 canvas.DrawRowHeaders( viewModel , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount );
             }

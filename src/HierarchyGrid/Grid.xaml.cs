@@ -9,6 +9,8 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Windows.Controls;
+using System.Windows.Input;
 using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
@@ -34,7 +36,62 @@ namespace HierarchyGrid
             viewModel.DrawGridInteraction
                 .RegisterHandler( ctx =>
                 {
+                    //view.Canvas.Children.Clear();
                     view.SkiaElement.InvalidateVisual();
+                    ctx.SetOutput( Unit.Default );
+                } )
+                .DisposeWith( disposables );
+
+            viewModel.StartEditionInteraction
+                .RegisterHandler( ctx =>
+                {
+                    var cell = ctx.Input;
+
+                    cell.ResultSet.Editor.IfSome( editor =>
+                    {
+                        view.Canvas.Children.Clear();
+                        var textBox = new TextBox
+                        {
+                            Width = cell.Width ,
+                            Height = cell.Height
+                        };
+
+                        Canvas.SetLeft( textBox , cell.Left );
+                        Canvas.SetTop( textBox , cell.Top );
+
+                        textBox.Events()
+                            .KeyDown
+                            .Subscribe( e =>
+                            {
+                                switch ( e.Key )
+                                {
+                                    case System.Windows.Input.Key.Escape:
+                                        Observable.Return( false )
+                                            .InvokeCommand( viewModel.EndEditionCommand );
+                                        break;
+
+                                    case System.Windows.Input.Key.Enter:
+                                        Observable.Return( false )
+                                            .InvokeCommand( viewModel.EndEditionCommand );
+                                        Observable.Return( editor( textBox.Text ) )
+                                            .InvokeCommand( viewModel.DrawGridCommand );
+                                        break;
+                                }
+                            } )
+                            .DisposeWith( disposables );
+
+                        view.Canvas.Children.Add( textBox );
+                        textBox.Focus();
+                    } );
+
+                    ctx.SetOutput( Unit.Default );
+                } )
+                .DisposeWith( disposables );
+
+            viewModel.EndEditionInteraction
+                .RegisterHandler( ctx =>
+                {
+                    view.Canvas.Children.Clear();
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -46,55 +103,53 @@ namespace HierarchyGrid
                     SKImageInfo info = args.Info;
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
-                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height );
+                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , false );
                 } )
                 .DisposeWith( disposables );
 
-            //view.SkiaElement.Events()
-            //    .MouseMove
-            //    .Subscribe( args =>
-            //    {
-            //    } )
-            //    .DisposeWith( disposables );
+            view.SkiaElement.Events()
+                .MouseLeave
+                .Subscribe( _ =>
+                {
+                    viewModel.ClearCrosshair();
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseMove
+                .Subscribe( args =>
+                {
+                    var position = args.GetPosition( view.SkiaElement );
+                    viewModel.HandleMouseOver( position.X , position.Y );
+                } )
+                .DisposeWith( disposables );
 
             view.SkiaElement.Events()
                 .MouseLeftButtonDown
                 .Subscribe( args =>
                 {
-                    if ( viewModel.RowsHeadersWidth?.Any() != true || viewModel.ColumnsHeadersHeight?.Any() != true )
-                        return;
-
                     var position = args.GetPosition( view.SkiaElement );
-
-                    // Find corresponding element
-                    if ( position.X <= viewModel.RowsHeadersWidth.Sum() )
+                    if ( args.ClickCount == 2 )
                     {
-                        Console.WriteLine( "In row headers" );
-
-                        if ( position.Y <= viewModel.ColumnsHeadersHeight.Sum() )
-                        {
-                            Console.WriteLine( "In global headers" );
-                        }
-                    }
-                    else if ( position.Y <= viewModel.ColumnsHeadersHeight.Sum() )
-                    {
-                        Console.WriteLine( "In row headers" );
+                        viewModel.HandleDoubleClick( position.X , position.Y );
                     }
                     else
                     {
-                        Console.WriteLine( "In cells" );
-                        var cell = viewModel.CellsCoordinates.Find( t => t.Item1.Contains( position.X , position.Y ) )
-                            .Match( s => s.Item2 , () => Option<PositionedCell>.None );
-
-                        cell.Some( c =>
-                        {
-                            Console.WriteLine( "Cell {0}" , c );
-                        } )
-                        .None( () =>
-                        {
-                            Console.WriteLine( "No cell" );
-                        } );
+                        viewModel.HandleMouseDown( position.X , position.Y );
                     }
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseWheel
+                .Subscribe( e =>
+                {
+                    if ( Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl ) )
+                        viewModel.Scale += .05 * ( e.Delta < 0 ? 1 : -1 );
+                    else if ( Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift ) )
+                        viewModel.HorizontalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
+                    else
+                        viewModel.VerticalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
                 } )
                 .DisposeWith( disposables );
 

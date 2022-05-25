@@ -130,6 +130,7 @@ namespace Demo
         {
             var dg = new DataGenerator();
             HierarchyGrid.ViewModel.Set( dg.GenerateSample() );
+            HierarchyGrid.ViewModel.EnableCrosshair = true;
         }
 
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
@@ -138,6 +139,7 @@ namespace Demo
             var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
+            FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
         }
 
         private void SaveStateClick( object sender , RoutedEventArgs e )
