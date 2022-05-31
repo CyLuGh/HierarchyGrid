@@ -1,6 +1,7 @@
 ﻿using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 using LanguageExt;
+using LanguageExt.Pipes;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
@@ -191,12 +192,12 @@ namespace HierarchyGrid
 
         private static void DrawSplitters( Grid view , HierarchyGridViewModel viewModel )
         {
+            /* Dispose previous resize events */
             foreach ( var disposables in viewModel.ResizeObservables )
                 disposables.Dispose();
 
             viewModel.ResizeObservables.Clear();
 
-            //Clear<GridSplitter>( view );
             var splitters = view.Canvas.Children.OfType<GridSplitter>().ToArray();
 
             GridSplitter GetSplitter( int idx )
@@ -209,8 +210,8 @@ namespace HierarchyGrid
                 {
                     var splitter = new GridSplitter
                     {
-                        BorderThickness = new Thickness( 1d ) ,
-                        BorderBrush = Brushes.Red ,
+                        BorderThickness = new Thickness( 2d ) ,
+                        BorderBrush = Brushes.Transparent ,
                     };
                     view.Canvas.Children.Add( splitter );
                     return splitter;
@@ -225,25 +226,42 @@ namespace HierarchyGrid
 
             foreach ( var c in headers.Where( t => t.Definition is ConsumerDefinition ) )
             {
-                var coord = c.Coord;
+                var (coord, def) = c;
                 var splitter = GetSplitter( splitterCount++ );
                 splitter.Height = coord.Height;
                 splitter.Width = 2;
                 splitter.ResizeDirection = GridResizeDirection.Columns;
-                //splitter.Events()
-                //    .DragCompleted
-                //    .Subscribe( args => { } );
+                var dsp = splitter.Events()
+                    .DragCompleted
+                    .Subscribe( args =>
+                    {
+                        var pos = viewModel.ColumnsDefinitions.Leaves()
+                                                .Count( x => x.Position < def.Position );
+                        viewModel.ColumnsWidths[pos] = Math.Max( viewModel.ColumnsWidths[pos] + args.HorizontalChange , 10d );
+                    } );
+                viewModel.ResizeObservables.Enqueue( dsp );
+
                 Canvas.SetTop( splitter , coord.Top );
                 Canvas.SetLeft( splitter , coord.Right );
             }
 
             foreach ( var p in headers.Where( t => t.Definition is ProducerDefinition ) )
             {
-                var coord = p.Coord;
+                var (coord, def) = p;
                 var splitter = GetSplitter( splitterCount++ );
                 splitter.Height = 2;
                 splitter.Width = coord.Width;
                 splitter.ResizeDirection = GridResizeDirection.Rows;
+                var dsp = splitter.Events()
+                    .DragCompleted
+                    .Subscribe( args =>
+                    {
+                        var pos = viewModel.RowsDefinitions.Leaves()
+                                                .Count( x => x.Position < def.Position );
+                        viewModel.RowsHeights[pos] = Math.Max( viewModel.RowsHeights[pos] + args.VerticalChange , 10d );
+                    } );
+                viewModel.ResizeObservables.Enqueue( dsp );
+
                 Canvas.SetTop( splitter , coord.Bottom );
                 Canvas.SetLeft( splitter , coord.Left );
             }
@@ -269,10 +287,30 @@ namespace HierarchyGrid
                     {
                         viewModel.RowsHeadersWidth[currentIndex] =
                             Math.Max( viewModel.RowsHeadersWidth[currentIndex] + args.HorizontalChange , 10d );
+                        Clear<Rectangle>( view );
                     } )
                     .Select( _ => false )
                     .InvokeCommand( viewModel , x => x.DrawGridCommand );
                 viewModel.ResizeObservables.Enqueue( dsp );
+
+                var posX = currentX;
+                var delta = splitter.Events()
+                     .DragDelta
+                     .Do( args =>
+                     {
+                         Clear<Rectangle>( view );
+                         var rect = new Rectangle
+                         {
+                             Fill = Brushes.Red ,
+                             Height = height ,
+                             Width = 2d
+                         };
+                         view.Canvas.Children.Add( rect );
+
+                         Canvas.SetTop( rect , currentY );
+                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                     } ).Subscribe();
+                viewModel.ResizeObservables.Enqueue( delta );
 
                 Canvas.SetTop( splitter , currentY );
                 Canvas.SetLeft( splitter , currentX );
