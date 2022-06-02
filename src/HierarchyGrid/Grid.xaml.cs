@@ -73,12 +73,12 @@ namespace HierarchyGrid
                             {
                                 switch ( e.Key )
                                 {
-                                    case System.Windows.Input.Key.Escape:
+                                    case Key.Escape:
                                         Observable.Return( false )
                                             .InvokeCommand( viewModel.EndEditionCommand );
                                         break;
 
-                                    case System.Windows.Input.Key.Enter:
+                                    case Key.Enter:
                                         Observable.Return( false )
                                             .InvokeCommand( viewModel.EndEditionCommand );
                                         Observable.Return( editor( textBox.Text ) )
@@ -149,6 +149,19 @@ namespace HierarchyGrid
                 .DisposeWith( disposables );
 
             view.SkiaElement.Events()
+                .MouseRightButtonDown
+                .Subscribe( args =>
+                {
+                    var position = args.GetPosition( view.SkiaElement );
+                    viewModel.HandleMouseDown( position.X , position.Y , true );
+
+                    // Show context menu
+                    var contextMenu = BuidContextMenu( viewModel );
+                    contextMenu.IsOpen = true;
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
                 .MouseWheel
                 .Subscribe( e =>
                 {
@@ -188,6 +201,32 @@ namespace HierarchyGrid
                 .DisposeWith( disposables );
 
             view.SkiaElement.InvalidateVisual();
+        }
+
+        private static ContextMenu BuidContextMenu( HierarchyGridViewModel viewModel )
+        {
+            var contextMenu = new ContextMenu();
+
+            MenuItem highlightsMenuItem = new() { Header = "Highlights" };
+            highlightsMenuItem.Items.Add( new MenuItem
+            {
+                Header = "Enable crosshair",
+                IsChecked = viewModel.EnableCrosshair,
+                IsCheckable = true ,
+            } );
+            highlightsMenuItem.Items.Add( new MenuItem
+            {
+                Header = "Enable highlights" ,
+                IsCheckable = true ,
+            } );
+            highlightsMenuItem.Items.Add( new MenuItem
+            {
+                Header = "Clear highlights" ,
+            } );
+
+            contextMenu.Items.Add( highlightsMenuItem );
+            
+            return contextMenu;
         }
 
         private static void DrawSplitters( Grid view , HierarchyGridViewModel viewModel )
@@ -235,11 +274,30 @@ namespace HierarchyGrid
                     .DragCompleted
                     .Subscribe( args =>
                     {
-                        var pos = viewModel.ColumnsDefinitions.Leaves()
-                                                .Count( x => x.Position < def.Position );
+                        var pos = viewModel.ColumnsDefinitions.GetPosition( def );
                         viewModel.ColumnsWidths[pos] = Math.Max( viewModel.ColumnsWidths[pos] + args.HorizontalChange , 10d );
+                        Clear<Rectangle>( view );
                     } );
                 viewModel.ResizeObservables.Enqueue( dsp );
+
+                var posX = coord.Right;
+                var delta = splitter.Events()
+                     .DragDelta
+                     .Do( args =>
+                     {
+                         Clear<Rectangle>( view );
+                         var rect = new Rectangle
+                         {
+                             Fill = Brushes.DarkSlateGray ,
+                             Height = coord.Height ,
+                             Width = 2d
+                         };
+                         view.Canvas.Children.Add( rect );
+
+                         Canvas.SetTop( rect , coord.Top );
+                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                     } ).Subscribe();
+                viewModel.ResizeObservables.Enqueue( delta );
 
                 Canvas.SetTop( splitter , coord.Top );
                 Canvas.SetLeft( splitter , coord.Right );
@@ -256,11 +314,30 @@ namespace HierarchyGrid
                     .DragCompleted
                     .Subscribe( args =>
                     {
-                        var pos = viewModel.RowsDefinitions.Leaves()
-                                                .Count( x => x.Position < def.Position );
+                        var pos = viewModel.RowsDefinitions.GetPosition( def );
                         viewModel.RowsHeights[pos] = Math.Max( viewModel.RowsHeights[pos] + args.VerticalChange , 10d );
+                        Clear<Rectangle>( view );
                     } );
                 viewModel.ResizeObservables.Enqueue( dsp );
+
+                var posY = coord.Bottom;
+                var delta = splitter.Events()
+                     .DragDelta
+                     .Do( args =>
+                     {
+                         Clear<Rectangle>( view );
+                         var rect = new Rectangle
+                         {
+                             Fill = Brushes.DarkSlateGray ,
+                             Height = 2d ,
+                             Width = coord.Width
+                         };
+                         view.Canvas.Children.Add( rect );
+
+                         Canvas.SetTop( rect , posY + args.VerticalChange );
+                         Canvas.SetLeft( rect , coord.Left );
+                     } ).Subscribe();
+                viewModel.ResizeObservables.Enqueue( delta );
 
                 Canvas.SetTop( splitter , coord.Bottom );
                 Canvas.SetLeft( splitter , coord.Left );
@@ -301,7 +378,7 @@ namespace HierarchyGrid
                          Clear<Rectangle>( view );
                          var rect = new Rectangle
                          {
-                             Fill = Brushes.Red ,
+                             Fill = Brushes.DarkSlateGray ,
                              Height = height ,
                              Width = 2d
                          };

@@ -9,16 +9,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "Demo\Demo.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Definitions.Tests", "HierarchyGrid.Definitions.Tests\HierarchyGrid.Definitions.Tests.csproj", "{30A955FC-EE04-4654-9F64-4AC3F79822E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualHierarchyGrid", "VirtualHierarchyGrid\VirtualHierarchyGrid.csproj", "{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{32F9C893-6467-46B4-BC4A-9F301AE15D39}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyGrid.Skia", "HierarchyGrid.Skia\HierarchyGrid.Skia.csproj", "{A7B2763C-4404-41E4-BED9-CAE951FAB886}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Skia", "HierarchyGrid.Skia\HierarchyGrid.Skia.csproj", "{A7B2763C-4404-41E4-BED9-CAE951FAB886}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyGrid", "HierarchyGrid\HierarchyGrid.csproj", "{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid", "HierarchyGrid\HierarchyGrid.csproj", "{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,10 +36,6 @@ Global
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Release|Any CPU.ActiveCfg = Release|Any CPU

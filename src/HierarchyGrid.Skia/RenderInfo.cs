@@ -1,11 +1,6 @@
 ﻿using HierarchyGrid.Definitions;
 using LanguageExt;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HierarchyGrid.Skia
 {
@@ -83,12 +78,12 @@ namespace HierarchyGrid.Skia
             var hoveredCell = viewModel.FindHoveredCell();
             return new RenderInfo
             {
-                BackgroundColor = FindBackgroundColor( hdef , hoveredCell ) ,
-                ForegroundColor = FindForegroundColor( hdef , hoveredCell )
+                BackgroundColor = FindBackgroundColor( viewModel , hdef , hoveredCell ) ,
+                ForegroundColor = FindForegroundColor( viewModel , hdef , hoveredCell )
             };
         }
 
-        private static SKColor FindBackgroundColor( HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
+        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
             => hoveredCell.Match( cell =>
             {
                 if ( ( hdef is ConsumerDefinition consumer && cell.ConsumerDefinition.Equals( consumer ) )
@@ -97,13 +92,21 @@ namespace HierarchyGrid.Skia
                     return SKColors.SeaGreen;
                 }
 
-                return FindBackgroundColor( hdef );
-            } , () => FindBackgroundColor( hdef ) );
+                return FindBackgroundColor( viewModel , hdef );
+            } , () => FindBackgroundColor( viewModel , hdef ) );
 
-        private static SKColor FindBackgroundColor( HierarchyDefinition hdef )
-            => hdef?.IsHighlighted == true ? SKColors.LightBlue : SKColors.LightGray;
+        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        {
+            if ( hdef == null || hdef.Count() > 1 )
+                return SKColors.LightGray;
 
-        private static SKColor FindForegroundColor( HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
+            if ( hdef.IsHighlighted )
+                return SKColors.LightBlue;
+
+            return IsHovered( viewModel , hdef ) ? SKColors.SeaGreen : SKColors.LightGray;
+        }
+
+        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
             => hoveredCell.Match( cell =>
             {
                 if ( ( hdef is ConsumerDefinition consumer && cell.ConsumerDefinition.Equals( consumer ) )
@@ -112,10 +115,26 @@ namespace HierarchyGrid.Skia
                     return SKColors.White;
                 }
 
-                return FindForegroundColor( hdef );
-            } , () => FindForegroundColor( hdef ) );
+                return FindForegroundColor( viewModel , hdef );
+            } , () => FindForegroundColor( viewModel , hdef ) );
 
-        private static SKColor FindForegroundColor( HierarchyDefinition hdef )
-            => SKColors.Black;
+        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        {
+            if ( hdef == null || hdef.Count() > 1 )
+                return SKColors.Black;
+
+            if ( hdef.IsHighlighted )
+                return SKColors.Black;
+
+            return IsHovered( viewModel , hdef ) ? SKColors.White : SKColors.Black;
+        }
+
+        private static bool IsHovered( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        {
+            var isColumn = hdef is ConsumerDefinition && !viewModel.IsTransposed;
+            var position = isColumn ? viewModel.ColumnsDefinitions.GetPosition( hdef ) : viewModel.RowsDefinitions.GetPosition( hdef );
+            var isHovered = isColumn ? viewModel.HoveredColumn == position : viewModel.HoveredRow == position;
+            return isHovered;
+        }
     }
 }

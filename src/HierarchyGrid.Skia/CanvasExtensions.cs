@@ -252,6 +252,7 @@ namespace HierarchyGrid.Skia
             GetHeaderDecorator( hdef , left , top )
                 .IfSome( decorator =>
                 {
+                    paint.Color = renderInfo.ForegroundColor;
                     paint.Style = SKPaintStyle.StrokeAndFill;
                     canvas.DrawPath( decorator , paint );
                 } );

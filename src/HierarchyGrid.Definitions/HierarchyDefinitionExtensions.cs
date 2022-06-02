@@ -44,9 +44,6 @@ namespace HierarchyGrid.Definitions
                  hdef.Children.Size( size );
              } );
 
-
-
-
         /// <summary>
         /// Returns hierarchy definitions on root level.
         /// </summary>
@@ -165,5 +162,8 @@ namespace HierarchyGrid.Definitions
 
             return flat;
         }
+
+        public static int GetPosition<X>( this IEnumerable<X> hdefs , X hdef ) where X : HierarchyDefinition 
+            => hdefs.Leaves().Count( x => x.Position < hdef.Position );
     }
 }

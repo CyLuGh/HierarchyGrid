@@ -346,7 +346,7 @@ namespace HierarchyGrid.Definitions
                     () => false ) , Option<PositionedCell>.None );
         }
 
-        internal async void HandleMouseDown( double x , double y )
+        internal async void HandleMouseDown( double x , double y , bool isRightClick = false )
         {
             if ( !IsValid )
                 return;
@@ -354,7 +354,7 @@ namespace HierarchyGrid.Definitions
             await EndEditionInteraction.Handle( Unit.Default );
 
             // Find corresponding element
-            if ( x <= RowsHeadersWidth.Sum() && y <= ColumnsHeadersHeight.Sum() )
+            if ( !isRightClick && x <= RowsHeadersWidth.Sum() && y <= ColumnsHeadersHeight.Sum() )
             {
                 /* Global header */
                 FindGlobalAction( x , y )
@@ -368,8 +368,15 @@ namespace HierarchyGrid.Definitions
             else
             {
                 var element = FindCoordinates( x , y );
-                element.Match( o => { o.Match( cell => CellClick( cell ) , () => { } ); } ,
-                    o => { o.Match( hdef => HeaderClick( hdef ) , () => { } ); } );
+                element.Match( c =>
+                {
+                    c.Match( cell => CellClick( cell ) , () => { } );
+                } ,
+                d =>
+                {
+                    if ( !isRightClick )
+                        d.Match( hdef => HeaderClick( hdef ) , () => { } );
+                } );
             }
         }
 
@@ -415,6 +422,8 @@ namespace HierarchyGrid.Definitions
                 {
                     HoveredColumn = s.HorizontalPosition;
                     HoveredRow = s.VerticalPosition;
+
+                    // TODO Show tooltip
                 } , () =>
                 {
                     HoveredColumn = -1;
@@ -427,18 +436,12 @@ namespace HierarchyGrid.Definitions
                 {
                     if ( s is ConsumerDefinition consumer && consumer.Count() == 1 )
                     {
-                        var pos = ColumnsDefinitions.Leaves()
-                                            .Count( x => x.Position < consumer.Position );
-
-                        HoveredColumn = pos;
+                        HoveredColumn = ColumnsDefinitions.GetPosition( consumer );
                         HoveredRow = -1;
                     }
                     else if ( s is ProducerDefinition producer && producer.Count() == 1 )
                     {
-                        var pos = RowsDefinitions.Leaves()
-                                            .Count( x => x.Position < producer.Position );
-
-                        HoveredRow = pos;
+                        HoveredRow = RowsDefinitions.GetPosition( producer );
                         HoveredColumn = -1;
                     }
                     else
