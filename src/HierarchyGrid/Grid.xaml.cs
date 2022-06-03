@@ -22,6 +22,8 @@ namespace HierarchyGrid
 {
     public partial class Grid
     {
+        private readonly ToolTip _tooltip = new();
+
         public Grid()
         {
             InitializeComponent();
@@ -48,6 +50,114 @@ namespace HierarchyGrid
                 } )
                 .DisposeWith( disposables );
 
+            RegisterStartEditionInteraction( view , viewModel , disposables );
+            RegisterEndEditionInteraction( view , viewModel , disposables );
+            RegisterToolTipInteractions( view , viewModel , disposables );
+
+            view.SkiaElement.Events()
+                .PaintSurface
+                .Subscribe( args =>
+                {
+                    SKImageInfo info = args.Info;
+                    SKSurface surface = args.Surface;
+                    SKCanvas canvas = surface.Canvas;
+                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , false );
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseLeave
+                .Subscribe( _ =>
+                {
+                    viewModel.HandleMouseLeft();
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseMove
+                .Subscribe( args =>
+                {
+                    var position = args.GetPosition( view.SkiaElement );
+                    viewModel.HandleMouseOver( position.X , position.Y );
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseLeftButtonDown
+                .Subscribe( args =>
+                {
+                    var position = args.GetPosition( view.SkiaElement );
+                    if ( args.ClickCount == 2 )
+                    {
+                        viewModel.HandleDoubleClick( position.X , position.Y );
+                    }
+                    else
+                    {
+                        viewModel.HandleMouseDown( position.X , position.Y );
+                    }
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseRightButtonDown
+                .Subscribe( args =>
+                {
+                    var position = args.GetPosition( view.SkiaElement );
+                    viewModel.HandleMouseDown( position.X , position.Y , true );
+
+                    // Show context menu
+                    if ( viewModel.IsValid && viewModel.HasData )
+                    {
+                        var contextMenu = BuildContextMenu( viewModel , position.X , position.Y );
+                        contextMenu.IsOpen = true;
+                    }
+                } )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.Events()
+                .MouseWheel
+                .Subscribe( e =>
+                {
+                    if ( Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl ) )
+                        viewModel.Scale += .05 * ( e.Delta < 0 ? 1 : -1 );
+                    else if ( Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift ) )
+                        viewModel.HorizontalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
+                    else
+                        viewModel.VerticalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
+                } )
+                .DisposeWith( disposables );
+
+            view.Bind( viewModel ,
+                vm => vm.HorizontalOffset ,
+                v => v.HorizontalScrollBar.Value ,
+                view.HorizontalScrollBar.Events().Scroll ,
+                vmToViewConverter: i => Convert.ToDouble( i ) ,
+                viewToVmConverter: d => Convert.ToInt32( d ) )
+                .DisposeWith( disposables );
+
+            view.Bind( viewModel ,
+                vm => vm.VerticalOffset ,
+                v => v.VerticalScrollBar.Value ,
+                view.VerticalScrollBar.Events().Scroll ,
+                vmToViewConverter: i => Convert.ToDouble( i ) ,
+                viewToVmConverter: d => Convert.ToInt32( d ) )
+                .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.MaxHorizontalOffset ,
+                v => v.HorizontalScrollBar.Maximum )
+                .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.MaxVerticalOffset ,
+                v => v.VerticalScrollBar.Maximum )
+                .DisposeWith( disposables );
+
+            view.SkiaElement.InvalidateVisual();
+        }
+
+        private static void RegisterStartEditionInteraction( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
+        {
             viewModel.StartEditionInteraction
                 .RegisterHandler( ctx =>
                 {
@@ -95,7 +205,36 @@ namespace HierarchyGrid
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
+        }
 
+        private static void RegisterToolTipInteractions( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
+        {
+            viewModel.ShowTooltipInteraction
+                .RegisterHandler( ctx =>
+                {
+                    view._tooltip.IsOpen = false;
+
+                    ctx.Input.ResultSet.TooltipText
+                        .IfSome( text =>
+                        {
+                            view._tooltip.Content = text;
+                            view._tooltip.IsOpen = true;
+                        } );
+                    ctx.SetOutput( Unit.Default );
+                } )
+                .DisposeWith( disposables );
+
+            viewModel.CloseTooltipInteraction
+                .RegisterHandler( ctx =>
+                {
+                    view._tooltip.IsOpen = false;
+                    ctx.SetOutput( Unit.Default );
+                } )
+                .DisposeWith( disposables );
+        }
+
+        private static void RegisterEndEditionInteraction( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
+        {
             viewModel.EndEditionInteraction
                 .RegisterHandler( ctx =>
                 {
@@ -103,129 +242,109 @@ namespace HierarchyGrid
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .PaintSurface
-                .Subscribe( args =>
-                {
-                    SKImageInfo info = args.Info;
-                    SKSurface surface = args.Surface;
-                    SKCanvas canvas = surface.Canvas;
-                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , false );
-                } )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .MouseLeave
-                .Subscribe( _ =>
-                {
-                    viewModel.ClearCrosshair();
-                } )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .MouseMove
-                .Subscribe( args =>
-                {
-                    var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseOver( position.X , position.Y );
-                } )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .MouseLeftButtonDown
-                .Subscribe( args =>
-                {
-                    var position = args.GetPosition( view.SkiaElement );
-                    if ( args.ClickCount == 2 )
-                    {
-                        viewModel.HandleDoubleClick( position.X , position.Y );
-                    }
-                    else
-                    {
-                        viewModel.HandleMouseDown( position.X , position.Y );
-                    }
-                } )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .MouseRightButtonDown
-                .Subscribe( args =>
-                {
-                    var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseDown( position.X , position.Y , true );
-
-                    // Show context menu
-                    var contextMenu = BuidContextMenu( viewModel );
-                    contextMenu.IsOpen = true;
-                } )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.Events()
-                .MouseWheel
-                .Subscribe( e =>
-                {
-                    if ( Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl ) )
-                        viewModel.Scale += .05 * ( e.Delta < 0 ? 1 : -1 );
-                    else if ( Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift ) )
-                        viewModel.HorizontalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
-                    else
-                        viewModel.VerticalOffset += 5 * ( e.Delta < 0 ? 1 : -1 );
-                } )
-                .DisposeWith( disposables );
-
-            view.Bind( viewModel ,
-                vm => vm.HorizontalOffset ,
-                v => v.HorizontalScrollBar.Value ,
-                view.HorizontalScrollBar.Events().Scroll ,
-                vmToViewConverter: i => Convert.ToDouble( i ) ,
-                viewToVmConverter: d => Convert.ToInt32( d ) )
-                .DisposeWith( disposables );
-
-            view.Bind( viewModel ,
-                vm => vm.VerticalOffset ,
-                v => v.VerticalScrollBar.Value ,
-                view.VerticalScrollBar.Events().Scroll ,
-                vmToViewConverter: i => Convert.ToDouble( i ) ,
-                viewToVmConverter: d => Convert.ToInt32( d ) )
-                .DisposeWith( disposables );
-
-            view.OneWayBind( viewModel ,
-                vm => vm.MaxHorizontalOffset ,
-                v => v.HorizontalScrollBar.Maximum )
-                .DisposeWith( disposables );
-
-            view.OneWayBind( viewModel ,
-                vm => vm.MaxVerticalOffset ,
-                v => v.VerticalScrollBar.Maximum )
-                .DisposeWith( disposables );
-
-            view.SkiaElement.InvalidateVisual();
         }
 
-        private static ContextMenu BuidContextMenu( HierarchyGridViewModel viewModel )
+        private static IEnumerable<MenuItem> BuildCustomItems( (string, ICommand)[] commands )
         {
+            var items = new Dictionary<(int, string) , MenuItem>();
+
+            foreach ( var t in commands )
+            {
+                var (header, command) = t;
+                var splits = header.Split( '|' );
+
+                if ( splits.Length == 1 )
+                {
+                    yield return new MenuItem { Header = header , Command = command };
+                }
+                else
+                {
+                    MenuItem? parent = null;
+                    for ( int i = 0 ; i < splits.Length ; i++ )
+                    {
+                        if ( i == splits.Length - 1 && parent != null )
+                        {
+                            parent.Items.Add( new MenuItem { Header = splits[i] , Command = command } );
+                        }
+                        else
+                        {
+                            if ( items.TryGetValue( (0, splits[i]) , out var mi ) )
+                            {
+                                parent = mi;
+                            }
+                            else
+                            {
+                                var menuItem = new MenuItem { Header = splits[i] };
+                                if ( parent != null )
+                                    parent.Items.Add( menuItem );
+
+                                parent = menuItem;
+                                items.Add( (i, splits[i]) , menuItem );
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ( var i in items.Values.Where( x => x.Parent == null ) )
+                yield return i;
+        }
+
+        private static ContextMenu BuildContextMenu( HierarchyGridViewModel viewModel , double x , double y )
+        {
+            var coord = viewModel.FindCoordinates( x , y );
             var contextMenu = new ContextMenu();
+
+            var items = coord.Match( r =>
+                r.Match( c =>
+                    c.ResultSet.ContextCommands.Match(
+                        cmds => BuildCustomItems( cmds ).ToArray() ,
+                        () => Array.Empty<MenuItem>() ) ,
+                    () => Array.Empty<MenuItem>() ) ,
+                _ => Array.Empty<MenuItem>() );
+
+            if ( items.Length > 0 )
+            {
+                foreach ( var i in items )
+                    contextMenu.Items.Add( i );
+                contextMenu.Items.Add( new Separator() );
+            }
 
             MenuItem highlightsMenuItem = new() { Header = "Highlights" };
             highlightsMenuItem.Items.Add( new MenuItem
             {
-                Header = "Enable crosshair",
-                IsChecked = viewModel.EnableCrosshair,
+                Header = "Enable crosshair" ,
+                IsChecked = viewModel.EnableCrosshair ,
                 IsCheckable = true ,
-            } );
-            highlightsMenuItem.Items.Add( new MenuItem
-            {
-                Header = "Enable highlights" ,
-                IsCheckable = true ,
+                Command = viewModel.ToggleCrosshairCommand
             } );
             highlightsMenuItem.Items.Add( new MenuItem
             {
                 Header = "Clear highlights" ,
+                Command = viewModel.ClearHighlightsCommand
             } );
 
             contextMenu.Items.Add( highlightsMenuItem );
-            
+
+            contextMenu.Items.Add( new MenuItem
+            {
+                Header = "Expand all"
+            } );
+            contextMenu.Items.Add( new MenuItem
+            {
+                Header = "Collapse all"
+
+            } );
+
+            contextMenu.Items.Add( new Separator() );
+
+            MenuItem copyMenuItem = new() { Header = "Copy to clipboard" };
+            copyMenuItem.Items.Add( new MenuItem { Header = "with tree structure" } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "without tree structure" } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "highlighted elements" } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "selection" } );
+            contextMenu.Items.Add( copyMenuItem );
+
             return contextMenu;
         }
 

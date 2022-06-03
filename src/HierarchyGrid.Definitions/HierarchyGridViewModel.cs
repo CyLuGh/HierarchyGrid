@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 using Unit = System.Reactive.Unit;
@@ -65,6 +66,8 @@ namespace HierarchyGrid.Definitions
         [Reactive] public bool EnableMultiSelection { get; set; }
         [Reactive] public bool IsEditing { get; set; }
 
+        private readonly Subject<Option<PositionedCell>> _hoveredCell = new();
+
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
@@ -77,6 +80,12 @@ namespace HierarchyGrid.Definitions
         public Interaction<Unit , Unit> EndEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public CombinedReactiveCommand<bool , Unit> EndAndDrawCommand { get; private set; }
+        public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
+        public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public Interaction<PositionedCell , Unit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
+
+        public ReactiveCommand<Unit , Unit> ToggleCrosshairCommand { get; private set; }
+        public ReactiveCommand<Unit , Unit> ClearHighlightsCommand { get; private set; }
 
         public Queue<IDisposable> ResizeObservables { get; } = new();
 
@@ -158,6 +167,21 @@ namespace HierarchyGrid.Definitions
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
+
+                _hoveredCell.Throttle( TimeSpan.FromMilliseconds( 600 ) )
+                    .DistinctUntilChanged()
+                    .InvokeCommand( HandleTooltipCommand )
+                    .DisposeWith( disposables );
+
+                ToggleCrosshairCommand
+                    .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
+                ClearHighlightsCommand
+                    .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
             } );
         }
 
@@ -166,6 +190,8 @@ namespace HierarchyGrid.Definitions
             @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.StartEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
+            @this.ShowTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
+            @this.CloseTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
         }
 
         private static void InitializeCommands( HierarchyGridViewModel @this )
@@ -189,6 +215,26 @@ namespace HierarchyGrid.Definitions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
             @this.EndAndDrawCommand = ReactiveCommand.CreateCombined( new[] { @this.EndEditionCommand , @this.DrawGridCommand } );
+
+            @this.HandleTooltipCommand = ReactiveCommand
+                .CreateFromTask( ( Option<PositionedCell> o ) =>
+                    o.MatchAsync( async cell => await @this.ShowTooltipInteraction.Handle( cell ) ,
+                        async () => await @this.CloseTooltipInteraction.Handle( Unit.Default ) ) );
+            @this.DrawGridCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
+            @this.ToggleCrosshairCommand = ReactiveCommand.Create( () =>
+            {
+                @this.EnableCrosshair = !@this.EnableCrosshair;
+                return Unit.Default;
+            } );
+            @this.ToggleCrosshairCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
+            @this.ClearHighlightsCommand = ReactiveCommand.CreateFromObservable( () =>
+                Observable.Start( () => @this.ClearHighlights() ) );
+            @this.ClearHighlightsCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
         }
 
         public void Set( HierarchyDefinitions hierarchyDefinitions , bool preserveSizes = false )
@@ -256,6 +302,15 @@ namespace HierarchyGrid.Definitions
         {
             HeadersCoordinates.Clear();
             CellsCoordinates.Clear();
+        }
+
+        public void ClearHighlights()
+        {
+            foreach ( var hdef in ColumnsDefinitions.FlatList().Concat( RowsDefinitions.FlatList() )
+                                    .Where( x => x.IsHighlighted ) )
+            {
+                hdef.IsHighlighted = false;
+            }
         }
 
         public PositionedCell[] DrawnCells( double width , double height , bool invalidate )
@@ -410,20 +465,28 @@ namespace HierarchyGrid.Definitions
                         => await StartEditionInteraction.Handle( cell ) ) );
         }
 
+        internal void HandleMouseLeft()
+        {
+            _hoveredCell.OnNext( Option<PositionedCell>.None );
+            ClearCrosshair();
+        }
+
         internal void HandleMouseOver( double x , double y )
         {
             if ( RowsHeadersWidth?.Any() != true || ColumnsHeadersHeight?.Any() != true )
+            {
+                _hoveredCell.OnNext( Option<PositionedCell>.None );
                 return;
+            }
 
             var element = FindCoordinates( x , y );
             element.Match( cell =>
             {
+                _hoveredCell.OnNext( cell );
                 cell.Match( s =>
                 {
                     HoveredColumn = s.HorizontalPosition;
                     HoveredRow = s.VerticalPosition;
-
-                    // TODO Show tooltip
                 } , () =>
                 {
                     HoveredColumn = -1;
@@ -432,6 +495,7 @@ namespace HierarchyGrid.Definitions
             } ,
             hdef =>
             {
+                _hoveredCell.OnNext( Option<PositionedCell>.None );
                 hdef.Match( s =>
                 {
                     if ( s is ConsumerDefinition consumer && consumer.Count() == 1 )
