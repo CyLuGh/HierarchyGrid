@@ -74,6 +74,42 @@ namespace HierarchyGrid.Definitions
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
+        public HierarchyGridState GridState
+        {
+            get { return new HierarchyGridState( this ); }
+            set
+            {
+                if ( value.Equals( default ) )
+                    return;
+
+                try
+                {
+                    var rowsFlat = RowsDefinitions.FlatList().ToArray();
+                    if ( rowsFlat.Length == value.RowToggles.Length )
+                        Parallel.For( 0 , value.RowToggles.Length , i => rowsFlat[i].IsExpanded = value.RowToggles[i] );
+                    else
+                        rowsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+
+                    var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
+                    if ( columnsFlat.Length == value.ColumnToggles.Length )
+                        Parallel.For( 0 , value.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = value.ColumnToggles[i] );
+                    else
+                        columnsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+
+                    VerticalOffset = value.VerticalOffset;
+                    HorizontalOffset = value.HorizontalOffset;
+                }
+                catch ( Exception )
+                {
+                    VerticalOffset = 0;
+                    HorizontalOffset = 0;
+                }
+
+                Observable.Return( false )
+                    .InvokeCommand( DrawGridCommand );
+            }
+        }
+
         public ReactiveCommand<bool , Unit> DrawGridCommand { get; private set; }
         public Interaction<Unit , Unit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
         public ReactiveCommand<bool , Unit> EndEditionCommand { get; private set; }

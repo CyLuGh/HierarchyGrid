@@ -147,12 +147,12 @@ namespace Demo
 
         private void SaveStateClick( object sender , RoutedEventArgs e )
         {
-            //_gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
+            _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
         }
 
         private void RestoreStateClick( object sender , RoutedEventArgs e )
         {
-            //FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
+            FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
         }
     }
 }
