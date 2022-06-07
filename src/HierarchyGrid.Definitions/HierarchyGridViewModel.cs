@@ -36,12 +36,6 @@ namespace HierarchyGrid.Definitions
 
         public ReadOnlyObservableCollection<PositionedCell> Selections => new( SelectedCells );
 
-        //private ReadOnlyObservableCollection<ResultSet> _selectedResultSets;
-        //public ReadOnlyObservableCollection<ResultSet> SelectedResultSets => _selectedResultSets;
-
-        //internal SourceCache<(int row, int col, ResultSet resultSet) , (int row, int col)> SelectedPositions { get; }
-        //    = new SourceCache<(int row, int col, ResultSet resultSet) , (int row, int col)>( x => (x.row, x.col) );
-
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, Action Action)> GlobalHeadersCoordinates { get; } = new();
@@ -65,6 +59,8 @@ namespace HierarchyGrid.Definitions
 
         [Reactive] public bool EnableMultiSelection { get; set; }
         [Reactive] public bool IsEditing { get; set; }
+
+        [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
         private readonly Subject<Option<PositionedCell>> _hoveredCell = new();
 
@@ -119,6 +115,7 @@ namespace HierarchyGrid.Definitions
         public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
         public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
         public Interaction<PositionedCell , Unit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<Unit , Unit> CopyToClipboardWithStrutureCommand { get; private set; }
 
         public ReactiveCommand<Unit , Unit> ToggleCrosshairCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> ClearHighlightsCommand { get; private set; }
@@ -200,6 +197,11 @@ namespace HierarchyGrid.Definitions
 
                 this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow )
                     .DistinctUntilChanged()
+                    .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
+                this.WhenAnyValue( x => x.Theme )
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
