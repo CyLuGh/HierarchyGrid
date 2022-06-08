@@ -115,7 +115,11 @@ namespace HierarchyGrid.Definitions
         public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
         public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
         public Interaction<PositionedCell , Unit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public ReactiveCommand<Unit , Unit> CopyToClipboardWithStrutureCommand { get; private set; }
+
+        public ReactiveCommand<CopyMode , Unit> CopyToClipboardCommand { get; private set; }
+        public Interaction<string , Unit> FillClipboardInteraction { get; } = new( RxApp.MainThreadScheduler );
+
+        public ReactiveCommand<bool , Unit> ToggleStatesCommand { get; private set; }
 
         public ReactiveCommand<Unit , Unit> ToggleCrosshairCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> ClearHighlightsCommand { get; private set; }
@@ -220,6 +224,11 @@ namespace HierarchyGrid.Definitions
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
+
+                ToggleStatesCommand
+                    .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
             } );
         }
 
@@ -230,6 +239,7 @@ namespace HierarchyGrid.Definitions
             @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.ShowTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
             @this.CloseTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
+            @this.FillClipboardInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
         }
 
         private static void InitializeCommands( HierarchyGridViewModel @this )
@@ -273,6 +283,30 @@ namespace HierarchyGrid.Definitions
                 Observable.Start( () => @this.ClearHighlights() ) );
             @this.ClearHighlightsCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
+
+            @this.CopyToClipboardCommand = ReactiveCommand.CreateFromTask( async ( CopyMode mode ) =>
+                {
+                    var content = @this.CreateClipboardContent( mode );
+                    await @this.FillClipboardInteraction.Handle( content );
+                }
+            );
+            @this.CopyToClipboardCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
+            @this.ToggleStatesCommand = ReactiveCommand.CreateFromObservable( ( bool expanded ) =>
+                Observable.Start( () =>
+                {
+                    if ( expanded )
+                    {
+                        @this.ColumnsDefinitions.ExpandAll();
+                        @this.RowsDefinitions.ExpandAll();
+                    }
+                    else
+                    {
+                        @this.ColumnsDefinitions.FoldAll();
+                        @this.RowsDefinitions.FoldAll();
+                    }
+                } ) );
         }
 
         public void Set( HierarchyDefinitions hierarchyDefinitions , bool preserveSizes = false )

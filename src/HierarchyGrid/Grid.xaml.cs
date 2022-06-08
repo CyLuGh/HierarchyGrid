@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using TextCopy;
 using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
@@ -46,6 +47,14 @@ namespace HierarchyGrid
                     view.SkiaElement.InvalidateVisual();
                     DrawSplitters( view , viewModel );
 
+                    ctx.SetOutput( Unit.Default );
+                } )
+                .DisposeWith( disposables );
+
+            viewModel.FillClipboardInteraction
+                .RegisterHandler( async ctx =>
+                {
+                    await ClipboardService.SetTextAsync( ctx.Input );
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -328,21 +337,24 @@ namespace HierarchyGrid
 
             contextMenu.Items.Add( new MenuItem
             {
-                Header = "Expand all"
+                Header = "Expand all" ,
+                Command = viewModel.ToggleStatesCommand ,
+                CommandParameter = true
             } );
             contextMenu.Items.Add( new MenuItem
             {
-                Header = "Collapse all"
-
+                Header = "Collapse all" ,
+                Command = viewModel.ToggleStatesCommand ,
+                CommandParameter = false
             } );
 
             contextMenu.Items.Add( new Separator() );
 
             MenuItem copyMenuItem = new() { Header = "Copy to clipboard" };
-            copyMenuItem.Items.Add( new MenuItem { Header = "with tree structure" } );
-            copyMenuItem.Items.Add( new MenuItem { Header = "without tree structure" } );
-            copyMenuItem.Items.Add( new MenuItem { Header = "highlighted elements" } );
-            copyMenuItem.Items.Add( new MenuItem { Header = "selection" } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "with tree structure" , Command = viewModel.CopyToClipboardCommand , CommandParameter = CopyMode.Structure } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "without tree structure" , Command = viewModel.CopyToClipboardCommand , CommandParameter = CopyMode.Flat } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "highlighted elements" , Command = viewModel.CopyToClipboardCommand , CommandParameter = CopyMode.Highlights } );
+            copyMenuItem.Items.Add( new MenuItem { Header = "selection" , Command = viewModel.CopyToClipboardCommand , CommandParameter = CopyMode.Selection } );
             contextMenu.Items.Add( copyMenuItem );
 
             return contextMenu;

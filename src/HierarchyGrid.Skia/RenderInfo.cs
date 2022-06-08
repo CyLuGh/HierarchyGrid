@@ -10,123 +10,123 @@ namespace HierarchyGrid.Skia
         public SKColor BorderColor { get; set; }
         public SKColor ForegroundColor { get; set; }
 
-        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , PositionedCell cell )
+        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
         {
             if ( cell.VerticalPosition == viewModel.HoveredRow
                 && cell.HorizontalPosition == viewModel.HoveredColumn )
             {
-                return SKColors.LightSeaGreen;
+                return theme.HoverBackgroundColor;
             }
 
             if ( viewModel.EnableCrosshair
                 && ( cell.VerticalPosition == viewModel.HoveredRow
                     || cell.HorizontalPosition == viewModel.HoveredColumn ) )
             {
-                return SKColors.LightSeaGreen;
+                return theme.HoverBackgroundColor;
             }
 
             if ( cell.ProducerDefinition.IsHighlighted || cell.ConsumerDefinition.IsHighlighted )
-                return SKColors.LightBlue;
+                return theme.HighlightBackgroundColor;
 
             return cell.ResultSet.Qualifier switch
             {
-                Qualification.Error => SKColors.IndianRed,
-                Qualification.Warning => SKColors.YellowGreen,
-                Qualification.Remark => SKColors.GreenYellow,
+                Qualification.Error => theme.ErrorBackgroundColor,
+                Qualification.Warning => theme.WarningBackgroundColor,
+                Qualification.Remark => theme.RemarkBackgroundColor,
                 Qualification.Custom => cell.ResultSet.BackgroundColor.Match( t => new SKColor( t.r , t.g , t.b , t.a ) , () => SKColors.White ),
                 _ => SKColors.White
             };
         }
 
-        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , PositionedCell cell )
+        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
         {
             if ( cell.VerticalPosition == viewModel.HoveredRow
                 && cell.HorizontalPosition == viewModel.HoveredColumn )
             {
-                return SKColors.Black;
+                return theme.HoverForegroundColor;
             }
 
             if ( viewModel.EnableCrosshair
                 && ( cell.VerticalPosition == viewModel.HoveredRow
                     || cell.HorizontalPosition == viewModel.HoveredColumn ) )
             {
-                return SKColors.Black;
+                return theme.HoverForegroundColor;
             }
 
             if ( cell.ProducerDefinition.IsHighlighted || cell.ConsumerDefinition.IsHighlighted )
-                return SKColors.Black;
+                return theme.HighlightForegroundColor;
 
             return cell.ResultSet.Qualifier switch
             {
-                Qualification.Error => SKColors.Black,
-                Qualification.Warning => SKColors.Black,
-                Qualification.Remark => SKColors.Black,
+                Qualification.Error => theme.ErrorForegroundColor,
+                Qualification.Warning => theme.WarningForegroundColor,
+                Qualification.Remark => theme.RemarkForegroundColor,
                 Qualification.Custom => cell.ResultSet.ForegroundColor.Match( t => new SKColor( t.r , t.g , t.b , t.a ) , () => SKColors.Black ),
                 _ => SKColors.Black
             };
         }
 
-        internal static RenderInfo FindRender( HierarchyGridViewModel viewModel , PositionedCell cell )
+        internal static RenderInfo FindRender( HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
             => new()
             {
-                BackgroundColor = FindBackgroundColor( viewModel , cell ) ,
-                ForegroundColor = FindForegroundColor( viewModel , cell )
+                BackgroundColor = FindBackgroundColor( viewModel , theme , cell ) ,
+                ForegroundColor = FindForegroundColor( viewModel , theme , cell )
             };
 
-        internal static RenderInfo FindRender( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        internal static RenderInfo FindRender( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef )
         {
             var hoveredCell = viewModel.FindHoveredCell();
             return new RenderInfo
             {
-                BackgroundColor = FindBackgroundColor( viewModel , hdef , hoveredCell ) ,
-                ForegroundColor = FindForegroundColor( viewModel , hdef , hoveredCell )
+                BackgroundColor = FindBackgroundColor( viewModel , theme , hdef , hoveredCell ) ,
+                ForegroundColor = FindForegroundColor( viewModel , theme , hdef , hoveredCell )
             };
         }
 
-        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
+        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
             => hoveredCell.Match( cell =>
             {
                 if ( ( hdef is ConsumerDefinition consumer && cell.ConsumerDefinition.Equals( consumer ) )
                         || ( hdef is ProducerDefinition producer && cell.ProducerDefinition.Equals( producer ) ) )
                 {
-                    return SKColors.SeaGreen;
+                    return theme.HoverHeaderBackgroundColor;
                 }
 
-                return FindBackgroundColor( viewModel , hdef );
-            } , () => FindBackgroundColor( viewModel , hdef ) );
+                return FindBackgroundColor( viewModel , theme , hdef );
+            } , () => FindBackgroundColor( viewModel , theme , hdef ) );
 
-        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef )
         {
             if ( hdef == null || hdef.Count() > 1 )
-                return SKColors.LightGray;
+                return theme.HeaderBackgroundColor;
 
             if ( hdef.IsHighlighted )
-                return SKColors.LightBlue;
+                return theme.HighlightHeaderBackgroundColor;
 
-            return IsHovered( viewModel , hdef ) ? SKColors.SeaGreen : SKColors.LightGray;
+            return IsHovered( viewModel , hdef ) ? theme.HoverHeaderBackgroundColor : theme.HeaderBackgroundColor;
         }
 
-        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
+        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef , Option<PositionedCell> hoveredCell )
             => hoveredCell.Match( cell =>
             {
                 if ( ( hdef is ConsumerDefinition consumer && cell.ConsumerDefinition.Equals( consumer ) )
                         || ( hdef is ProducerDefinition producer && cell.ProducerDefinition.Equals( producer ) ) )
                 {
-                    return SKColors.White;
+                    return theme.HoverHeaderForegroundColor;
                 }
 
-                return FindForegroundColor( viewModel , hdef );
-            } , () => FindForegroundColor( viewModel , hdef ) );
+                return FindForegroundColor( viewModel , theme , hdef );
+            } , () => FindForegroundColor( viewModel , theme , hdef ) );
 
-        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )
+        private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef )
         {
             if ( hdef == null || hdef.Count() > 1 )
-                return SKColors.Black;
+                return theme.HeaderForegroundColor;
 
             if ( hdef.IsHighlighted )
-                return SKColors.Black;
+                return theme.HighlightHeaderForegroundColor;
 
-            return IsHovered( viewModel , hdef ) ? SKColors.White : SKColors.Black;
+            return IsHovered( viewModel , hdef ) ? theme.HoverHeaderForegroundColor : theme.HeaderForegroundColor;
         }
 
         private static bool IsHovered( HierarchyGridViewModel viewModel , HierarchyDefinition hdef )

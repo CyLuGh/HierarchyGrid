@@ -1,36 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
+	<PropertyGroup>
+		<PackageOutputPath>./nupkg</PackageOutputPath>
 
-    <Authors>Demortier Jeremy</Authors>
-    <Description>Double dimension hierarchy grid</Description>
-    <Version>0.5.8</Version>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-  </PropertyGroup>
+		<Authors>Demortier Jeremy</Authors>
+		<Description>Double dimension hierarchy grid</Description>
+		<Version>0.5.8</Version>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.1.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="ReactiveUI.Fody" Version="18.0.10" />
-    <PackageReference Include="ReactiveUI.WPF" Version="18.0.10" />
-    <PackageReference Include="SkiaSharp.Views.WPF" Version="2.80.3" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.1.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="ReactiveUI.Fody" Version="18.0.10" />
+		<PackageReference Include="ReactiveUI.WPF" Version="18.0.10" />
+		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.80.3" />
+		<PackageReference Include="TextCopy" Version="6.1.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
-    <ProjectReference Include="..\HierarchyGrid.Skia\HierarchyGrid.Skia.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+		<ProjectReference Include="..\HierarchyGrid.Skia\HierarchyGrid.Skia.csproj" />
+	</ItemGroup>
 </Project>

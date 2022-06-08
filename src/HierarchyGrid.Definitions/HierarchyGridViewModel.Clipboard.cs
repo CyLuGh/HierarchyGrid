@@ -10,8 +10,21 @@ using System.Xml;
 
 namespace HierarchyGrid.Definitions
 {
+    public enum CopyMode
+    {
+        Flat, Structure, Selection, Highlights
+    }
+
     public partial class HierarchyGridViewModel
     {
+        private string CreateClipboardContent( CopyMode mode )
+            => mode switch
+            {
+                CopyMode.Flat => CreateClipboardContent( string.Empty , false , RowsDefinitions.Leaves() , ColumnsDefinitions.Leaves() , Theme ),
+                CopyMode.Structure => CreateClipboardContent( string.Empty , true , RowsDefinitions.Leaves() , ColumnsDefinitions.Leaves() , Theme ),
+                _ => string.Empty
+            };
+
         private string CreateClipboardContent( string title , bool withStructure , IEnumerable<HierarchyDefinition> rows , IEnumerable<HierarchyDefinition> columns , ITheme theme )
         {
             using var mem = new MemoryStream();

@@ -1,10 +1,5 @@
 ﻿using HierarchyGrid.Definitions;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HierarchyGrid.Skia
 {
@@ -20,10 +15,12 @@ namespace HierarchyGrid.Skia
 
                 viewModel.ClearCoordinates();
 
-                canvas.DrawGlobalHeaders( viewModel );
-                canvas.DrawCells( viewModel , viewModel.DrawnCells( width , height , invalidate ) );
-                canvas.DrawColumnHeaders( viewModel , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount );
-                canvas.DrawRowHeaders( viewModel , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount );
+                var theme = new SkiaTheme( viewModel.Theme );
+
+                canvas.DrawGlobalHeaders( viewModel , theme );
+                canvas.DrawCells( viewModel , theme , viewModel.DrawnCells( width , height , invalidate ) );
+                canvas.DrawColumnHeaders( viewModel , theme , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount );
+                canvas.DrawRowHeaders( viewModel , theme , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount );
             }
             else
             {
