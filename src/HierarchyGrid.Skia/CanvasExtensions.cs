@@ -72,15 +72,13 @@ namespace HierarchyGrid.Skia
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
 
-            var renderInfo = RenderInfo.FindRender( viewModel , theme , default( HierarchyDefinition ) );
-
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
-            paint.Color = renderInfo.BackgroundColor;
+            paint.Color = theme.HeaderBackgroundColor;
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
-            paint.Color = SKColors.SlateGray;
+            paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
             var act = () =>
@@ -250,7 +248,7 @@ namespace HierarchyGrid.Skia
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
-            paint.Color = SKColors.SlateGray;
+            paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
             GetHeaderDecorator( hdef , left , top )
@@ -321,9 +319,15 @@ namespace HierarchyGrid.Skia
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
-            paint.StrokeWidth = viewModel.Selections.Contains( cell ) ? 2f : 1f;
-            paint.Color = SKColors.SlateGray;
+            paint.StrokeWidth = 1f;
+            paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
+
+            if ( viewModel.Selections.Contains( cell ) )
+            {
+                rect = SKRect.Create( (float) cell.Left + 1f , (float) cell.Top + 1f , (float) cell.Width - 2f , (float) cell.Height - 2f );
+                canvas.DrawRect( rect , paint );
+            }
 
             var textHPadding = 6f;
             var textVPadding = (float) cell.Height - TextSize;

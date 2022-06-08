@@ -26,7 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="LanguageExt.Core" Version="4.1.0" />
+		<PackageReference Include="LanguageExt.Core" Version="4.2.2" />
 		<PackageReference Include="morelinq" Version="3.3.2" />
 		<PackageReference Include="ReactiveUI.Fody" Version="18.0.10" />
 	</ItemGroup>
