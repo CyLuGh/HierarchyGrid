@@ -475,10 +475,7 @@ namespace HierarchyGrid
             }
 
             var currentX = 0d;
-            var currentY =
-                viewModel.ColumnsHeadersHeight != null
-                ? viewModel.ColumnsHeadersHeight.Take( viewModel.ColumnsHeadersHeight.Length - 1 ).Sum()
-                : 0d;
+            var currentY = ( viewModel.ColumnsHeadersHeight?.Take( viewModel.ColumnsHeadersHeight.Length - 1 ).Sum() ) ?? 0d;
             var height = viewModel.ColumnsHeadersHeight?.LastOrDefault( 0d ) ?? 0d;
             for ( int i = 0 ; i < viewModel.RowsHeadersWidth?.Length ; i++ )
             {
@@ -515,9 +512,9 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , currentY );
-                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
-                     } ).Subscribe();
+                            Canvas.SetTop( rect , currentY );
+                            Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                        } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
                 Canvas.SetTop( splitter , currentY );
