@@ -107,7 +107,7 @@ namespace HierarchyGrid.Skia
             foreach ( var hdef in frozen )
             {
                 var width = viewModel.ColumnsWidths[hdefs.IndexOf( hdef )];
-                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width ); ;
+                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width );
                 column++;
             }
 
@@ -329,7 +329,7 @@ namespace HierarchyGrid.Skia
                 canvas.DrawRect( rect , paint );
             }
 
-            var textHPadding = 6f;
+            const float textHPadding = 6f;
             var textVPadding = (float) cell.Height - TextSize;
 
             TextDrawer.Clear();
@@ -344,6 +344,6 @@ namespace HierarchyGrid.Skia
 
         private static TextBlock TextDrawer { get; } = new TextBlock();
         private static TextPaintOptions TextPaintOptions { get; } = new TextPaintOptions { Edging = SKFontEdging.Antialias };
-        private static readonly float TextSize = 14f;
+        private const float TextSize = 14f;
     }
 }
