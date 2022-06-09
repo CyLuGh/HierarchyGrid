@@ -34,7 +34,7 @@ namespace HierarchyGrid.Skia
                 Qualification.Warning => theme.WarningBackgroundColor,
                 Qualification.Remark => theme.RemarkBackgroundColor,
                 Qualification.Custom => cell.ResultSet.BackgroundColor.Match( t => new SKColor( t.R , t.G , t.B , t.A ) , () => SKColors.White ),
-                _ => SKColors.White
+                _ => theme.BackgroundColor
             };
         }
 
@@ -62,7 +62,7 @@ namespace HierarchyGrid.Skia
                 Qualification.Warning => theme.WarningForegroundColor,
                 Qualification.Remark => theme.RemarkForegroundColor,
                 Qualification.Custom => cell.ResultSet.ForegroundColor.Match( t => new SKColor( t.R , t.G , t.B , t.A ) , () => SKColors.Black ),
-                _ => SKColors.Black
+                _ => theme.ForegroundColor
             };
         }
 

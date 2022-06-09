@@ -16,16 +16,16 @@ public struct ThemeColor
     {
         var colorCode = code.Replace( "#" , "" );
 
-        if ( code.Length == 6 )
+        if ( colorCode.Length == 6 )
         {
             A = 255;
-            R = byte.Parse( colorCode.Substring( 0 , 2 ) , System.Globalization.NumberStyles.HexNumber );
+            R = byte.Parse( colorCode[..2] , System.Globalization.NumberStyles.HexNumber );
             G = byte.Parse( colorCode.Substring( 2 , 2 ) , System.Globalization.NumberStyles.HexNumber );
             B = byte.Parse( colorCode.Substring( 4 , 2 ) , System.Globalization.NumberStyles.HexNumber );
         }
-        else if ( code.Length == 8 )
+        else if ( colorCode.Length == 8 )
         {
-            A = byte.Parse( colorCode.Substring( 0 , 2 ) , System.Globalization.NumberStyles.HexNumber );
+            A = byte.Parse( colorCode[..2] , System.Globalization.NumberStyles.HexNumber );
             R = byte.Parse( colorCode.Substring( 2 , 2 ) , System.Globalization.NumberStyles.HexNumber );
             G = byte.Parse( colorCode.Substring( 4 , 2 ) , System.Globalization.NumberStyles.HexNumber );
             B = byte.Parse( colorCode.Substring( 6 , 2 ) , System.Globalization.NumberStyles.HexNumber );

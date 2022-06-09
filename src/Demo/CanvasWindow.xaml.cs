@@ -154,5 +154,15 @@ namespace Demo
         {
             FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
         }
+
+        private void DefaultThemeClick( object sender , RoutedEventArgs e )
+        {
+            TestGrid.ViewModel.Theme = HierarchyGridTheme.Default;
+        }
+
+        private void OtherThemeClick( object sender , RoutedEventArgs e )
+        {
+            TestGrid.ViewModel.Theme = new OtherTheme();
+        }
     }
 }
