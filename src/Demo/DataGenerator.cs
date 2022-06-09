@@ -16,15 +16,19 @@ namespace Demo
 
         static DataGenerator()
         {
-            _regions = new Dictionary<string , string[]>();
-            _regions.Add( "Europe" , new[] { "Benelux" , "France" , "Germany" , "United Kingdom" , "Italy" , "Spain" } );
-            _regions.Add( "Benelux" , new[] { "Belgium" , "Netherlands" , "Luxemburg" } );
-            _regions.Add( "North America" , new[] { "USA" , "Canada" , "Mexico" } );
-            _regions.Add( "Asia" , new[] { "Japan" , "China" , "Thailand" , "Korea" } );
+            _regions = new Dictionary<string , string[]>
+            {
+                { "Europe" , new[] { "Benelux" , "France" , "Germany" , "United Kingdom" , "Italy" , "Spain" } } ,
+                { "Benelux" , new[] { "Belgium" , "Netherlands" , "Luxemburg" } } ,
+                { "North America" , new[] { "USA" , "Canada" , "Mexico" } } ,
+                { "Asia" , new[] { "Japan" , "China" , "Thailand" , "Korea" } }
+            };
 
-            _vehicles = new Dictionary<string , string[]>();
-            _vehicles.Add( "Without motors" , new[] { "Bicycles" , "Scooters" } );
-            _vehicles.Add( "With motors" , new[] { "Motorbikes" , "Cars" , "Lorries" } );
+            _vehicles = new Dictionary<string , string[]>
+            {
+                { "Without motors" , new[] { "Bicycles" , "Scooters" } } ,
+                { "With motors" , new[] { "Motorbikes" , "Cars" , "Lorries" } }
+            };
         }
 
         public DataGenerator()
@@ -35,12 +39,12 @@ namespace Demo
 
             _regions.Values
                 .SelectMany( o => o )
-                .Where( o => !_regions.Keys.Contains( o ) )
+                .Where( o => !_regions.ContainsKey( o ) )
                 .ForEach( region =>
                  {
                      _vehicles.Values
                          .SelectMany( o => o )
-                         .Where( o => !_vehicles.Keys.Contains( o ) )
+                         .Where( o => !_vehicles.ContainsKey( o ) )
                          .ForEach( vehicle => Data.Add( (region, vehicle) , rnd.Next( 10_000_000 ) ) );
                  } );
         }
@@ -60,7 +64,7 @@ namespace Demo
         }
 
         public HierarchyDefinitions GenerateSample()
-            => new HierarchyDefinitions( BuildProducers() , BuildConsumers() );
+            => new( BuildProducers() , BuildConsumers() );
 
         private IEnumerable<ProducerDefinition> BuildProducers() => new[] {
             BuildProducer("Europe"),
@@ -106,7 +110,7 @@ namespace Demo
             }
             else
             {
-                csr.Editor = ( data , consumed , input ) =>
+                csr.Editor = ( data , _ , input ) =>
                 {
                     if ( Data.TryGetValue( ((string) data, vehicle) , out var _ ) && int.TryParse( input , out var newValue ) )
                     {
@@ -138,9 +142,9 @@ namespace Demo
                     string region => new (string description, Action<ResultSet> action)[] {
                         ( $"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
                         ($"First|Second|Hide {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
-                        ($"First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
+                        ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
                     },
-                    _ => new (string description, Action<ResultSet> action)[0]
+                    _ => Array.Empty<(string description, Action<ResultSet> action)>()
                 };
 
             csr.Qualify = o =>
@@ -153,8 +157,8 @@ namespace Demo
             csr.Colorize = o =>
                 o switch
                 {
-                    _ => ((Brushes.LightGray.Color.A, Brushes.LightGray.Color.R, Brushes.LightGray.Color.G, Brushes.LightGray.Color.B),
-                    (Brushes.IndianRed.Color.A, Brushes.IndianRed.Color.R, Brushes.IndianRed.Color.G, Brushes.IndianRed.Color.B))
+                    _ => (new ThemeColor( Brushes.LightGray.Color.A , Brushes.LightGray.Color.R , Brushes.LightGray.Color.G , Brushes.LightGray.Color.B ),
+                    new ThemeColor( Brushes.IndianRed.Color.A , Brushes.IndianRed.Color.R , Brushes.IndianRed.Color.G , Brushes.IndianRed.Color.B ))
                 };
 
             csr.TooltipCreator = ( p , c ) => $"{p} x {c}";

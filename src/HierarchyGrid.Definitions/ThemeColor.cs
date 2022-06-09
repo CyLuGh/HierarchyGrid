@@ -43,6 +43,14 @@ public struct ThemeColor
 
     public (byte a, byte r, byte g, byte b) ToArgb()
         => (A, R, G, B);
+
+    public void Deconstruct( out byte a , out byte r , out byte g , out byte b )
+    {
+        a = A;
+        r = R;
+        g = G;
+        b = B;
+    }
 }
 
 public static class ThemeColors

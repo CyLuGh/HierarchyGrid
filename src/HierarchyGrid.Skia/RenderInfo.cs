@@ -33,7 +33,7 @@ namespace HierarchyGrid.Skia
                 Qualification.Error => theme.ErrorBackgroundColor,
                 Qualification.Warning => theme.WarningBackgroundColor,
                 Qualification.Remark => theme.RemarkBackgroundColor,
-                Qualification.Custom => cell.ResultSet.BackgroundColor.Match( t => new SKColor( t.r , t.g , t.b , t.a ) , () => SKColors.White ),
+                Qualification.Custom => cell.ResultSet.BackgroundColor.Match( t => new SKColor( t.R , t.G , t.B , t.A ) , () => SKColors.White ),
                 _ => SKColors.White
             };
         }
@@ -61,7 +61,7 @@ namespace HierarchyGrid.Skia
                 Qualification.Error => theme.ErrorForegroundColor,
                 Qualification.Warning => theme.WarningForegroundColor,
                 Qualification.Remark => theme.RemarkForegroundColor,
-                Qualification.Custom => cell.ResultSet.ForegroundColor.Match( t => new SKColor( t.r , t.g , t.b , t.a ) , () => SKColors.Black ),
+                Qualification.Custom => cell.ResultSet.ForegroundColor.Match( t => new SKColor( t.R , t.G , t.B , t.A ) , () => SKColors.Black ),
                 _ => SKColors.Black
             };
         }

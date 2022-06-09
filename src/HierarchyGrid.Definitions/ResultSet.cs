@@ -32,8 +32,8 @@ namespace HierarchyGrid.Definitions
         /// <summary>
         /// Brush color required by producer for all consumer results
         /// </summary>
-        public Option<((byte a, byte r, byte g, byte b), (byte a, byte r, byte g, byte b))> CustomColors { get; set; }
-            = Option<((byte a, byte r, byte g, byte b), (byte a, byte r, byte g, byte b))>.None;
+        public Option<(ThemeColor, ThemeColor)> CustomColors { get; set; }
+            = Option<(ThemeColor, ThemeColor)>.None;
 
         public bool IsLocked { get; set; }
 
@@ -46,8 +46,8 @@ namespace HierarchyGrid.Definitions
 
         public string Result { get; set; }
         public Qualification Qualifier { get; init; }
-        public Option<(byte a, byte r, byte g, byte b)> BackgroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
-        public Option<(byte a, byte r, byte g, byte b)> ForegroundColor { get; set; } = Option<(byte a, byte r, byte g, byte b)>.None;
+        public Option<ThemeColor> BackgroundColor { get; set; } = Option<ThemeColor>.None;
+        public Option<ThemeColor> ForegroundColor { get; set; } = Option<ThemeColor>.None;
         public Option<string> TooltipText { get; set; }
 
         public Option<Func<string , bool>> Editor { get; set; } = Option<Func<string , bool>>.None;

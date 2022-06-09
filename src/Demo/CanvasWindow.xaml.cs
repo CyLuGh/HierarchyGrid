@@ -108,10 +108,10 @@ namespace Demo
                             } : Qualification.Normal ,
                             Colorize = o => int.TryParse( o.ToString() , out var i ) ? i switch
                             {
-                                17 => (((byte) 150, (byte) 100, (byte) 120, (byte) 0), ((byte) 255, (byte) 0, (byte) 0, (byte) 0)),
-                                18 => (((byte) 150, (byte) 0, (byte) 100, (byte) 120), ((byte) 255, (byte) 255, (byte) 0, (byte) 0)),
-                                _ => (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 255, (byte) 0, (byte) 0))
-                            } : (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 0, (byte) 0, (byte) 0)) ,
+                                17 => (new ThemeColor( 150 , 100 , 120 , 0 ), new ThemeColor( 255 , 0 , 0 , 0 )),
+                                18 => (new ThemeColor( 150 , 0 , 100 , 120 ), new ThemeColor( 255 , 255 , 0 , 0 )),
+                                _ => (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 255 , 0 , 0 ))
+                            } : (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 0 , 0 , 0 )) ,
                             Editor = ( p , c , s ) =>
                             {
                                 this.Log().Debug( $"{p} _ {c} _ {s}" );

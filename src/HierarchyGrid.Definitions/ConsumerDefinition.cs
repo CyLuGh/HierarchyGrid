@@ -11,7 +11,7 @@ namespace HierarchyGrid.Definitions
         public Func<object , object> Consumer { get; set; } = o => o;
         public Func<object , string> Formatter { get; set; } = o => o.ToString();
         public Func<object , Qualification> Qualify { get; set; } = _ => Qualification.Normal;
-        public Func<object , ((byte a, byte r, byte g, byte b), (byte a, byte r, byte g, byte b))> Colorize { get; set; }
+        public Func<object , (ThemeColor, ThemeColor)> Colorize { get; set; }
         public Func<object , object , string> TooltipCreator { get; set; }
 
         /// <summary>
@@ -46,21 +46,21 @@ namespace HierarchyGrid.Definitions
             inputSet.CustomColors.Match( c =>
                 {
                     var (back, fore) = c;
-                    resultSet.BackgroundColor = Option<(byte a, byte r, byte g, byte b)>.Some( back );
-                    resultSet.ForegroundColor = Option<(byte a, byte r, byte g, byte b)>.Some( fore );
+                    resultSet.BackgroundColor = back;
+                    resultSet.ForegroundColor = fore;
                 } ,
                 () =>
                 {
                     if ( Colorize != null )
                     {
                         var (background, foreground) = Colorize( data );
-                        resultSet.BackgroundColor = Option<(byte a, byte r, byte g, byte b)>.Some( background );
-                        resultSet.ForegroundColor = Option<(byte a, byte r, byte g, byte b)>.Some( foreground );
+                        resultSet.BackgroundColor = background;
+                        resultSet.ForegroundColor = foreground;
                     }
                     else
                     {
-                        resultSet.BackgroundColor = Option<(byte a, byte r, byte g, byte b)>.None;
-                        resultSet.ForegroundColor = Option<(byte a, byte r, byte g, byte b)>.None;
+                        resultSet.BackgroundColor = Option<ThemeColor>.None;
+                        resultSet.ForegroundColor = Option<ThemeColor>.None;
                     }
                 } );
 
