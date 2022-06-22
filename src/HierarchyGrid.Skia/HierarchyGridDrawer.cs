@@ -5,7 +5,9 @@ namespace HierarchyGrid.Skia
 {
     public static class HierarchyGridDrawer
     {
-        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height , bool invalidate )
+        //TODO Check invalidate
+
+        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height , bool invalidate = false )
         {
             canvas.Clear();
 

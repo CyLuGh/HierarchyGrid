@@ -24,8 +24,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="ReactiveUI.Fody" Version="18.0.10" />
-		<PackageReference Include="ReactiveUI.WPF" Version="18.0.10" />
+		<PackageReference Include="ReactiveUI.Fody" Version="18.1.8" />
+		<PackageReference Include="ReactiveUI.WPF" Version="18.1.8" />
 		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.0" />
 		<PackageReference Include="TextCopy" Version="6.1.0" />
 	</ItemGroup>
