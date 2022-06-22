@@ -1,8 +1,6 @@
 ﻿using HierarchyGrid.Definitions;
 using LanguageExt;
 using SkiaSharp;
-using SkiaSharp.HarfBuzz;
-using System.Data.Common;
 using Topten.RichTextKit;
 
 namespace HierarchyGrid.Skia
