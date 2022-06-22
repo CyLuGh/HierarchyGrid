@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace HierarchyGrid.Definitions;
 
@@ -43,6 +44,16 @@ public struct ThemeColor
 
     public (byte a, byte r, byte g, byte b) ToArgb()
         => (A, R, G, B);
+
+    public string ToCode()
+    {
+        var sb = new StringBuilder( "#" );
+        sb.Append( A.ToString( "X" ) );
+        sb.Append( R.ToString( "X" ) );
+        sb.Append( G.ToString( "X" ) );
+        sb.Append( B.ToString( "X" ) );
+        return sb.ToString();
+    }
 
     public void Deconstruct( out byte a , out byte r , out byte g , out byte b )
     {
