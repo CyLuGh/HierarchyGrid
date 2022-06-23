@@ -7,6 +7,9 @@ namespace HierarchyGrid.Skia
 {
     internal static class CanvasExtensions
     {
+        private enum GlobalHeader
+        { CollapseAll, ExpandAll, Local }
+
         internal static void DrawGlobalHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme )
         {
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
@@ -20,7 +23,7 @@ namespace HierarchyGrid.Skia
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
                 false ,
-                0 , 0 , rowsHorizontalSpan , columnsVerticalSpan );
+                0 , 0 , rowsHorizontalSpan , columnsVerticalSpan , GlobalHeader.CollapseAll );
 
             /* Draw rows global headers */
             var currentY = columnsVerticalSpan;
@@ -63,10 +66,11 @@ namespace HierarchyGrid.Skia
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
                 true ,
-                currentX , currentY , viewModel.RowsHeadersWidth.Last() , viewModel.ColumnsHeadersHeight.Last() );
+                currentX , currentY , viewModel.RowsHeadersWidth.Last() , viewModel.ColumnsHeadersHeight.Last() ,
+                GlobalHeader.ExpandAll );
         }
 
-        internal static void DrawGlobalHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector , Action<HierarchyDefinition , bool> action , bool expanded , double left , double top , double width , double height )
+        private static void DrawGlobalHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector , Action<HierarchyDefinition , bool> action , bool expanded , double left , double top , double width , double height , GlobalHeader globalHeader = GlobalHeader.Local )
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
 
@@ -78,6 +82,11 @@ namespace HierarchyGrid.Skia
             paint.Style = SKPaintStyle.Stroke;
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
+
+            var decorator = GetGlobalHeaderDecorator( !expanded , left , top , globalHeader );
+            paint.Color = theme.ForegroundColor;
+            paint.Style = SKPaintStyle.StrokeAndFill;
+            canvas.DrawPath( decorator , paint );
 
             var act = () =>
             {
@@ -119,7 +128,7 @@ namespace HierarchyGrid.Skia
             }
         }
 
-        internal static void DrawColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int column , HierarchyDefinition hdef , double width )
+        private static void DrawColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int column , HierarchyDefinition hdef , double width )
         {
             var height = hdef.IsExpanded && hdef.HasChild ?
                                 viewModel.ColumnsHeadersHeight[hdef.Level] :
@@ -136,7 +145,7 @@ namespace HierarchyGrid.Skia
             currentPosition += width;
         }
 
-        internal static void DrawParentColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int column , double currentPosition , ref int headerCount )
+        private static void DrawParentColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int column , double currentPosition , ref int headerCount )
         {
             if ( src.Parent == null )
                 return;
@@ -191,7 +200,7 @@ namespace HierarchyGrid.Skia
             }
         }
 
-        internal static void DrawRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int row , HierarchyDefinition hdef , double height )
+        private static void DrawRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int row , HierarchyDefinition hdef , double height )
         {
             var width = hdef.IsExpanded && hdef.HasChild ?
                                 viewModel.RowsHeadersWidth[hdef.Level] :
@@ -210,7 +219,7 @@ namespace HierarchyGrid.Skia
             currentPosition += height;
         }
 
-        internal static void DrawParentRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int row , double currentPosition , ref int headerCount )
+        private static void DrawParentRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int row , double currentPosition , ref int headerCount )
         {
             if ( src.Parent == null )
                 return;
@@ -234,7 +243,7 @@ namespace HierarchyGrid.Skia
             canvas.DrawParentRowHeader( viewModel , theme , hdef , origin , row , currentPosition , ref headerCount );
         }
 
-        internal static void DrawHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , HierarchyDefinition hdef , double left , double top , double width , double height )
+        private static void DrawHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , HierarchyDefinition hdef , double left , double top , double width , double height )
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
 
@@ -277,6 +286,76 @@ namespace HierarchyGrid.Skia
             return hdef.IsExpanded ? BuildExpandedPath( left , top ) : BuildFoldedPath( left , top );
         }
 
+        private static SKPath GetGlobalHeaderDecorator( bool isExpanded , double left , double top , GlobalHeader globalHeader )
+            => globalHeader switch
+            {
+                GlobalHeader.ExpandAll => BuildExpandAllPath( left , top ),
+                GlobalHeader.CollapseAll => BuildFoldAllPath( left , top ),
+                _ => isExpanded ? BuildExpandedPath( left , top ) : BuildFoldedPath( left , top )
+            };
+
+        private static SKPath BuildFoldAllPath( double left , double top )
+        {
+            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+
+            var startPoint = new SKPoint( 11f + (float) left , 5f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint.X - 8f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 3f + (float) left , 14f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 8f , startPoint.Y );
+            path.LineTo( startPoint.X + 8f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 13f + (float) left , 5f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint.X + 7f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 13f + (float) left , 14f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 7f , startPoint.Y );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            return path;
+        }
+
+        private static SKPath BuildExpandAllPath( double left , double top )
+        {
+            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+
+            var startPoint = new SKPoint( 3f + (float) left , 5f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 7f , startPoint.Y );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 3f + (float) left , 14f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint.X + 7f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 12f + (float) left , 5f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X + 8f , startPoint.Y );
+            path.LineTo( startPoint.X + 8f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            startPoint = new SKPoint( 20f + (float) left , 14f + (float) top );
+            path.MoveTo( startPoint );
+            path.LineTo( startPoint.X , startPoint.Y + 7f );
+            path.LineTo( startPoint.X - 8f , startPoint.Y + 7f );
+            path.LineTo( startPoint );
+
+            return path;
+        }
+
         private static SKPath BuildFoldedPath( double left , double top )
         {
             var path = new SKPath { FillType = SKPathFillType.EvenOdd };
@@ -305,7 +384,7 @@ namespace HierarchyGrid.Skia
                 canvas.DrawCell( viewModel , theme , cell );
         }
 
-        internal static void DrawCell( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
+        private static void DrawCell( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
         {
             var rect = SKRect.Create( (float) cell.Left , (float) cell.Top , (float) cell.Width , (float) cell.Height );
 

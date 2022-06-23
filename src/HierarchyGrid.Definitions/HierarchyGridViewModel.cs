@@ -84,13 +84,13 @@ namespace HierarchyGrid.Definitions
                     if ( rowsFlat.Length == value.RowToggles.Length )
                         Parallel.For( 0 , value.RowToggles.Length , i => rowsFlat[i].IsExpanded = value.RowToggles[i] );
                     else
-                        rowsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+                        rowsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
 
                     var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
                     if ( columnsFlat.Length == value.ColumnToggles.Length )
                         Parallel.For( 0 , value.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = value.ColumnToggles[i] );
                     else
-                        columnsFlat.AsParallel().ForAll( x => x.IsExpanded = true );
+                        columnsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
 
                     VerticalOffset = value.VerticalOffset;
                     HorizontalOffset = value.HorizontalOffset;

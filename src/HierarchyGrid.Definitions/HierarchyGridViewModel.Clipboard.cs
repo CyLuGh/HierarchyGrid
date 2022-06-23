@@ -141,8 +141,10 @@ namespace HierarchyGrid.Definitions
 
                 var currentLevelColumns = columns.Where( c => c.Level == currentLevel );
                 foreach ( var column in currentLevelColumns )
+                {
                     for ( int _ = 0 ; _ < column.Span ; _++ )
                         sb.Append( column.Content ).Append( separator );
+                }
 
                 sb.Length--;
                 sb.AppendLine();
@@ -177,16 +179,6 @@ namespace HierarchyGrid.Definitions
             }
 
             return sb.ToString();
-        }
-
-        private static Option<(Guid, Guid)> Identify( HierarchyDefinition rowDef , HierarchyDefinition colDef )
-        {
-            if ( rowDef is ProducerDefinition p && colDef is ConsumerDefinition c )
-                return Option<(Guid, Guid)>.Some( (p.Guid, c.Guid) );
-            else if ( rowDef is ConsumerDefinition cr && colDef is ProducerDefinition pr )
-                return Option<(Guid, Guid)>.Some( (pr.Guid, cr.Guid) );
-
-            return Option<(Guid, Guid)>.None;
         }
 
         private static Option<ResultSet> Resolve( HierarchyDefinition rowDef , HierarchyDefinition colDef )
