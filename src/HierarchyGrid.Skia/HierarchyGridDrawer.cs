@@ -21,10 +21,12 @@ namespace HierarchyGrid.Skia
             if ( viewModel.HasData )
             {
                 int headerCount = 0;
-
+                var previousGlobalCoordinates = viewModel.GlobalHeadersCoordinates
+                    .Select( t => (t.Coord, t.Guid) )
+                    .ToList();
                 viewModel.ClearCoordinates();
 
-                canvas.DrawGlobalHeaders( viewModel , theme );
+                canvas.DrawGlobalHeaders( viewModel , theme , previousGlobalCoordinates );
                 canvas.DrawCells( viewModel , theme , viewModel.DrawnCells( width , height , invalidate ) );
                 canvas.DrawColumnHeaders( viewModel , theme , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount );
                 canvas.DrawRowHeaders( viewModel , theme , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount );

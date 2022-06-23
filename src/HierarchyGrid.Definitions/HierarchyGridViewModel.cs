@@ -38,7 +38,7 @@ namespace HierarchyGrid.Definitions
 
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
-        public ConcurrentBag<(ElementCoordinates Coord, Action Action)> GlobalHeadersCoordinates { get; } = new();
+        public ConcurrentBag<(ElementCoordinates Coord, Guid Guid, Action Action)> GlobalHeadersCoordinates { get; } = new();
 
         [Reactive] public int HorizontalOffset { get; set; }
         [Reactive] public int VerticalOffset { get; set; }
@@ -63,6 +63,8 @@ namespace HierarchyGrid.Definitions
         [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
         private readonly Subject<Option<PositionedCell>> _hoveredCell = new();
+
+        [Reactive] public Guid HoveredElementId { get; private set; }
 
         public HierarchyDefinition[] ColumnsDefinitions => IsTransposed ?
             ProducersCache.Items.Cast<HierarchyDefinition>().ToArray() : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
@@ -199,7 +201,7 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( EndAndDrawCommand )
                     .DisposeWith( disposables );
 
-                this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow )
+                this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow , x => x.HoveredElementId )
                     .DistinctUntilChanged()
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
@@ -374,6 +376,7 @@ namespace HierarchyGrid.Definitions
         {
             HeadersCoordinates.Clear();
             CellsCoordinates.Clear();
+            GlobalHeadersCoordinates.Clear();
         }
 
         public void ClearHighlights()
@@ -540,6 +543,7 @@ namespace HierarchyGrid.Definitions
         internal void HandleMouseLeft()
         {
             _hoveredCell.OnNext( Option<PositionedCell>.None );
+            HoveredElementId = Guid.Empty;
             ClearCrosshair();
         }
 
@@ -548,6 +552,7 @@ namespace HierarchyGrid.Definitions
             if ( RowsHeadersWidth?.Any() != true || ColumnsHeadersHeight?.Any() != true )
             {
                 _hoveredCell.OnNext( Option<PositionedCell>.None );
+                HoveredElementId = Guid.Empty;
                 return;
             }
 
@@ -555,6 +560,8 @@ namespace HierarchyGrid.Definitions
             element.Match( cell =>
             {
                 _hoveredCell.OnNext( cell );
+                HoveredElementId = Guid.Empty;
+
                 cell.Match( s =>
                 {
                     HoveredColumn = s.HorizontalPosition;
@@ -570,6 +577,7 @@ namespace HierarchyGrid.Definitions
                 _hoveredCell.OnNext( Option<PositionedCell>.None );
                 hdef.Match( s =>
                 {
+                    HoveredElementId = s.Guid;
                     if ( s is ConsumerDefinition consumer && consumer.Count() == 1 )
                     {
                         HoveredColumn = ColumnsDefinitions.GetPosition( consumer );
@@ -587,6 +595,11 @@ namespace HierarchyGrid.Definitions
                     }
                 } , () =>
                 {
+                    HoveredElementId = GlobalHeadersCoordinates
+                        .Find( t => t.Coord.Contains( x , y ) )
+                        .Some( t => t.Guid )
+                        .None( () => Guid.Empty );
+
                     HoveredColumn = -1;
                     HoveredRow = -1;
                 } );

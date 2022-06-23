@@ -97,6 +97,9 @@ namespace HierarchyGrid.Skia
 
         private static SKColor FindBackgroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef )
         {
+            if ( hdef?.Guid.Equals( viewModel.HoveredElementId ) == true )
+                return theme.HoverHeaderBackgroundColor;
+
             if ( hdef == null || hdef.Count() > 1 )
                 return theme.HeaderBackgroundColor;
 
@@ -120,6 +123,9 @@ namespace HierarchyGrid.Skia
 
         private static SKColor FindForegroundColor( HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition hdef )
         {
+            if ( hdef?.Guid.Equals( viewModel.HoveredElementId ) == true )
+                return theme.HoverHeaderForegroundColor;
+
             if ( hdef == null || hdef.Count() > 1 )
                 return theme.HeaderForegroundColor;
 

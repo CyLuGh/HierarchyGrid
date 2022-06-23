@@ -10,7 +10,7 @@ namespace HierarchyGrid.Skia
         private enum GlobalHeader
         { CollapseAll, ExpandAll, Local }
 
-        internal static void DrawGlobalHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme )
+        internal static void DrawGlobalHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , IList<(ElementCoordinates, Guid)> previousGlobalCoordinates )
         {
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
             var colDepth = viewModel.ColumnsDefinitions.TotalDepth();
@@ -19,6 +19,7 @@ namespace HierarchyGrid.Skia
             var rowsHorizontalSpan = viewModel.RowsHeadersWidth.Take( viewModel.RowsHeadersWidth.Length - 1 ).Sum();
 
             canvas.DrawGlobalHeader( viewModel ,
+                previousGlobalCoordinates ,
                 theme ,
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
@@ -35,6 +36,7 @@ namespace HierarchyGrid.Skia
                 var width = viewModel.RowsHeadersWidth[i];
 
                 canvas.DrawGlobalHeader( viewModel ,
+                    previousGlobalCoordinates ,
                     theme ,
                     vm => vm.RowsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
@@ -53,6 +55,7 @@ namespace HierarchyGrid.Skia
                 var height = viewModel.ColumnsHeadersHeight[i];
 
                 canvas.DrawGlobalHeader( viewModel ,
+                    previousGlobalCoordinates ,
                     theme ,
                     vm => vm.ColumnsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
@@ -62,6 +65,7 @@ namespace HierarchyGrid.Skia
             }
 
             canvas.DrawGlobalHeader( viewModel ,
+                previousGlobalCoordinates ,
                 theme ,
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
@@ -70,13 +74,18 @@ namespace HierarchyGrid.Skia
                 GlobalHeader.ExpandAll );
         }
 
-        private static void DrawGlobalHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector , Action<HierarchyDefinition , bool> action , bool expanded , double left , double top , double width , double height , GlobalHeader globalHeader = GlobalHeader.Local )
+        private static void DrawGlobalHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , IList<(ElementCoordinates, Guid)> previousGlobalCoordinates , SkiaTheme theme , Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector , Action<HierarchyDefinition , bool> action , bool expanded , double left , double top , double width , double height , GlobalHeader globalHeader = GlobalHeader.Local )
         {
             var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
+            var coordinates = new ElementCoordinates( left , top , left + width , top + height );
+
+            var isHovered = previousGlobalCoordinates.Find( t => rect.IntersectsWith( t.Item1.ToRectangle() ) )
+                .Some( t => t.Item2.Equals( viewModel.HoveredElementId ) )
+                .None( () => false );
 
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
-            paint.Color = theme.HeaderBackgroundColor;
+            paint.Color = isHovered ? theme.HoverHeaderBackgroundColor : theme.HeaderBackgroundColor;
             canvas.DrawRect( rect , paint );
 
             paint.Style = SKPaintStyle.Stroke;
@@ -84,7 +93,7 @@ namespace HierarchyGrid.Skia
             canvas.DrawRect( rect , paint );
 
             var decorator = GetGlobalHeaderDecorator( !expanded , left , top , globalHeader );
-            paint.Color = theme.ForegroundColor;
+            paint.Color = isHovered ? theme.HoverHeaderForegroundColor : theme.HeaderForegroundColor;
             paint.Style = SKPaintStyle.StrokeAndFill;
             canvas.DrawPath( decorator , paint );
 
@@ -94,7 +103,7 @@ namespace HierarchyGrid.Skia
                     action( hd , expanded );
             };
 
-            viewModel.GlobalHeadersCoordinates.Add( new( new( left , top , left + width , top + height ) , act ) );
+            viewModel.GlobalHeadersCoordinates.Add( new( coordinates , Guid.NewGuid() , act ) );
         }
 
         internal static void DrawColumnHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , HierarchyDefinition[]> selector , float availableWidth , ref int headerCount )
