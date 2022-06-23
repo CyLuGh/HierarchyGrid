@@ -1,5 +1,7 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using HierarchyGrid.Definitions;
 using System;
 using System.Collections.Generic;
@@ -20,6 +22,11 @@ public class GridControl : Control
 
     public override void Render( DrawingContext context )
     {
-        base.Render( context );
+        var noSkia = new FormattedText()
+        {
+            Text = "Current rendering API is not Skia"
+        };
+        context.Custom( new GridCustomDrawOperation( new Rect( 0 , 0 , Bounds.Width , Bounds.Height ) , noSkia , _viewModel ) );
+        Dispatcher.UIThread.InvokeAsync( InvalidateVisual , DispatcherPriority.Background );
     }
 }

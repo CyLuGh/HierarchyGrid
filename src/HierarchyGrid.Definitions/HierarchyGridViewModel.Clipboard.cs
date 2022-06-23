@@ -20,10 +20,72 @@ namespace HierarchyGrid.Definitions
         private string CreateClipboardContent( CopyMode mode )
             => mode switch
             {
-                CopyMode.Flat => CreateClipboardFlatContent( RowsDefinitions.Leaves().ToArr() , ColumnsDefinitions.Leaves().ToArr() ),
-                CopyMode.Structure => CreateClipboardStructuredContent( RowsDefinitions.Leaves().ToArr() , ColumnsDefinitions.Leaves().ToArr() ),
+                CopyMode.Flat => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
+                CopyMode.Structure => CreateClipboardStructuredContent( GetRows( mode ) , GetColumns( mode ) ),
+                CopyMode.Highlights => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
+                CopyMode.Selection => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
                 _ => string.Empty
             };
+
+        private Arr<HierarchyDefinition> GetRows( CopyMode mode )
+        {
+            switch ( mode )
+            {
+                case CopyMode.Flat:
+                    return RowsDefinitions.Leaves().ToArr();
+
+                case CopyMode.Structure:
+                    return RowsDefinitions.FlatList( false ).ToArr();
+
+                case CopyMode.Highlights:
+                    var leaves = RowsDefinitions.Leaves().ToArr();
+                    if ( leaves.Any( l => l.IsHighlighted ) )
+                        return leaves.Where( l => l.IsHighlighted );
+                    return leaves;
+
+                case CopyMode.Selection:
+                    var selected = Selections.Select( s => !IsTransposed ? s.ProducerDefinition as HierarchyDefinition : s.ConsumerDefinition )
+                        .Distinct().ToArr();
+
+                    if ( selected.Length > 0 )
+                        return selected;
+
+                    return Arr<HierarchyDefinition>.Empty;
+
+                default:
+                    return RowsDefinitions.ToArr();
+            }
+        }
+
+        private Arr<HierarchyDefinition> GetColumns( CopyMode mode )
+        {
+            switch ( mode )
+            {
+                case CopyMode.Flat:
+                    return ColumnsDefinitions.Leaves().ToArr();
+
+                case CopyMode.Structure:
+                    return ColumnsDefinitions.FlatList( false ).ToArr();
+
+                case CopyMode.Highlights:
+                    var leaves = ColumnsDefinitions.Leaves().ToArr();
+                    if ( leaves.Any( l => l.IsHighlighted ) )
+                        return leaves.Where( l => l.IsHighlighted );
+                    return leaves;
+
+                case CopyMode.Selection:
+                    var selected = Selections.Select( s => !IsTransposed ? s.ConsumerDefinition as HierarchyDefinition : s.ProducerDefinition )
+                        .Distinct().ToArr();
+
+                    if ( selected.Length > 0 )
+                        return selected;
+
+                    return Arr<HierarchyDefinition>.Empty;
+
+                default:
+                    return ColumnsDefinitions.ToArr();
+            }
+        }
 
         private static string CreateClipboardFlatContent( Arr<HierarchyDefinition> rows , Arr<HierarchyDefinition> columns )
         {
@@ -66,23 +128,45 @@ namespace HierarchyGrid.Definitions
 
             const char separator = '\t';
 
-            // Skip first cell
-            sb.Append( separator );
+            var rowDepth = rows.TotalDepth( false );
+            var colDepth = columns.TotalDepth( false );
 
-            // Columns titles
-            foreach ( var column in columns )
-                sb.Append( column.Content ).Append( separator );
-
-            sb.Length--;
-            sb.AppendLine();
-
-            foreach ( var row in rows )
+            for ( int i = 0 ; i < colDepth ; i++ )
             {
-                sb.Append( row.Content ).Append( separator );
+                var currentLevel = i;
 
-                foreach ( var column in columns )
+                // Skip cells corresponding to rows depth
+                for ( int _ = 0 ; _ < rowDepth ; _++ )
+                    sb.Append( separator );
+
+                var currentLevelColumns = columns.Where( c => c.Level == currentLevel );
+                foreach ( var column in currentLevelColumns )
+                    for ( int _ = 0 ; _ < column.Span ; _++ )
+                        sb.Append( column.Content ).Append( separator );
+
+                sb.Length--;
+                sb.AppendLine();
+            }
+
+            var columnLeaves = columns.Roots().Leaves().ToArr();
+
+            foreach ( var leafRow in rows.Roots().Leaves() )
+            {
+                var path = leafRow.Path;
+                int position = 0;
+
+                foreach ( var row in path )
                 {
-                    sb.Append( Resolve( row , column )
+                    sb.Append( row.Content ).Append( separator );
+                    position++;
+                }
+
+                for ( int _ = position ; _ < rowDepth ; _++ )
+                    sb.Append( separator );
+
+                foreach ( var column in columnLeaves )
+                {
+                    sb.Append( Resolve( leafRow , column )
                         .Some( rs => rs.Result )
                         .None( () => string.Empty ) );
                     sb.Append( separator );

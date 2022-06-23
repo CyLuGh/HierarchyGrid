@@ -18,7 +18,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Skia", "Hiera
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid", "HierarchyGrid\HierarchyGrid.csproj", "{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyGrid.Avalonia", "HierarchyGrid.Avalonia\HierarchyGrid.Avalonia.csproj", "{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Avalonia", "HierarchyGrid.Avalonia\HierarchyGrid.Avalonia.csproj", "{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Avalonia", "Avalonia", "{7061C7EA-6813-441B-AAEC-B8AA4828DD85}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WPF", "WPF", "{2C46ACB2-27D4-4F01-B745-B59DB4A451D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Avalonia", "Demo.Avalonia\Demo.Avalonia.csproj", "{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,9 +56,19 @@ Global
 		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2D34F07A-CFCB-4196-AF7E-6D3708EC8F61} = {2C46ACB2-27D4-4F01-B745-B59DB4A451D9}
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4} = {2C46ACB2-27D4-4F01-B745-B59DB4A451D9}
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF} = {7061C7EA-6813-441B-AAEC-B8AA4828DD85}
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7} = {7061C7EA-6813-441B-AAEC-B8AA4828DD85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {41A03B4F-365B-4745-BA3F-99ADB65857DA}
