@@ -124,6 +124,7 @@ namespace HierarchyGrid.Definitions
         public ReactiveCommand<bool , Unit> ToggleStatesCommand { get; private set; }
 
         public ReactiveCommand<Unit , Unit> ToggleCrosshairCommand { get; private set; }
+        public ReactiveCommand<Unit , Unit> ToggleTransposeCommand { get; private set; }
         public ReactiveCommand<Unit , Unit> ClearHighlightsCommand { get; private set; }
 
         public Queue<IDisposable> ResizeObservables { get; } = new();
@@ -212,6 +213,11 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
+                this.WhenAnyValue( x => x.IsTransposed )
+                    .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
                 _hoveredCell.Throttle( TimeSpan.FromMilliseconds( 600 ) )
                     .DistinctUntilChanged()
                     .InvokeCommand( HandleTooltipCommand )
@@ -279,6 +285,14 @@ namespace HierarchyGrid.Definitions
                 return Unit.Default;
             } );
             @this.ToggleCrosshairCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
+            @this.ToggleTransposeCommand = ReactiveCommand.Create( () =>
+            {
+                @this.IsTransposed = !@this.IsTransposed;
+                return Unit.Default;
+            } );
+            @this.ToggleTransposeCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
             @this.ClearHighlightsCommand = ReactiveCommand.CreateFromObservable( () =>

@@ -402,8 +402,19 @@ namespace HierarchyGrid.Skia
             using var paint = new SKPaint();
             paint.Style = SKPaintStyle.Fill;
             paint.Color = renderInfo.BackgroundColor;
+
+            if ( cell.ResultSet.Qualifier == Qualification.Empty && !cell.HasSpecialRenderStatus( viewModel ) )
+            {
+                paint.Shader = SKShader.CreateLinearGradient(
+                    new SKPoint( rect.Left , rect.Top ) ,
+                    new SKPoint( rect.Right , rect.Bottom ) ,
+                    new SKColor[] { renderInfo.BackgroundColor , renderInfo.ForegroundColor } ,
+                    SKShaderTileMode.Repeat );
+            }
+
             canvas.DrawRect( rect , paint );
 
+            paint.Shader = null;
             paint.Style = SKPaintStyle.Stroke;
             paint.StrokeWidth = 1f;
             paint.Color = theme.BorderColor;

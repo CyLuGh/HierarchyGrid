@@ -37,6 +37,9 @@ public struct ThemeColor
         }
     }
 
+    public ThemeColor With( byte? a = null , byte? r = null , byte? g = null , byte? b = null )
+        => new( a ?? A , r ?? R , g ?? G , b ?? B );
+
     public byte A { get; }
     public byte R { get; }
     public byte G { get; }
@@ -87,4 +90,6 @@ public static class ThemeColors
     public static readonly ThemeColor LightSeaGreen = new( "20B2AA" );
 
     public static readonly ThemeColor LightBlue = new( "ADD8E6" );
+
+    public static readonly ThemeColor Gainsboro = new( "#FFDCDCDC" );
 }

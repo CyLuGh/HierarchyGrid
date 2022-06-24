@@ -50,5 +50,7 @@ namespace Demo
         public ThemeColor ErrorBackgroundColor => ThemeColors.IndianRed;
 
         public ThemeColor ErrorForegroundColor => ThemeColors.White;
+
+        public ThemeColor EmptyBackgroundColor => ThemeColors.LightGray;
     }
 }

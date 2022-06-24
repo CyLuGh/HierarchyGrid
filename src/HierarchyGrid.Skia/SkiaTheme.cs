@@ -38,6 +38,9 @@ namespace HierarchyGrid.Skia
 
             ErrorBackgroundColor = theme.ErrorBackgroundColor.ToSKColor();
             ErrorForegroundColor = theme.ErrorForegroundColor.ToSKColor();
+
+            EmptyBackgroundColor = theme.EmptyBackgroundColor.ToSKColor();
+            EmptyForegroundColor = theme.BorderColor.With( a: 100 ).ToSKColor();
         }
 
         public SKColor BackgroundColor { get; init; }
@@ -71,6 +74,9 @@ namespace HierarchyGrid.Skia
 
         public SKColor ErrorBackgroundColor { get; init; }
         public SKColor ErrorForegroundColor { get; init; }
+
+        public SKColor EmptyBackgroundColor { get; init; }
+        public SKColor EmptyForegroundColor { get; init; }
     }
 
     internal static class ThemeColorExtension

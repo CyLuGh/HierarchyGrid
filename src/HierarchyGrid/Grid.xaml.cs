@@ -347,6 +347,13 @@ namespace HierarchyGrid
                 Command = viewModel.ToggleStatesCommand ,
                 CommandParameter = false
             } );
+            //contextMenu.Items.Add( new MenuItem
+            //{
+            //    Header = "Transposed" ,
+            //    IsChecked = viewModel.IsTransposed ,
+            //    IsCheckable = true ,
+            //    Command = viewModel.ToggleTransposeCommand
+            //} );
 
             contextMenu.Items.Add( new Separator() );
 
@@ -512,9 +519,9 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                            Canvas.SetTop( rect , currentY );
-                            Canvas.SetLeft( rect , posX + args.HorizontalChange );
-                        } ).Subscribe();
+                         Canvas.SetTop( rect , currentY );
+                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                     } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
                 Canvas.SetTop( splitter , currentY );

@@ -33,4 +33,6 @@ public interface ITheme
 
     public ThemeColor ErrorBackgroundColor { get; }
     public ThemeColor ErrorForegroundColor { get; }
+
+    public ThemeColor EmptyBackgroundColor { get; }
 }

@@ -53,4 +53,6 @@ public sealed class HierarchyGridTheme : ITheme
     public ThemeColor ErrorBackgroundColor => ThemeColors.IndianRed;
 
     public ThemeColor ErrorForegroundColor => ThemeColors.White;
+
+    public ThemeColor EmptyBackgroundColor => ThemeColors.Gainsboro;
 }
