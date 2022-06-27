@@ -18,14 +18,15 @@ namespace HierarchyGrid.Definitions
     public partial class HierarchyGridViewModel
     {
         private string CreateClipboardContent( CopyMode mode )
-            => mode switch
-            {
-                CopyMode.Flat => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
-                CopyMode.Structure => CreateClipboardStructuredContent( GetRows( mode ) , GetColumns( mode ) ),
-                CopyMode.Highlights => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
-                CopyMode.Selection => CreateClipboardFlatContent( GetRows( mode ) , GetColumns( mode ) ),
-                _ => string.Empty
-            };
+        {
+            var rows = GetRows( mode );
+            var columns = GetColumns( mode );
+
+            Func<Arr<HierarchyDefinition> , Arr<HierarchyDefinition> , string> builder =
+                mode == CopyMode.Structure ? CreateClipboardStructuredContent : CreateClipboardFlatContent;
+
+            return builder( rows , columns );
+        }
 
         private Arr<HierarchyDefinition> GetRows( CopyMode mode )
         {
