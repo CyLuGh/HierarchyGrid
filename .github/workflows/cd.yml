@@ -2,8 +2,9 @@ name: VirtualHierarchyGrid integration
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 0.*
+      - 1.*
 env:
   configuration: Release
 
@@ -35,13 +36,19 @@ jobs:
         run: dotnet test --configuration=Release --verbosity=minimal --no-restore
         working-directory: src
 
+      - uses: little-core-labs/get-git-tag@v3.0.1
+        id: tagName
+
       - name: Pack
-        run: dotnet pack --configuration=Release --verbosity=minimal --no-restore
+        run: dotnet pack -p:PackageVersion=${{ steps.tagName.outputs.tag }} --configuration=Release --verbosity=minimal --no-restore
         working-directory: src
 
       - name: Push to nuget
         run: dotnet nuget push **/HierarchyGrid.Definitions/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Push to nuget
-        run: dotnet nuget push **/VirtualHierarchyGrid/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push **/HierarchyGrid.Skia/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Push to nuget
+        run: dotnet nuget push **/HierarchyGrid/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
     

@@ -8,8 +8,7 @@
 		<PackageOutputPath>./nupkg</PackageOutputPath>
 
 		<Authors>Demortier Jeremy</Authors>
-		<Description>Definitions used by VirtualHierarchyGrid</Description>
-		<Version>0.5.8</Version>
+		<Description>Definitions used by HierarchyGrid</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
