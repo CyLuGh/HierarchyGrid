@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<PropertyGroup>
+		<PackageOutputPath>./nupkg</PackageOutputPath>
+
+		<Authors>Demortier Jeremy</Authors>
+		<Description>HierarchyGrid rendering in Skia</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.0" />
+    <PackageReference Include="Topten.RichTextKit" Version="0.4.151" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+  </ItemGroup>
+
+</Project>

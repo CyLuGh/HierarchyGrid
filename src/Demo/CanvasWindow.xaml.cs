@@ -1,5 +1,4 @@
-﻿using VirtualHierarchyGrid;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -30,6 +29,8 @@ namespace Demo
             InitializeComponent();
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
+            TestGrid.ViewModel = new HierarchyGridViewModel();
+            TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
@@ -39,7 +40,7 @@ namespace Demo
                     var hpd = new ProducerDefinition
                     {
                         Content = x.ToString() ,
-                        //Producer = () => x,
+                        Producer = () => x ,
                         IsExpanded = true
                     };
 
@@ -69,7 +70,7 @@ namespace Demo
                 {
                     Content = idx.ToString() ,
                     Producer = () => idx ,
-                    //Classification = () => idx == 3 ? CellClassification.Remark : CellClassification.Normal
+                    //Qualify = () => idx == 3 ? Qualification.Remark : Qualification.Normal
                 } );
 
                 if ( addChild )
@@ -107,10 +108,10 @@ namespace Demo
                             } : Qualification.Normal ,
                             Colorize = o => int.TryParse( o.ToString() , out var i ) ? i switch
                             {
-                                17 => (((byte) 150, (byte) 100, (byte) 120, (byte) 0), ((byte) 255, (byte) 0, (byte) 0, (byte) 0)),
-                                18 => (((byte) 150, (byte) 0, (byte) 100, (byte) 120), ((byte) 255, (byte) 255, (byte) 0, (byte) 0)),
-                                _ => (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 255, (byte) 0, (byte) 0))
-                            } : (((byte) 0, (byte) 0, (byte) 0, (byte) 0), ((byte) 0, (byte) 0, (byte) 0, (byte) 0)) ,
+                                17 => (new ThemeColor( 150 , 100 , 120 , 0 ), new ThemeColor( 255 , 0 , 0 , 0 )),
+                                18 => (new ThemeColor( 150 , 0 , 100 , 120 ), new ThemeColor( 255 , 255 , 0 , 0 )),
+                                _ => (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 255 , 0 , 0 ))
+                            } : (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 0 , 0 , 0 )) ,
                             Editor = ( p , c , s ) =>
                             {
                                 this.Log().Debug( $"{p} _ {c} _ {s}" );
@@ -131,16 +132,18 @@ namespace Demo
         {
             var dg = new DataGenerator();
             HierarchyGrid.ViewModel.Set( dg.GenerateSample() );
+            HierarchyGrid.ViewModel.EnableCrosshair = true;
         }
 
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
         {
             var calendarBuilder = new CalendarBuilder( "#1" , "#2" , "#3" );
             var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
-            FoldedSampleHierarchyGrid.ViewModel.Set( definitions, true );
+            FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
+            FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
+            FoldedSampleHierarchyGrid.ViewModel.EnableMultiSelection = true;
         }
-
 
         private void SaveStateClick( object sender , RoutedEventArgs e )
         {
@@ -150,6 +153,16 @@ namespace Demo
         private void RestoreStateClick( object sender , RoutedEventArgs e )
         {
             FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
+        }
+
+        private void DefaultThemeClick( object sender , RoutedEventArgs e )
+        {
+            TestGrid.ViewModel.Theme = HierarchyGridTheme.Default;
+        }
+
+        private void OtherThemeClick( object sender , RoutedEventArgs e )
+        {
+            TestGrid.ViewModel.Theme = new OtherTheme();
         }
     }
 }

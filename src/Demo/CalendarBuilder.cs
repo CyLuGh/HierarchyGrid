@@ -10,7 +10,7 @@ namespace Demo
     {
         private string[] _users;
 
-        public CalendarBuilder(params string[] users)
+        public CalendarBuilder( params string[] users )
         {
             _users = users;
         }
@@ -39,25 +39,25 @@ namespace Demo
 
                     yearlyProducer.IsExpanded = year == DateTime.Today.Year;
                     return yearlyProducer;
-                });
+                } );
 
-        public IEnumerable<ConsumerDefinition> GetConsumers() 
-            => Enumerable.Range(1,31)
-                .Select ( day =>
+        public IEnumerable<ConsumerDefinition> GetConsumers()
+            => Enumerable.Range( 1 , 31 )
+                .Select( day =>
                 {
                     var consumer = new ConsumerDefinition
                     {
-                        Content = $"{day}",
+                        Content = $"{day}" ,
                         Consumer = o =>
                         {
                             if ( o is ValueTuple<int , int , string> tuple )
                             {
                                 var (year, month, user) = tuple;
-                                
-                                if ( day <= DateTime.DaysInMonth( year , month ) ) 
+
+                                if ( day <= DateTime.DaysInMonth( year , month ) )
                                 {
                                     var date = new DateTime( year , month , day );
-                                    return (date,user);
+                                    return (date, user);
                                 }
                             }
 
@@ -66,6 +66,6 @@ namespace Demo
                     };
 
                     return consumer;
-                });
+                } );
     }
 }

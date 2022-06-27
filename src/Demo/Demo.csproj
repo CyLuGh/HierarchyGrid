@@ -1,18 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="33.1.1" />
-    <PackageReference Include="NLog" Version="4.7.11" />
-    <PackageReference Include="Splat.NLog" Version="13.1.22" />
+    <PackageReference Include="Bogus" Version="34.0.2" />
+    <PackageReference Include="NLog" Version="5.0.1" />
+    <PackageReference Include="Splat.NLog" Version="14.2.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VirtualHierarchyGrid\VirtualHierarchyGrid.csproj" />
+    <ProjectReference Include="..\HierarchyGrid\HierarchyGrid.csproj" />
   </ItemGroup>
 </Project>

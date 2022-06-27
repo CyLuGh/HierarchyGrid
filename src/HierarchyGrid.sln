@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32414.318
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Definitions", "HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj", "{31930A95-053D-4E09-AEDA-34A8C9E7FDAE}"
 EndProject
@@ -9,12 +9,22 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo", "Demo\Demo.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Definitions.Tests", "HierarchyGrid.Definitions.Tests\HierarchyGrid.Definitions.Tests.csproj", "{30A955FC-EE04-4654-9F64-4AC3F79822E1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualHierarchyGrid", "VirtualHierarchyGrid\VirtualHierarchyGrid.csproj", "{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{32F9C893-6467-46B4-BC4A-9F301AE15D39}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Skia", "HierarchyGrid.Skia\HierarchyGrid.Skia.csproj", "{A7B2763C-4404-41E4-BED9-CAE951FAB886}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid", "HierarchyGrid\HierarchyGrid.csproj", "{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyGrid.Avalonia", "HierarchyGrid.Avalonia\HierarchyGrid.Avalonia.csproj", "{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Avalonia", "Avalonia", "{7061C7EA-6813-441B-AAEC-B8AA4828DD85}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WPF", "WPF", "{2C46ACB2-27D4-4F01-B745-B59DB4A451D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Avalonia", "Demo.Avalonia\Demo.Avalonia.csproj", "{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,13 +44,31 @@ Global
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30A955FC-EE04-4654-9F64-4AC3F79822E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7DEAB8B-3FD5-46D0-A73C-8292E0BE604A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7B2763C-4404-41E4-BED9-CAE951FAB886}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2D34F07A-CFCB-4196-AF7E-6D3708EC8F61} = {2C46ACB2-27D4-4F01-B745-B59DB4A451D9}
+		{FCD1D553-FCC3-4296-AC6C-F84594BCD3E4} = {2C46ACB2-27D4-4F01-B745-B59DB4A451D9}
+		{7EA04CDA-FAED-4D60-B9D1-9F92E478A0FF} = {7061C7EA-6813-441B-AAEC-B8AA4828DD85}
+		{C67AF464-F7A5-4766-B847-BD82EFDA8AA7} = {7061C7EA-6813-441B-AAEC-B8AA4828DD85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {41A03B4F-365B-4745-BA3F-99ADB65857DA}

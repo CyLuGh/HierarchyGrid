@@ -111,17 +111,17 @@ namespace HierarchyGrid.Definitions
             this.WhenAnyValue( o => o.Parent )
                 .WhereNotNull()
                 .SubscribeSafe( p =>
-                 {
-                     CanToggle = p.CanToggle;
-                     Invalidate();
-                 } );
+                {
+                    CanToggle = p.CanToggle;
+                    Invalidate();
+                } );
 
             this.WhenAnyValue( o => o.CanToggle )
                 .SubscribeSafe( can =>
-                 {
-                     foreach ( var child in _children )
-                         child.CanToggle = can;
-                 } );
+                {
+                    foreach ( var child in _children )
+                        child.CanToggle = can;
+                } );
         }
 
         /// <summary>
@@ -234,6 +234,8 @@ namespace HierarchyGrid.Definitions
                 return _root;
             }
         }
+
+        public bool IsRoot => Parent == null;
 
         #region Interaction
 

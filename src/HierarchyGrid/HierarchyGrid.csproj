@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
-		<IncludePackageReferencesDuringMarkupCompilation>true</IncludePackageReferencesDuringMarkupCompilation>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -15,7 +15,6 @@
 
 		<Authors>Demortier Jeremy</Authors>
 		<Description>Double dimension hierarchy grid</Description>
-		<Version>0.5.8</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
 
@@ -24,11 +23,14 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="ReactiveUI.Fody" Version="16.4.1" />
-		<PackageReference Include="ReactiveUI.WPF" Version="16.4.1" />
+		<PackageReference Include="ReactiveUI.Fody" Version="18.1.8" />
+		<PackageReference Include="ReactiveUI.WPF" Version="18.1.8" />
+		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.0" />
+		<PackageReference Include="TextCopy" Version="6.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\HierarchyGrid.Definitions\HierarchyGrid.Definitions.csproj" />
+		<ProjectReference Include="..\HierarchyGrid.Skia\HierarchyGrid.Skia.csproj" />
 	</ItemGroup>
 </Project>
