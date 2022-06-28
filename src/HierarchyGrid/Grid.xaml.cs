@@ -227,6 +227,7 @@ namespace HierarchyGrid
                         .IfSome( text =>
                         {
                             view._tooltip.Content = text;
+                            view._tooltip.Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse;
                             view._tooltip.IsOpen = true;
                         } );
                     ctx.SetOutput( Unit.Default );
