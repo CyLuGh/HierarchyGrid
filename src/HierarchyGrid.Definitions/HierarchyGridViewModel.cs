@@ -57,7 +57,7 @@ namespace HierarchyGrid.Definitions
         [Reactive] public int HoveredColumn { get; set; } = -1;
         [Reactive] public int HoveredRow { get; set; } = -1;
 
-        [Reactive] public bool EnableMultiSelection { get; set; }
+        [Reactive] public SelectionMode SelectionMode { get; set; }
         [Reactive] public bool IsEditing { get; set; }
 
         [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
@@ -490,7 +490,7 @@ namespace HierarchyGrid.Definitions
                     () => false ) , Option<PositionedCell>.None );
         }
 
-        internal async void HandleMouseDown( double x , double y , bool isRightClick = false )
+        internal async void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false )
         {
             if ( !IsValid )
                 return;
@@ -514,7 +514,7 @@ namespace HierarchyGrid.Definitions
                 var element = FindCoordinates( x , y );
                 element.Match( c =>
                 {
-                    c.Match( cell => CellClick( cell ) , () => { } );
+                    c.Match( cell => CellClick( cell , isShiftPressed , isCtrlPressed ) , () => { } );
                 } ,
                 d =>
                 {
@@ -524,15 +524,77 @@ namespace HierarchyGrid.Definitions
             }
         }
 
-        private void CellClick( PositionedCell cell )
+        private void CellClick( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
         {
-            if ( !EnableMultiSelection )
-                SelectedCells.Clear();
-
-            SelectedCells.Add( cell );
+            HandleSelection( cell , isShiftPressed , isCtrlPressed );
 
             Observable.Return( false )
                 .InvokeCommand( DrawGridCommand );
+        }
+
+        private void HandleSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
+        {
+            switch ( SelectionMode )
+            {
+                case SelectionMode.Single:
+                    HandleSingleSelection( cell );
+                    break;
+
+                case SelectionMode.MultiExtended:
+                    HandleMultiExtendedSelection( cell , isShiftPressed , isCtrlPressed );
+                    break;
+
+                case SelectionMode.MultiSimple:
+                    HandleMultiSimpleSelection( cell );
+                    break;
+
+                case SelectionMode.None:
+                default:
+                    SelectedCells.Clear();
+                    break;
+            }
+        }
+
+        private void HandleMultiExtendedSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
+        {
+            if ( isCtrlPressed )
+            {
+                if ( SelectedCells.Contains( cell ) )
+                    SelectedCells.Remove( cell );
+                else
+                    SelectedCells.Add( cell );
+            }
+            else if ( isShiftPressed && SelectedCells.Count > 0 )
+            {
+                var lastSelection = SelectedCells.Last();
+                var rows = Enumerable.Range( Math.Min( lastSelection.VerticalPosition , cell.VerticalPosition ) ,
+                    Math.Abs( lastSelection.VerticalPosition - cell.VerticalPosition ) + 1 ).ToArr();
+                var columns = Enumerable.Range( Math.Min( lastSelection.HorizontalPosition , cell.HorizontalPosition ) ,
+                    Math.Abs( lastSelection.HorizontalPosition - cell.HorizontalPosition ) + 1 ).ToArr();
+
+                SelectedCells.AddRange( CellsCoordinates.Where( t => rows.Contains( t.Cell.VerticalPosition )
+                    && columns.Contains( t.Cell.HorizontalPosition ) )
+                    .Select( t => t.Cell ).ToList() );
+            }
+            else
+            {
+                SelectedCells.Clear();
+                SelectedCells.Add( cell );
+            }
+        }
+
+        private void HandleMultiSimpleSelection( PositionedCell cell )
+        {
+            if ( SelectedCells.Count > 1 && SelectedCells.Contains( cell ) )
+                SelectedCells.Remove( cell );
+            else
+                SelectedCells.Add( cell );
+        }
+
+        private void HandleSingleSelection( PositionedCell cell )
+        {
+            SelectedCells.Clear();
+            SelectedCells.Add( cell );
         }
 
         private void HeaderClick( HierarchyDefinition hdef )

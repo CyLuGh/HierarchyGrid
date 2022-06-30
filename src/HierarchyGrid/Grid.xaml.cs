@@ -102,8 +102,13 @@ namespace HierarchyGrid
                     }
                     else
                     {
-                        viewModel.HandleMouseDown( position.X , position.Y );
+                        var ctrl = Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl );
+                        var shift = Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift );
+
+                        viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl );
                     }
+
+                    args.Handled = true;
                 } )
                 .DisposeWith( disposables );
 
@@ -112,7 +117,7 @@ namespace HierarchyGrid
                 .Subscribe( args =>
                 {
                     var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseDown( position.X , position.Y , true );
+                    viewModel.HandleMouseDown( position.X , position.Y , false , false , true );
 
                     // Show context menu
                     if ( viewModel.IsValid && viewModel.HasData )

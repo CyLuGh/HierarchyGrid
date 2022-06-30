@@ -51,12 +51,10 @@ namespace HierarchyGrid.Definitions
                 && ColumnToggles.Length == 0;
 
         public bool Equals( HierarchyGridState other )
-        {
-            return VerticalOffset == other.VerticalOffset
+            => VerticalOffset == other.VerticalOffset
                 && HorizontalOffset == other.HorizontalOffset
                 && RowToggles.SequenceEqual( other.RowToggles )
                 && ColumnToggles.SequenceEqual( other.ColumnToggles );
-        }
 
         public override bool Equals( object obj )
             => obj is HierarchyGridState hierarchyGridState && Equals( hierarchyGridState );
