@@ -1,7 +1,6 @@
-﻿namespace HierarchyGrid.Definitions
+﻿namespace HierarchyGrid.Definitions;
+
+public enum SelectionMode
 {
-    public enum SelectionMode
-    {
-        None, Single, MultiSimple, MultiExtended
-    }
+    None, Single, MultiSimple, MultiExtended
 }

@@ -1,15 +1,10 @@
 ﻿<rxui:ReactiveUserControl x:Class="HierarchyGrid.Grid"
-             x:TypeArguments="definitions:HierarchyGridViewModel"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:rxui="http://reactiveui.net"
+                          x:TypeArguments="definitions:HierarchyGridViewModel"
+                          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:rxui="http://reactiveui.net"
                           xmlns:definitions="clr-namespace:HierarchyGrid.Definitions;assembly=HierarchyGrid.Definitions"
-                          xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF"
-             xmlns:local="clr-namespace:HierarchyGrid"
-             mc:Ignorable="d"
-             d:DesignHeight="450" d:DesignWidth="800">
+                          xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
@@ -39,21 +34,5 @@
         <Rectangle x:Name="Corner"
                    Grid.Row="1"
                    Grid.Column="1" />
-
-        <!--<Border x:Name="MessageBorder"
-                Background="{DynamicResource CellBackground}"
-                BorderThickness="1"
-                BorderBrush="{DynamicResource CellBorder}"
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.RowSpan="2"
-                Grid.ColumnSpan="2">
-            <TextBlock x:Name="MessageTextBlock"
-                       Text="Message"
-                       Foreground="{DynamicResource CellForeground}"
-                       FontSize="15"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center" />
-        </Border>-->
     </Grid>
 </rxui:ReactiveUserControl>

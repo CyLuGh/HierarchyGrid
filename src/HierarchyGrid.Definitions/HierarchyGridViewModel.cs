@@ -58,6 +58,7 @@ namespace HierarchyGrid.Definitions
         [Reactive] public int HoveredRow { get; set; } = -1;
 
         [Reactive] public SelectionMode SelectionMode { get; set; }
+        [Reactive] public CellTextAlignment TextAlignment { get; set; } = CellTextAlignment.Right;
         [Reactive] public bool IsEditing { get; set; }
 
         [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;

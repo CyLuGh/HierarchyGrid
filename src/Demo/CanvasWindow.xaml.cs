@@ -31,6 +31,7 @@ namespace Demo
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel = new HierarchyGridViewModel();
+            TestGrid.ViewModel.TextAlignment = CellTextAlignment.Left;
             TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
         }
 
@@ -144,6 +145,7 @@ namespace Demo
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
+            FoldedSampleHierarchyGrid.ViewModel.TextAlignment = CellTextAlignment.Center;
             FoldedSampleHierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiSimple;
         }
 

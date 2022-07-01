@@ -430,7 +430,7 @@ namespace HierarchyGrid.Skia
             var textVPadding = (float) cell.Height - TextSize;
 
             TextDrawer.Clear();
-            TextDrawer.Alignment = TextAlignment.Right;
+            TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText( cell.ResultSet.Result , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
             TextDrawer.MaxHeight = (float) cell.Height;
             TextDrawer.MaxWidth = (float) cell.Width - textHPadding;
