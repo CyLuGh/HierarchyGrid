@@ -577,9 +577,13 @@ namespace HierarchyGrid.Definitions
                 var columns = Enumerable.Range( Math.Min( lastSelection.HorizontalPosition , cell.HorizontalPosition ) ,
                     Math.Abs( lastSelection.HorizontalPosition - cell.HorizontalPosition ) + 1 ).ToArr();
 
-                SelectedCells.AddRange( CellsCoordinates.Where( t => rows.Contains( t.Cell.VerticalPosition )
-                    && columns.Contains( t.Cell.HorizontalPosition ) )
-                    .Select( t => t.Cell ).ToList() );
+                var rangeCells = CellsCoordinates.Where( t =>
+                    rows.Contains( t.Cell.VerticalPosition ) && columns.Contains( t.Cell.HorizontalPosition ) )
+                    .Select( t => t.Cell )
+                    .ToList();
+
+                /* Prevent double selection */
+                SelectedCells.AddRange( rangeCells.Where( rc => !SelectedCells.Contains( rc ) ) );
             }
             else
             {
