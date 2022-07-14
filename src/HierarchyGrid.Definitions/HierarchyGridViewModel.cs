@@ -515,7 +515,7 @@ namespace HierarchyGrid.Definitions
                 var element = FindCoordinates( x , y );
                 element.Match( c =>
                 {
-                    c.Match( cell => CellClick( cell , isShiftPressed , isCtrlPressed ) , () => { } );
+                    c.Match( cell => CellClick( cell , isShiftPressed , isCtrlPressed , isRightClick ) , () => { } );
                 } ,
                 d =>
                 {
@@ -525,15 +525,15 @@ namespace HierarchyGrid.Definitions
             }
         }
 
-        private void CellClick( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
+        private void CellClick( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
         {
-            HandleSelection( cell , isShiftPressed , isCtrlPressed );
+            HandleSelection( cell , isShiftPressed , isCtrlPressed , isRightClick );
 
             Observable.Return( false )
                 .InvokeCommand( DrawGridCommand );
         }
 
-        private void HandleSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
+        private void HandleSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
         {
             switch ( SelectionMode )
             {
@@ -542,7 +542,7 @@ namespace HierarchyGrid.Definitions
                     break;
 
                 case SelectionMode.MultiExtended:
-                    HandleMultiExtendedSelection( cell , isShiftPressed , isCtrlPressed );
+                    HandleMultiExtendedSelection( cell , isShiftPressed , isCtrlPressed , isRightClick );
                     break;
 
                 case SelectionMode.MultiSimple:
@@ -556,8 +556,12 @@ namespace HierarchyGrid.Definitions
             }
         }
 
-        private void HandleMultiExtendedSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed )
+        private void HandleMultiExtendedSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
         {
+            // Right clicking shouldn't reset current selection
+            if ( isRightClick && SelectedCells.Contains( cell ) )
+                return;
+
             if ( isCtrlPressed )
             {
                 if ( SelectedCells.Contains( cell ) )
