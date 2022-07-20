@@ -95,8 +95,9 @@ namespace HierarchyGrid.Definitions
                 resultSet.ContextCommands = Option<(string, ICommand)[]>.None;
             }
 
-            resultSet.TooltipText =
-                TooltipCreator != null ? Option<string>.Some( TooltipCreator( inputSet.Input , data ) ) : Option<string>.None;
+            var tooltipText = TooltipCreator != null ? TooltipCreator( inputSet.Input , data ) : string.Empty;
+            resultSet.TooltipText = !string.IsNullOrEmpty(tooltipText) ?
+                Option<string>.Some( tooltipText ) : Option<string>.None;
 
             return resultSet;
         }
