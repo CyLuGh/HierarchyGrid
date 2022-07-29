@@ -8,6 +8,8 @@ namespace HierarchyGrid.Definitions
 {
     public class ConsumerDefinition : HierarchyDefinition
     {
+        public ConsumerDefinition( Guid? id = null ) : base( id ) {}
+
         public Func<object , object> Consumer { get; set; } = o => o;
         public Func<object , string> Formatter { get; set; } = o => o.ToString();
         public Func<object , Qualification> Qualify { get; set; } = _ => Qualification.Normal;

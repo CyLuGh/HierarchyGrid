@@ -13,22 +13,22 @@ namespace HierarchyGrid.Definitions
         public ViewModelActivator Activator { get; }
         public Guid Guid { get; }
 
-        public HierarchyDefinition Parent { get; set; }
+        public HierarchyDefinition Parent { get; protected set; }
 
-        public object Content { get; set; }
+        public object Content { get; init; }
         public object Tag { get; set; }
 
-        public int Position { get; internal set; }
+        public int Position { get; protected set; }
 
         /// <summary>
         /// Number of hierarchical elements from root. 0 based.
         /// </summary>
-        public int Level { get; set; }
+        public int Level { get; protected set; }
 
         /// <summary>
         /// Position among sibling definitions.
         /// </summary>
-        public int RelativePosition { get; set; }
+        public int RelativePosition { get; protected set; }
 
         /// <summary>
         /// Relevent dimension of header (width for columns, height for rows)
@@ -103,9 +103,10 @@ namespace HierarchyGrid.Definitions
             return dpt;
         }
 
-        protected HierarchyDefinition()
+        protected HierarchyDefinition( Guid? id = null )
         {
-            Guid = Guid.NewGuid();
+            Guid = id ?? Guid.NewGuid();
+
             Activator = new ViewModelActivator();
 
             this.WhenAnyValue( o => o.Parent )

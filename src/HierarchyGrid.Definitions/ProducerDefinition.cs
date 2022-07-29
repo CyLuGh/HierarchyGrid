@@ -5,6 +5,8 @@ namespace HierarchyGrid.Definitions
 {
     public class ProducerDefinition : HierarchyDefinition
     {
+        public ProducerDefinition( Guid? id = null ) : base( id ) {}
+
         public Func<object> Producer { get; set; }
         public Func<Qualification> Qualify { get; set; } = () => Qualification.Unset;
 
