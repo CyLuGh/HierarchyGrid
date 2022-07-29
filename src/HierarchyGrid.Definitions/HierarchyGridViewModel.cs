@@ -207,6 +207,7 @@ namespace HierarchyGrid.Definitions
                     .DisposeWith( disposables );
 
                 this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow , x => x.HoveredElementId )
+                    .Throttle( TimeSpan.FromMilliseconds( 2 ) )
                     .DistinctUntilChanged()
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
@@ -368,8 +369,7 @@ namespace HierarchyGrid.Definitions
         {
             ProducersCache.Clear();
             ConsumersCache.Clear();
-
-            //SelectedPositions.Clear();
+            SelectedCells.Clear();
 
             if ( !preserveSizes )
             {
@@ -388,6 +388,7 @@ namespace HierarchyGrid.Definitions
         {
             HoveredColumn = -1;
             HoveredRow = -1;
+            HoveredElementId = Guid.Empty;
         }
 
         public void ClearCoordinates()

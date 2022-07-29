@@ -343,6 +343,12 @@ namespace HierarchyGrid
 
             contextMenu.Items.Add( new MenuItem
             {
+                Header = "Clear selection" ,
+                Command = ReactiveCommand.Create( () => viewModel.SelectedCells.Clear() )
+            } );
+
+            contextMenu.Items.Add( new MenuItem
+            {
                 Header = "Expand all" ,
                 Command = viewModel.ToggleStatesCommand ,
                 CommandParameter = true

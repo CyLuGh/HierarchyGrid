@@ -24,10 +24,11 @@ namespace Demo
     public partial class CanvasWindow : Window, IEnableLogger
     {
         private HierarchyGridState _gridState;
-
+        private readonly CalendarBuilder _calendarBuilder;
         public CanvasWindow()
         {
             InitializeComponent();
+            _calendarBuilder = new ( "#1" , "#2" , "#3" );
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel = new HierarchyGridViewModel();
@@ -140,8 +141,8 @@ namespace Demo
 
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
         {
-            var calendarBuilder = new CalendarBuilder( "#1" , "#2" , "#3" );
-            var definitions = new HierarchyDefinitions( calendarBuilder.GetProducers() , calendarBuilder.GetConsumers() );
+            
+            var definitions = new HierarchyDefinitions( _calendarBuilder.GetProducers() , _calendarBuilder.GetConsumers() );
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
