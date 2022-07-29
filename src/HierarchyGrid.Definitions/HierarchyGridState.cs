@@ -51,6 +51,15 @@ namespace HierarchyGrid.Definitions
             Selections = viewModel.Selections.ToArr();
         }
 
+        public HierarchyGridState( HierarchyGridState state )
+        {
+            VerticalOffset = state.VerticalOffset;
+            HorizontalOffset = state.HorizontalOffset;
+            RowToggles = state.RowToggles;
+            ColumnToggles = state.ColumnToggles;
+            Selections = state.Selections;
+        }
+
         public bool IsDefault()
             => VerticalOffset == 0
                 && HorizontalOffset == 0
