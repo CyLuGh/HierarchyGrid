@@ -32,7 +32,7 @@ namespace HierarchyGrid.Definitions
         internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; }
             = new ConcurrentDictionary<(Guid, Guid) , ResultSet>();
 
-        internal ObservableCollection<PositionedCell> SelectedCells { get; } = new();
+        internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
         public ReadOnlyObservableCollection<PositionedCell> Selections => new( SelectedCells );
 
@@ -97,6 +97,9 @@ namespace HierarchyGrid.Definitions
 
                     VerticalOffset = value.VerticalOffset;
                     HorizontalOffset = value.HorizontalOffset;
+
+                    SelectedCells.Clear();
+                    SelectedCells.AddRange( value.Selections );
                 }
                 catch ( Exception )
                 {

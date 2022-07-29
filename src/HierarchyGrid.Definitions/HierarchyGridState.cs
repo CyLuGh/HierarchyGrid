@@ -28,12 +28,18 @@ namespace HierarchyGrid.Definitions
         /// </summary>
         public Arr<bool> ColumnToggles { get; init; }
 
+        /// <summary>
+        /// Currently selected cells
+        /// </summary>
+        public Arr<PositionedCell> Selections { get; init; }
+
         public HierarchyGridState()
         {
             VerticalOffset = 0;
             HorizontalOffset = 0;
             RowToggles = Arr<bool>.Empty;
             ColumnToggles = Arr<bool>.Empty;
+            Selections = Arr<PositionedCell>.Empty;
         }
 
         public HierarchyGridState( HierarchyGridViewModel viewModel )
@@ -42,13 +48,15 @@ namespace HierarchyGrid.Definitions
             HorizontalOffset = viewModel.HorizontalOffset;
             RowToggles = viewModel.RowsDefinitions.FlatList().Select( x => x.IsExpanded ).ToArr();
             ColumnToggles = viewModel.ColumnsDefinitions.FlatList().Select( x => x.IsExpanded ).ToArr();
+            Selections = viewModel.Selections.ToArr();
         }
 
         public bool IsDefault()
             => VerticalOffset == 0
                 && HorizontalOffset == 0
-                && RowToggles.Length == 0
-                && ColumnToggles.Length == 0;
+                && RowToggles.IsEmpty
+                && ColumnToggles.IsEmpty
+                && Selections.IsEmpty;
 
         public bool Equals( HierarchyGridState other )
             => VerticalOffset == other.VerticalOffset
