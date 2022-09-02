@@ -7,7 +7,7 @@ namespace HierarchyGrid.Skia
     {
         //TODO Check invalidate
 
-        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height , bool invalidate = false )
+        public static void Draw( HierarchyGridViewModel viewModel , SKCanvas canvas , float width , float height , double screenScale = 1d , bool invalidate = false )
         {
             canvas.Clear();
             var theme = new SkiaTheme( viewModel.Theme );
@@ -26,10 +26,10 @@ namespace HierarchyGrid.Skia
                     .ToList();
                 viewModel.ClearCoordinates();
 
-                canvas.DrawGlobalHeaders( viewModel , theme , previousGlobalCoordinates );
-                canvas.DrawCells( viewModel , theme , viewModel.DrawnCells( width , height , invalidate ) );
-                canvas.DrawColumnHeaders( viewModel , theme , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount );
-                canvas.DrawRowHeaders( viewModel , theme , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount );
+                canvas.DrawGlobalHeaders( viewModel , theme , previousGlobalCoordinates , screenScale );
+                canvas.DrawCells( viewModel , theme , viewModel.DrawnCells( width , height , invalidate ) , screenScale );
+                canvas.DrawColumnHeaders( viewModel , theme , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount , screenScale );
+                canvas.DrawRowHeaders( viewModel , theme , v => v.RowsDefinitions.Leaves().ToArray() , height , ref headerCount , screenScale );
             }
             else
             {
