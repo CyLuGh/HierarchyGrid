@@ -10,7 +10,11 @@ namespace HierarchyGrid.Skia
         private enum GlobalHeader
         { CollapseAll, ExpandAll, Local }
 
-        internal static void DrawGlobalHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , IList<(ElementCoordinates, Guid)> previousGlobalCoordinates )
+        internal static void DrawGlobalHeaders( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            IList<(ElementCoordinates, Guid)> previousGlobalCoordinates ,
+            double screenScale = 1d )
         {
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
             var colDepth = viewModel.ColumnsDefinitions.TotalDepth();
@@ -106,7 +110,13 @@ namespace HierarchyGrid.Skia
             viewModel.GlobalHeadersCoordinates.Add( new( coordinates , Guid.NewGuid() , act ) );
         }
 
-        internal static void DrawColumnHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , HierarchyDefinition[]> selector , float availableWidth , ref int headerCount )
+        internal static void DrawColumnHeaders( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            Func<HierarchyGridViewModel , HierarchyDefinition[]> selector ,
+            float availableWidth ,
+            ref int headerCount ,
+            double screenScale = 1d )
         {
             viewModel.ColumnsParents.Clear();
             var hdefs = selector( viewModel ).ToArr();
@@ -178,7 +188,13 @@ namespace HierarchyGrid.Skia
             canvas.DrawParentColumnHeader( viewModel , theme , hdef , origin , column , currentPosition , ref headerCount );
         }
 
-        internal static void DrawRowHeaders( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , Func<HierarchyGridViewModel , HierarchyDefinition[]> selector , float availableHeight , ref int headerCount )
+        internal static void DrawRowHeaders( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            Func<HierarchyGridViewModel , HierarchyDefinition[]> selector ,
+            float availableHeight ,
+            ref int headerCount ,
+            double screenScale = 1d )
         {
             viewModel.RowsParents.Clear();
             var hdefs = selector( viewModel ).ToArr();
@@ -387,15 +403,26 @@ namespace HierarchyGrid.Skia
             return path;
         }
 
-        internal static void DrawCells( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell[] cells )
+        internal static void DrawCells( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            PositionedCell[] cells ,
+            double screenScale = 1d )
         {
             foreach ( var cell in cells )
                 canvas.DrawCell( viewModel , theme , cell );
         }
 
-        private static void DrawCell( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , PositionedCell cell )
+        private static void DrawCell( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            PositionedCell cell ,
+            double screenScale = 1d )
         {
-            var rect = SKRect.Create( (float) cell.Left , (float) cell.Top , (float) cell.Width , (float) cell.Height );
+            var rect = SKRect.Create( (float) ( cell.Left * screenScale ) ,
+                (float) ( cell.Top * screenScale ) ,
+                (float) ( cell.Width * screenScale ) ,
+                (float) ( cell.Height * screenScale ) );
 
             var renderInfo = RenderInfo.FindRender( viewModel , theme , cell );
 

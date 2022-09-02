@@ -14,9 +14,11 @@ using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using TextCopy;
+using WpfScreenHelper;
 using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
@@ -70,7 +72,12 @@ namespace HierarchyGrid
                     SKImageInfo info = args.Info;
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
-                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , false );
+
+                    var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
+                    // Try to find the UI scaling that's applied in Display settings
+                    var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+
+                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
                 } )
                 .DisposeWith( disposables );
 
