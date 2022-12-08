@@ -31,7 +31,12 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
     private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
     {
-        var page = new GridControl( viewModel );
-        view.Content = page;
+        var hGrid = view.FindControl<ContentControl>( "HierarchyGrid" );
+
+        if ( hGrid != null )
+        {
+            var page = new GridControl( viewModel );
+            hGrid.Content = page;
+        }
     }
 }

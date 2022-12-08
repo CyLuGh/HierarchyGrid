@@ -3,6 +3,7 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Rendering.SceneGraph;
 using Avalonia.Skia;
+using Avalonia.Threading;
 using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 
@@ -13,7 +14,7 @@ internal class GridCustomDrawOperation : ICustomDrawOperation
     private readonly FormattedText _noSkia;
     private readonly HierarchyGridViewModel _viewModel;
 
-    public Rect Bounds { get; }
+    public Rect Bounds { get; internal set; }
 
     public GridCustomDrawOperation( Rect bounds , FormattedText noSkia , HierarchyGridViewModel viewModel )
     {
@@ -34,14 +35,16 @@ internal class GridCustomDrawOperation : ICustomDrawOperation
 
     public void Render( IDrawingContextImpl context )
     {
-        var canvas = ( context as ISkiaDrawingContextImpl )?.SkCanvas;
-
-        if ( canvas == null )
-        {
-            context.DrawText( Brush.Parse( _viewModel.Theme.ForegroundColor.ToCode() ) , new Point() , _noSkia.PlatformImpl );
-        }
+        var leaseFeature = context.GetFeature<ISkiaSharpApiLeaseFeature>();
+        if ( leaseFeature == null )
+            using ( var c = new DrawingContext( context , false ) )
+            {
+                c.DrawText( _noSkia , new Point() );
+            }
         else
         {
+            using var lease = leaseFeature.Lease();
+            var canvas = lease.SkCanvas;
             canvas.Save();
             HierarchyGridDrawer.Draw( _viewModel , canvas , (float) Bounds.Width , (float) Bounds.Height );
             canvas.Restore();

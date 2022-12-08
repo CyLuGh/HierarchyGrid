@@ -19,15 +19,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.1.4">
+		<PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.2.3">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="ReactiveUI.Fody" Version="18.2.5" />
-		<PackageReference Include="ReactiveUI.WPF" Version="18.2.5" />
-		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.0" />
-		<PackageReference Include="TextCopy" Version="6.1.0" />
-		<PackageReference Include="WpfScreenHelper" Version="2.0.0" />
+		<PackageReference Include="ReactiveUI.Fody" Version="18.4.1" />
+		<PackageReference Include="ReactiveUI.WPF" Version="18.4.1" />
+		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.3" />
+		<PackageReference Include="TextCopy" Version="6.2.0" />
+		<PackageReference Include="WpfScreenHelper" Version="2.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>

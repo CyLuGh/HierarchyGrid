@@ -24,7 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Avalonia", "Avalonia", "{70
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WPF", "WPF", "{2C46ACB2-27D4-4F01-B745-B59DB4A451D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo.Avalonia", "Demo.Avalonia\Demo.Avalonia.csproj", "{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Demo.Avalonia", "Demo.Avalonia\Demo.Avalonia.csproj", "{C67AF464-F7A5-4766-B847-BD82EFDA8AA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

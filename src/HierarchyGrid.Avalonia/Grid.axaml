@@ -4,4 +4,33 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="HierarchyGrid.Avalonia.Grid">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <ContentControl x:Name="HierarchyGrid" Grid.Column="0" Grid.Row="0" />
+    <Canvas Grid.Column="0" Grid.Row="0" />
+
+    <ScrollBar x:Name="VerticalScrollBar"
+                   Minimum="0"
+                   SmallChange="1"
+                   LargeChange="5"
+                   Grid.Column="1" />
+    <ScrollBar x:Name="HorizontalScrollBar"
+               Minimum="0"
+               SmallChange="1"
+               LargeChange="5"
+               Orientation="Horizontal"
+               Grid.Row="1" />
+
+    <Rectangle x:Name="Corner"
+               Grid.Row="1"
+               Grid.Column="1" />
+  </Grid>
 </UserControl>
