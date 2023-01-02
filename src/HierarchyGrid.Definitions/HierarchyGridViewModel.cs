@@ -338,11 +338,11 @@ namespace HierarchyGrid.Definitions
             ConsumersCache.AddOrUpdate( hierarchyDefinitions.Consumers );
 
             RowsHeadersWidth = Enumerable.Range( 0 , RowsDefinitions.TotalDepth( true ) )
-                .Select( _ => DEFAULT_HEADER_WIDTH )
+                .Select( _ => DefaultHeaderWidth )
                 .ToArray();
 
             ColumnsHeadersHeight = Enumerable.Range( 0 , ColumnsDefinitions.TotalDepth( true ) )
-                .Select( _ => DEFAULT_HEADER_HEIGHT )
+                .Select( _ => DefaultHeaderHeight )
                 .ToArray();
 
             var columnsCount = ColumnsDefinitions.TotalCount( true );
@@ -350,7 +350,7 @@ namespace HierarchyGrid.Definitions
             {
                 ColumnsWidths.Clear();
                 for ( int x = 0 ; x <= columnsCount ; x++ )
-                    ColumnsWidths.Add( x , DEFAULT_COLUMN_WIDTH );
+                    ColumnsWidths.Add( x , DefaultColumnWidth );
             }
 
             var rowsCount = RowsDefinitions.TotalCount( true );
@@ -358,7 +358,7 @@ namespace HierarchyGrid.Definitions
             {
                 RowsHeights.Clear();
                 for ( int x = 0 ; x <= rowsCount ; x++ )
-                    RowsHeights.Add( x , DEFAULT_ROW_HEIGHT );
+                    RowsHeights.Add( x , DefaultRowHeight );
             }
 
             Observable.Return( true )
