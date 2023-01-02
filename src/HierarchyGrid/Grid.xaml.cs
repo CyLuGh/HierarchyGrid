@@ -8,7 +8,6 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
@@ -43,6 +42,8 @@ namespace HierarchyGrid
 
         private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
         {
+            ApplyDependencyProperties( view , viewModel );
+
             viewModel.DrawGridInteraction
                 .RegisterHandler( ctx =>
                 {
@@ -175,6 +176,16 @@ namespace HierarchyGrid
                 .DisposeWith( disposables );
 
             view.SkiaElement.InvalidateVisual();
+        }
+
+        private static void ApplyDependencyProperties( Grid view , HierarchyGridViewModel viewModel )
+        {
+            viewModel.DefaultColumnWidth = view.DefaultColumnWidth;
+            viewModel.DefaultRowHeight = view.DefaultRowHeight;
+            viewModel.DefaultHeaderHeight = view.DefaultHeaderHeight;
+            viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
+            viewModel.StatusMessage = view.StatusMessage;
+            viewModel.EnableCrosshair = view.EnableCrosshair;
         }
 
         private static void RegisterStartEditionInteraction( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )

@@ -18,7 +18,13 @@
                             Content="Fill"
                             DockPanel.Dock="Bottom" />
                     <hierarchyGrid:Grid x:Name="HierarchyGrid"
-                                                        Margin="10" />
+                                        DefaultColumnWidth="250"
+                                        DefaultHeaderHeight="40"
+                                        DefaultHeaderWidth="120"
+                                        DefaultRowHeight="60"
+                                        StatusMessage="I'm a test message!"
+                                        EnableCrosshair="True"
+                                        Margin="10" />
                 </DockPanel>
             </TabItem>
             <TabItem Header="Folded">
@@ -33,19 +39,22 @@
                         <Button Content="RestoreState"
                                 Click="RestoreStateClick" />
                     </UniformGrid>
-
                     <hierarchyGrid:Grid  x:Name="FoldedSampleHierarchyGrid"
-                                                        Margin="10" />
+                                         Margin="10" />
                 </DockPanel>
             </TabItem>
             <TabItem Header="Test">
                 <DockPanel>
-                    <UniformGrid Rows="1" DockPanel.Dock="Bottom">
-                        <Button Content="Default theme" Click="DefaultThemeClick" />
-                        <Button Content="Other theme" Click="OtherThemeClick" />
+                    <UniformGrid Rows="1"
+                                 DockPanel.Dock="Bottom">
+                        <Button Content="Default theme"
+                                Click="DefaultThemeClick" />
+                        <Button Content="Other theme"
+                                Click="OtherThemeClick" />
                     </UniformGrid>
-
-                    <hierarchyGrid:Grid x:Name="TestGrid" Margin="10" />
+                    <hierarchyGrid:Grid x:Name="TestGrid"
+                                        DefaultColumnWidth="300"
+                                        Margin="10" />
                 </DockPanel>
             </TabItem>
         </TabControl>

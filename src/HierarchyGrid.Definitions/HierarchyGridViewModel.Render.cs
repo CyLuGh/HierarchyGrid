@@ -1,16 +1,20 @@
 ﻿using ReactiveUI;
 using System.Collections.Generic;
-using System.Reactive;
 using System.Reactive.Linq;
 
 namespace HierarchyGrid.Definitions
 {
     public partial class HierarchyGridViewModel
     {
-        public static double DEFAULT_HEADER_WIDTH => 80;
-        public static double DEFAULT_HEADER_HEIGHT => 30;
-        public static double DEFAULT_COLUMN_WIDTH => 120;
-        public static double DEFAULT_ROW_HEIGHT => 30;
+        private static double DEFAULT_HEADER_WIDTH => 80;
+        private static double DEFAULT_HEADER_HEIGHT => 30;
+        private static double DEFAULT_COLUMN_WIDTH => 120;
+        private static double DEFAULT_ROW_HEIGHT => 30;
+
+        public double DefaultHeaderWidth { get; set; } = DEFAULT_HEADER_WIDTH;
+        public double DefaultHeaderHeight { get; set; } = DEFAULT_HEADER_HEIGHT;
+        public double DefaultColumnWidth { get; set; } = DEFAULT_COLUMN_WIDTH;
+        public double DefaultRowHeight { get; set; } = DEFAULT_ROW_HEIGHT;
 
         public double[] RowsHeadersWidth { get; internal set; }
         public double[] ColumnsHeadersHeight { get; internal set; }
