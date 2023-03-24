@@ -623,10 +623,13 @@ namespace HierarchyGrid.Definitions
 
         internal void HandleDoubleClick( double x , double y )
         {
-            FindCoordinates( x , y )
-                .IfRight( o
+            if ( ColumnsDefinitions?.Length > 0 && RowsDefinitions?.Length > 0 )
+            {
+                FindCoordinates( x , y )
+                    .IfRight( o
                     => o.IfSome( async cell
                         => await StartEditionInteraction.Handle( cell ) ) );
+            }
         }
 
         internal void HandleMouseLeft()
