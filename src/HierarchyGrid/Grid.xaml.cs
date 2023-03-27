@@ -5,6 +5,7 @@ using LanguageExt.Pipes;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
+using Splat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,22 +23,41 @@ using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
 {
-    public partial class Grid
+    public partial class Grid : IEnableLogger
     {
         private readonly ToolTip _tooltip = new();
+
+        private ReactiveCommand<double , Unit>? SetScreenScaleCommand { get; set; }
 
         public Grid()
         {
             InitializeComponent();
+            InitializeCommands();
 
             this.WhenActivated( disposables =>
             {
+                this.WhenAnyValue( x => x.ViewModel )
+                    .BindTo( this , x => x.DataContext )
+                    .DisposeWith( disposables );
+
                 this.WhenAnyValue( x => x.ViewModel )
                     .WhereNotNull()
                     .Do( vm => PopulateFromViewModel( this , vm , disposables ) )
                     .Subscribe()
                     .DisposeWith( disposables );
             } );
+        }
+
+        private void InitializeCommands()
+        {
+            SetScreenScaleCommand = ReactiveCommand.Create( ( double scale ) =>
+            {
+                ScreenScale = scale;
+                ToggleAdjustScale.IsChecked = false;
+                InvalidateMeasure();
+            } );
+            SetScreenScaleCommand.ThrownExceptions
+                .Subscribe( ex => this.Log().Error( ex ) );
         }
 
         private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
@@ -76,8 +96,8 @@ namespace HierarchyGrid
 
                     // TODO: Try to find the UI scaling that's applied in Display settings
 
-                    // var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
-                    // var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+                    //var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
+                    //var scale = screen.WorkingArea.Width / screen.Bounds.Width;
                     var scale = view.ScreenScale;
 
                     HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
@@ -176,6 +196,36 @@ namespace HierarchyGrid
                 vm => vm.MaxVerticalOffset ,
                 v => v.VerticalScrollBar.Maximum )
                 .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.Theme ,
+                v => v.BorderPopup.Background ,
+                t => new SolidColorBrush( Color.FromArgb( t.BackgroundColor.A , t.BackgroundColor.R , t.BackgroundColor.G , t.BackgroundColor.B ) ) )
+                .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.Theme ,
+                v => v.BorderPopup.BorderBrush ,
+                t => new SolidColorBrush( Color.FromArgb( t.BorderColor.A , t.BorderColor.R , t.BorderColor.G , t.BorderColor.B ) ) )
+                .DisposeWith( disposables );
+
+            view.MenuItemScale100.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale100.CommandParameter = 1d;
+
+            view.MenuItemScale125.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale125.CommandParameter = 1.25d;
+
+            view.MenuItemScale150.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale150.CommandParameter = 1.5d;
+
+            view.MenuItemScale175.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale175.CommandParameter = 1.75d;
+
+            //view.OneWayBind( view ,
+            //    v => v.ScreenScale ,
+            //    v => v.MenuItemScale100.IsChecked ,
+            //    s => s == 1 )
+            //    .DisposeWith( disposables );
 
             view.SkiaElement.InvalidateVisual();
         }
