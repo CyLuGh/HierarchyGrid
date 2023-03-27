@@ -74,9 +74,11 @@ namespace HierarchyGrid
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
 
-                    var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
-                    // Try to find the UI scaling that's applied in Display settings
-                    var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+                    // TODO: Try to find the UI scaling that's applied in Display settings
+
+                    // var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
+                    // var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+                    var scale = view.ScreenScale;
 
                     HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
                 } )
@@ -95,7 +97,7 @@ namespace HierarchyGrid
                 .Subscribe( args =>
                 {
                     var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseOver( position.X , position.Y );
+                    viewModel.HandleMouseOver( position.X , position.Y , view.ScreenScale );
                 } )
                 .DisposeWith( disposables );
 
@@ -106,14 +108,14 @@ namespace HierarchyGrid
                     var position = args.GetPosition( view.SkiaElement );
                     if ( args.ClickCount == 2 )
                     {
-                        viewModel.HandleDoubleClick( position.X , position.Y );
+                        viewModel.HandleDoubleClick( position.X , position.Y , view.ScreenScale );
                     }
                     else
                     {
                         var ctrl = Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl );
                         var shift = Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift );
 
-                        viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl );
+                        viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl , screenScale: view.ScreenScale );
                     }
 
                     args.Handled = true;
@@ -125,12 +127,12 @@ namespace HierarchyGrid
                 .Subscribe( args =>
                 {
                     var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseDown( position.X , position.Y , false , false , true );
+                    viewModel.HandleMouseDown( position.X , position.Y , false , false , true , view.ScreenScale );
 
                     // Show context menu
                     if ( viewModel.IsValid && viewModel.HasData )
                     {
-                        var contextMenu = BuildContextMenu( viewModel , position.X , position.Y );
+                        var contextMenu = BuildContextMenu( viewModel , position.X , position.Y , view.ScreenScale );
                         contextMenu.IsOpen = true;
                     }
                 } )
@@ -323,9 +325,9 @@ namespace HierarchyGrid
                 yield return i;
         }
 
-        private static ContextMenu BuildContextMenu( HierarchyGridViewModel viewModel , double x , double y )
+        private static ContextMenu BuildContextMenu( HierarchyGridViewModel viewModel , double x , double y , double screenScale )
         {
-            var coord = viewModel.FindCoordinates( x , y );
+            var coord = viewModel.FindCoordinates( x , y , screenScale );
             var contextMenu = new ContextMenu();
 
             var items = coord.Match( r =>
@@ -462,8 +464,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , coord.Top );
-                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                         Canvas.SetTop( rect , coord.Top * view.ScreenScale );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) * view.ScreenScale );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
@@ -502,8 +504,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , posY + args.VerticalChange );
-                         Canvas.SetLeft( rect , coord.Left );
+                         Canvas.SetTop( rect , ( posY + args.VerticalChange ) * view.ScreenScale );
+                         Canvas.SetLeft( rect , coord.Left * view.ScreenScale );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
@@ -549,8 +551,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , currentY );
-                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                         Canvas.SetTop( rect , currentY * view.ScreenScale );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) * view.ScreenScale );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
