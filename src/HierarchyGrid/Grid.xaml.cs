@@ -433,7 +433,8 @@ namespace HierarchyGrid
                                     .Where( x => x.Definition.Count() == 1 )
                                     .ToArray();
 
-            foreach ( var c in headers.Where( t => t.Definition is ConsumerDefinition ) )
+            foreach ( var c in
+                headers.Where( t => t.Definition is ConsumerDefinition ) )
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter( splitterCount++ );
@@ -464,8 +465,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , coord.Top * view.ScreenScale );
-                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) * view.ScreenScale );
+                         Canvas.SetTop( rect , coord.Top );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
@@ -504,8 +505,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , ( posY + args.VerticalChange ) * view.ScreenScale );
-                         Canvas.SetLeft( rect , coord.Left * view.ScreenScale );
+                         Canvas.SetTop( rect , ( posY + args.VerticalChange ) );
+                         Canvas.SetLeft( rect , coord.Left );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
@@ -551,8 +552,8 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , currentY * view.ScreenScale );
-                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) * view.ScreenScale );
+                         Canvas.SetTop( rect , currentY );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
