@@ -93,7 +93,7 @@ namespace HierarchyGrid.Skia
             GlobalHeader globalHeader = GlobalHeader.Local )
         {
             var rect = SKRect.Create( (float) ( left * screenScale ) , (float) ( top * screenScale ) , (float) ( width * screenScale ) , (float) ( height * screenScale ) );
-            var coordinates = new ElementCoordinates( left , top , left + width , top + height );
+            var coordinates = new ElementCoordinates( left * screenScale , top * screenScale , ( left + width ) * screenScale , ( top + height ) * screenScale );
 
             var isHovered = previousGlobalCoordinates.Find( t => rect.IntersectsWith( t.Item1.ToRectangle() ) )
                 .Some( t => t.Item2.Equals( viewModel.HoveredElementId ) )
@@ -108,7 +108,7 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
-            var decorator = GetGlobalHeaderDecorator( !expanded , left , top , globalHeader );
+            var decorator = GetGlobalHeaderDecorator( !expanded , left * screenScale , top * screenScale , globalHeader );
             paint.Color = isHovered ? theme.HoverHeaderForegroundColor : theme.HeaderForegroundColor;
             paint.Style = SKPaintStyle.StrokeAndFill;
             canvas.DrawPath( decorator , paint );
@@ -306,7 +306,7 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
-            GetHeaderDecorator( hdef , left , top )
+            GetHeaderDecorator( hdef , left * screenScale , top * screenScale )
                 .IfSome( decorator =>
                 {
                     paint.Color = renderInfo.ForegroundColor;
