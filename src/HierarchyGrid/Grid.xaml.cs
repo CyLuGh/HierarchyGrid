@@ -53,6 +53,12 @@ namespace HierarchyGrid
             SetScreenScaleCommand = ReactiveCommand.Create( ( double scale ) =>
             {
                 ScreenScale = scale;
+
+                MenuItemScale100.IsChecked = scale == 1d;
+                MenuItemScale125.IsChecked = scale == 1.25d;
+                MenuItemScale150.IsChecked = scale == 1.5d;
+                MenuItemScale175.IsChecked = scale == 1.75d;
+
                 ToggleAdjustScale.IsChecked = false;
                 InvalidateMeasure();
             } );
@@ -63,6 +69,11 @@ namespace HierarchyGrid
         private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
         {
             ApplyDependencyProperties( view , viewModel );
+
+            view.MenuItemScale100.IsChecked = view.ScreenScale == 1d;
+            view.MenuItemScale125.IsChecked = view.ScreenScale == 1.25d;
+            view.MenuItemScale150.IsChecked = view.ScreenScale == 1.5d;
+            view.MenuItemScale175.IsChecked = view.ScreenScale == 1.75d;
 
             viewModel.DrawGridInteraction
                 .RegisterHandler( ctx =>
@@ -220,12 +231,6 @@ namespace HierarchyGrid
 
             view.MenuItemScale175.Command = view.SetScreenScaleCommand;
             view.MenuItemScale175.CommandParameter = 1.75d;
-
-            //view.OneWayBind( view ,
-            //    v => v.ScreenScale ,
-            //    v => v.MenuItemScale100.IsChecked ,
-            //    s => s == 1 )
-            //    .DisposeWith( disposables );
 
             view.SkiaElement.InvalidateVisual();
         }
