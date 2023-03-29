@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Install .NET Core
-        uses: actions/setup-dotnet@v1.8.0
+      - name: Install .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 6.0.x
 
@@ -36,7 +36,7 @@ jobs:
         run: dotnet test --configuration=Release --verbosity=minimal --no-restore
         working-directory: src
 
-      - uses: little-core-labs/get-git-tag@v3.0.1
+      - uses: olegtarasov/get-tag@v2.1.2
         id: tagName
 
       - name: Pack
@@ -51,4 +51,4 @@ jobs:
 
       - name: Push to nuget
         run: dotnet nuget push **/HierarchyGrid/nupkg/*.nupkg -k ${{ secrets.Nuget_Key }} -s https://api.nuget.org/v3/index.json --skip-duplicate
-    
+

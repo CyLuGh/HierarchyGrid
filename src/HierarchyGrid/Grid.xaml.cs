@@ -1,7 +1,5 @@
 ﻿using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
-using LanguageExt;
-using LanguageExt.Pipes;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
@@ -14,11 +12,9 @@ using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using TextCopy;
-using WpfScreenHelper;
 using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
@@ -106,9 +102,6 @@ namespace HierarchyGrid
                     SKCanvas canvas = surface.Canvas;
 
                     // TODO: Try to find the UI scaling that's applied in Display settings
-
-                    //var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
-                    //var scale = screen.WorkingArea.Width / screen.Bounds.Width;
                     var scale = view.ScreenScale;
 
                     HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );

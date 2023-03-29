@@ -27,7 +27,6 @@
 		<PackageReference Include="ReactiveUI.WPF" Version="18.4.26" />
 		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.3" />
 		<PackageReference Include="TextCopy" Version="6.2.1" />
-		<PackageReference Include="WpfScreenHelper" Version="2.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
