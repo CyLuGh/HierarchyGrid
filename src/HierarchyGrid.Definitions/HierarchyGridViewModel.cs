@@ -495,7 +495,7 @@ namespace HierarchyGrid.Definitions
                     () => false ) , Option<PositionedCell>.None );
         }
 
-        internal async void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false )
+        internal async void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false , double screenScale = 1d )
         {
             if ( !IsValid )
                 return;
@@ -516,7 +516,7 @@ namespace HierarchyGrid.Definitions
             }
             else
             {
-                var element = FindCoordinates( x , y );
+                var element = FindCoordinates( x , y , screenScale );
                 element.Match( c =>
                 {
                     c.Match( cell => CellClick( cell , isShiftPressed , isCtrlPressed , isRightClick ) , () => { } );
@@ -621,12 +621,15 @@ namespace HierarchyGrid.Definitions
                 .InvokeCommand( DrawGridCommand );
         }
 
-        internal void HandleDoubleClick( double x , double y )
+        internal void HandleDoubleClick( double x , double y , double screenScale )
         {
-            FindCoordinates( x , y )
-                .IfRight( o
+            if ( ColumnsDefinitions?.Length > 0 && RowsDefinitions?.Length > 0 )
+            {
+                FindCoordinates( x , y , screenScale )
+                    .IfRight( o
                     => o.IfSome( async cell
                         => await StartEditionInteraction.Handle( cell ) ) );
+            }
         }
 
         internal void HandleMouseLeft()
@@ -636,7 +639,7 @@ namespace HierarchyGrid.Definitions
             ClearCrosshair();
         }
 
-        internal void HandleMouseOver( double x , double y )
+        internal void HandleMouseOver( double x , double y , double screenScale )
         {
             if ( RowsHeadersWidth?.Any() != true || ColumnsHeadersHeight?.Any() != true )
             {
@@ -645,7 +648,7 @@ namespace HierarchyGrid.Definitions
                 return;
             }
 
-            var element = FindCoordinates( x , y );
+            var element = FindCoordinates( x , y , screenScale );
             element.Match( cell =>
             {
                 _hoveredCell.OnNext( cell );
@@ -700,9 +703,9 @@ namespace HierarchyGrid.Definitions
                 .Find( t => t.Coord.Contains( x , y ) )
                 .Match( s => s.Action , () => Option<Action>.None );
 
-        public Either<Option<HierarchyDefinition> , Option<PositionedCell>> FindCoordinates( double x , double y )
+        public Either<Option<HierarchyDefinition> , Option<PositionedCell>> FindCoordinates( double x , double y , double screenScale )
         {
-            if ( x <= RowsHeadersWidth.Sum() || y <= ColumnsHeadersHeight.Sum() )
+            if ( x <= RowsHeadersWidth.Sum() * screenScale || y <= ColumnsHeadersHeight.Sum() * screenScale )
             {
                 return HeadersCoordinates
                     .AsParallel()

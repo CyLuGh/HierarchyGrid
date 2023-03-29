@@ -63,5 +63,14 @@ namespace HierarchyGrid
         // Using a DependencyProperty as the backing store for EnableCrosshair.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty EnableCrosshairProperty =
             DependencyProperty.Register( "EnableCrosshair" , typeof( bool ) , typeof( Grid ) , new FrameworkPropertyMetadata( false ) );
+
+        public double ScreenScale
+        {
+            get { return (double) GetValue( ScreenScaleProperty ); }
+            set { SetValue( ScreenScaleProperty , value ); }
+        }
+
+        public static readonly DependencyProperty ScreenScaleProperty =
+            DependencyProperty.Register( "ScreenScale" , typeof( double ) , typeof( Grid ) , new FrameworkPropertyMetadata( 1.0d ) );
     }
 }

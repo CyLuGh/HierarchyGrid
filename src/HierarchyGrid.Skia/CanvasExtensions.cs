@@ -28,7 +28,7 @@ namespace HierarchyGrid.Skia
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
                 false ,
-                0 , 0 , rowsHorizontalSpan , columnsVerticalSpan , GlobalHeader.CollapseAll );
+                0 , 0 , rowsHorizontalSpan , columnsVerticalSpan , screenScale , GlobalHeader.CollapseAll );
 
             /* Draw rows global headers */
             var currentY = columnsVerticalSpan;
@@ -45,7 +45,7 @@ namespace HierarchyGrid.Skia
                     vm => vm.RowsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
                     viewModel.RowsDefinitions.FlatList().Where( x => x.Level == lvl ).All( x => !x.IsExpanded ) ,
-                    currentX , currentY , width , viewModel.ColumnsHeadersHeight.Last() );
+                    currentX , currentY , width , viewModel.ColumnsHeadersHeight.Last() , screenScale );
                 currentX += width;
             }
 
@@ -64,7 +64,7 @@ namespace HierarchyGrid.Skia
                     vm => vm.ColumnsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
                     viewModel.ColumnsDefinitions.FlatList().Where( x => x.Level == lvl ).All( x => !x.IsExpanded ) ,
-                    currentX , currentY , viewModel.RowsHeadersWidth.Last() , height );
+                    currentX , currentY , viewModel.RowsHeadersWidth.Last() , height , screenScale );
                 currentY += height;
             }
 
@@ -74,14 +74,26 @@ namespace HierarchyGrid.Skia
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
                 true ,
-                currentX , currentY , viewModel.RowsHeadersWidth.Last() , viewModel.ColumnsHeadersHeight.Last() ,
+                currentX , currentY , viewModel.RowsHeadersWidth.Last() , viewModel.ColumnsHeadersHeight.Last() , screenScale ,
                 GlobalHeader.ExpandAll );
         }
 
-        private static void DrawGlobalHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , IList<(ElementCoordinates, Guid)> previousGlobalCoordinates , SkiaTheme theme , Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector , Action<HierarchyDefinition , bool> action , bool expanded , double left , double top , double width , double height , GlobalHeader globalHeader = GlobalHeader.Local )
+        private static void DrawGlobalHeader( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            IList<(ElementCoordinates, Guid)> previousGlobalCoordinates ,
+            SkiaTheme theme ,
+            Func<HierarchyGridViewModel , IEnumerable<HierarchyDefinition>> selector ,
+            Action<HierarchyDefinition , bool> action ,
+            bool expanded ,
+            double left ,
+            double top ,
+            double width ,
+            double height ,
+            double screenScale ,
+            GlobalHeader globalHeader = GlobalHeader.Local )
         {
-            var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
-            var coordinates = new ElementCoordinates( left , top , left + width , top + height );
+            var rect = SKRect.Create( (float) ( left * screenScale ) , (float) ( top * screenScale ) , (float) ( width * screenScale ) , (float) ( height * screenScale ) );
+            var coordinates = new ElementCoordinates( left * screenScale , top * screenScale , ( left + width ) * screenScale , ( top + height ) * screenScale );
 
             var isHovered = previousGlobalCoordinates.Find( t => rect.IntersectsWith( t.Item1.ToRectangle() ) )
                 .Some( t => t.Item2.Equals( viewModel.HoveredElementId ) )
@@ -96,7 +108,7 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
-            var decorator = GetGlobalHeaderDecorator( !expanded , left , top , globalHeader );
+            var decorator = GetGlobalHeaderDecorator( !expanded , left * screenScale , top * screenScale , globalHeader );
             paint.Color = isHovered ? theme.HoverHeaderForegroundColor : theme.HeaderForegroundColor;
             paint.Style = SKPaintStyle.StrokeAndFill;
             canvas.DrawPath( decorator , paint );
@@ -133,7 +145,7 @@ namespace HierarchyGrid.Skia
             foreach ( var hdef in frozen )
             {
                 var width = viewModel.ColumnsWidths[hdefs.IndexOf( hdef )];
-                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width );
+                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width , screenScale );
                 column++;
             }
 
@@ -142,12 +154,12 @@ namespace HierarchyGrid.Skia
                 var hdef = hdefs[column];
                 var width = viewModel.ColumnsWidths[column];
 
-                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width );
+                canvas.DrawColumnHeader( viewModel , theme , ref headerCount , ref currentPosition , column , hdef , width , screenScale );
                 column++;
             }
         }
 
-        private static void DrawColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int column , HierarchyDefinition hdef , double width )
+        private static void DrawColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int column , HierarchyDefinition hdef , double width , double screenScale )
         {
             var height = hdef.IsExpanded && hdef.HasChild ?
                                 viewModel.ColumnsHeadersHeight[hdef.Level] :
@@ -158,13 +170,13 @@ namespace HierarchyGrid.Skia
                 .Select( x => viewModel.ColumnsHeadersHeight[x] )
                 .Sum();
 
-            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , currentPosition , top , width , height );
+            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , currentPosition , top , width , height , screenScale );
 
-            canvas.DrawParentColumnHeader( viewModel , theme , hdef , hdef , column , currentPosition , ref headerCount );
+            canvas.DrawParentColumnHeader( viewModel , theme , hdef , hdef , column , currentPosition , ref headerCount , screenScale );
             currentPosition += width;
         }
 
-        private static void DrawParentColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int column , double currentPosition , ref int headerCount )
+        private static void DrawParentColumnHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int column , double currentPosition , ref int headerCount , double screenScale )
         {
             if ( src.Parent == null )
                 return;
@@ -181,11 +193,12 @@ namespace HierarchyGrid.Skia
                 .Select( x => viewModel.ColumnsHeadersHeight[x] )
                 .Sum();
             var height = viewModel.ColumnsHeadersHeight[hdef.Level];
-            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , currentPosition , top , width , height );
+
+            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , currentPosition , top , width , height , screenScale );
 
             viewModel.ColumnsParents.Add( hdef );
 
-            canvas.DrawParentColumnHeader( viewModel , theme , hdef , origin , column , currentPosition , ref headerCount );
+            canvas.DrawParentColumnHeader( viewModel , theme , hdef , origin , column , currentPosition , ref headerCount , screenScale );
         }
 
         internal static void DrawRowHeaders( this SKCanvas canvas ,
@@ -211,7 +224,7 @@ namespace HierarchyGrid.Skia
             foreach ( var hdef in frozen )
             {
                 var height = viewModel.RowsHeights[hdefs.IndexOf( hdef )];
-                canvas.DrawRowHeader( viewModel , theme , ref headerCount , ref currentPosition , row , hdef , height );
+                canvas.DrawRowHeader( viewModel , theme , ref headerCount , ref currentPosition , row , hdef , height , screenScale );
                 row++;
             }
 
@@ -220,12 +233,12 @@ namespace HierarchyGrid.Skia
                 var hdef = hdefs[row];
                 var height = viewModel.RowsHeights[row];
 
-                canvas.DrawRowHeader( viewModel , theme , ref headerCount , ref currentPosition , row , hdef , height );
+                canvas.DrawRowHeader( viewModel , theme , ref headerCount , ref currentPosition , row , hdef , height , screenScale );
                 row++;
             }
         }
 
-        private static void DrawRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int row , HierarchyDefinition hdef , double height )
+        private static void DrawRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , ref double currentPosition , int row , HierarchyDefinition hdef , double height , double screenScale )
         {
             var width = hdef.IsExpanded && hdef.HasChild ?
                                 viewModel.RowsHeadersWidth[hdef.Level] :
@@ -237,14 +250,14 @@ namespace HierarchyGrid.Skia
                 .Where( x => x < viewModel.RowsHeadersWidth.Length )
                 .Select( x => viewModel.RowsHeadersWidth[x] ).Sum();
 
-            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , left , currentPosition , width , height );
+            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , left , currentPosition , width , height , screenScale );
 
-            canvas.DrawParentRowHeader( viewModel , theme , hdef , hdef , row , currentPosition , ref headerCount );
+            canvas.DrawParentRowHeader( viewModel , theme , hdef , hdef , row , currentPosition , ref headerCount , screenScale );
 
             currentPosition += height;
         }
 
-        private static void DrawParentRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int row , double currentPosition , ref int headerCount )
+        private static void DrawParentRowHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , HierarchyDefinition src , HierarchyDefinition origin , int row , double currentPosition , ref int headerCount , double screenScale )
         {
             if ( src.Parent == null )
                 return;
@@ -261,16 +274,26 @@ namespace HierarchyGrid.Skia
                 .Where( x => x < viewModel.RowsHeadersWidth.Length )
                 .Select( x => viewModel.RowsHeadersWidth[x] ).Sum();
             var width = viewModel.RowsHeadersWidth[hdef.Level];
-            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , left , currentPosition , width , height );
+
+            canvas.DrawHeader( viewModel , theme , ref headerCount , hdef , left , currentPosition , width , height , screenScale );
 
             viewModel.RowsParents.Add( hdef );
 
-            canvas.DrawParentRowHeader( viewModel , theme , hdef , origin , row , currentPosition , ref headerCount );
+            canvas.DrawParentRowHeader( viewModel , theme , hdef , origin , row , currentPosition , ref headerCount , screenScale );
         }
 
-        private static void DrawHeader( this SKCanvas canvas , HierarchyGridViewModel viewModel , SkiaTheme theme , ref int headerCount , HierarchyDefinition hdef , double left , double top , double width , double height )
+        private static void DrawHeader( this SKCanvas canvas ,
+            HierarchyGridViewModel viewModel ,
+            SkiaTheme theme ,
+            ref int headerCount ,
+            HierarchyDefinition hdef ,
+            double left ,
+            double top ,
+            double width ,
+            double height ,
+            double screenScale )
         {
-            var rect = SKRect.Create( (float) left , (float) top , (float) width , (float) height );
+            var rect = SKRect.Create( (float) ( left * screenScale ) , (float) ( top * screenScale ) , (float) ( width * screenScale ) , (float) ( height * screenScale ) );
 
             var renderInfo = RenderInfo.FindRender( viewModel , theme , hdef );
 
@@ -283,7 +306,7 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
-            GetHeaderDecorator( hdef , left , top )
+            GetHeaderDecorator( hdef , left * screenScale , top * screenScale )
                 .IfSome( decorator =>
                 {
                     paint.Color = renderInfo.ForegroundColor;
@@ -294,10 +317,10 @@ namespace HierarchyGrid.Skia
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
             TextDrawer.AddText( hdef.Content.ToString() , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
-            TextDrawer.MaxHeight = (float) height - 10;
-            TextDrawer.MaxWidth = (float) width - 22;
+            TextDrawer.MaxHeight = (float) ( ( height - 10 ) * screenScale );
+            TextDrawer.MaxWidth = (float) ( ( width - 22 ) * screenScale );
 
-            TextDrawer.Paint( canvas , new SKPoint( (float) left + 20 , (float) top + 6 ) , TextPaintOptions );
+            TextDrawer.Paint( canvas , new SKPoint( (float) ( ( left + 20 ) * screenScale ) , (float) ( ( top + 6 ) * screenScale ) ) , TextPaintOptions );
             viewModel.HeadersCoordinates.Add( new( new( left , top , left + width , top + height ) , hdef ) );
 
             headerCount++;
@@ -410,7 +433,7 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d )
         {
             foreach ( var cell in cells )
-                canvas.DrawCell( viewModel , theme , cell );
+                canvas.DrawCell( viewModel , theme , cell , screenScale );
         }
 
         private static void DrawCell( this SKCanvas canvas ,
@@ -449,20 +472,20 @@ namespace HierarchyGrid.Skia
 
             if ( viewModel.Selections.Contains( cell ) )
             {
-                rect = SKRect.Create( (float) cell.Left + 1f , (float) cell.Top + 1f , (float) cell.Width - 2f , (float) cell.Height - 2f );
+                rect = SKRect.Create( (float) ( cell.Left * screenScale ) + 1f , (float) ( cell.Top * screenScale ) + 1f , (float) ( cell.Width * screenScale ) - 2f , (float) ( cell.Height * screenScale ) - 2f );
                 canvas.DrawRect( rect , paint );
             }
 
-            const float textHPadding = 6f;
-            var textVPadding = (float) cell.Height - TextSize;
+            float textHPadding = (float) ( 6f * screenScale );
+            var textVPadding = (float) ( cell.Height - ( TextSize * screenScale ) );
 
             TextDrawer.Clear();
             TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText( cell.ResultSet.Result , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
-            TextDrawer.MaxHeight = (float) cell.Height;
-            TextDrawer.MaxWidth = (float) cell.Width - textHPadding;
+            TextDrawer.MaxHeight = (float) ( cell.Height * screenScale );
+            TextDrawer.MaxWidth = (float) ( cell.Width * screenScale ) - textHPadding;
 
-            TextDrawer.Paint( canvas , new SKPoint( (float) cell.Left + ( textHPadding / 2 ) , (float) cell.Top + ( textVPadding / 2 ) ) , TextPaintOptions );
+            TextDrawer.Paint( canvas , new SKPoint( (float) ( cell.Left * screenScale ) + ( textHPadding / 2 ) , (float) ( cell.Top * screenScale ) + ( textVPadding / 2 ) ) , TextPaintOptions );
             viewModel.CellsCoordinates.Add( (new( cell ), cell) );
         }
 

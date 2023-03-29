@@ -5,6 +5,7 @@ using LanguageExt.Pipes;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
+using Splat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,16 +23,23 @@ using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
 {
-    public partial class Grid
+    public partial class Grid : IEnableLogger
     {
         private readonly ToolTip _tooltip = new();
+
+        private ReactiveCommand<double , Unit>? SetScreenScaleCommand { get; set; }
 
         public Grid()
         {
             InitializeComponent();
+            InitializeCommands();
 
             this.WhenActivated( disposables =>
             {
+                this.WhenAnyValue( x => x.ViewModel )
+                    .BindTo( this , x => x.DataContext )
+                    .DisposeWith( disposables );
+
                 this.WhenAnyValue( x => x.ViewModel )
                     .WhereNotNull()
                     .Do( vm => PopulateFromViewModel( this , vm , disposables ) )
@@ -40,9 +48,32 @@ namespace HierarchyGrid
             } );
         }
 
+        private void InitializeCommands()
+        {
+            SetScreenScaleCommand = ReactiveCommand.Create( ( double scale ) =>
+            {
+                ScreenScale = scale;
+
+                MenuItemScale100.IsChecked = scale == 1d;
+                MenuItemScale125.IsChecked = scale == 1.25d;
+                MenuItemScale150.IsChecked = scale == 1.5d;
+                MenuItemScale175.IsChecked = scale == 1.75d;
+
+                ToggleAdjustScale.IsChecked = false;
+                InvalidateMeasure();
+            } );
+            SetScreenScaleCommand.ThrownExceptions
+                .Subscribe( ex => this.Log().Error( ex ) );
+        }
+
         private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
         {
             ApplyDependencyProperties( view , viewModel );
+
+            view.MenuItemScale100.IsChecked = view.ScreenScale == 1d;
+            view.MenuItemScale125.IsChecked = view.ScreenScale == 1.25d;
+            view.MenuItemScale150.IsChecked = view.ScreenScale == 1.5d;
+            view.MenuItemScale175.IsChecked = view.ScreenScale == 1.75d;
 
             viewModel.DrawGridInteraction
                 .RegisterHandler( ctx =>
@@ -74,9 +105,11 @@ namespace HierarchyGrid
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
 
-                    var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
-                    // Try to find the UI scaling that's applied in Display settings
-                    var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+                    // TODO: Try to find the UI scaling that's applied in Display settings
+
+                    //var screen = Screen.FromHandle( new WindowInteropHelper( Window.GetWindow( view ) ).Handle );
+                    //var scale = screen.WorkingArea.Width / screen.Bounds.Width;
+                    var scale = view.ScreenScale;
 
                     HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
                 } )
@@ -95,7 +128,7 @@ namespace HierarchyGrid
                 .Subscribe( args =>
                 {
                     var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseOver( position.X , position.Y );
+                    viewModel.HandleMouseOver( position.X , position.Y , view.ScreenScale );
                 } )
                 .DisposeWith( disposables );
 
@@ -106,14 +139,14 @@ namespace HierarchyGrid
                     var position = args.GetPosition( view.SkiaElement );
                     if ( args.ClickCount == 2 )
                     {
-                        viewModel.HandleDoubleClick( position.X , position.Y );
+                        viewModel.HandleDoubleClick( position.X , position.Y , view.ScreenScale );
                     }
                     else
                     {
                         var ctrl = Keyboard.IsKeyDown( Key.LeftCtrl ) || Keyboard.IsKeyDown( Key.RightCtrl );
                         var shift = Keyboard.IsKeyDown( Key.LeftShift ) || Keyboard.IsKeyDown( Key.RightShift );
 
-                        viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl );
+                        viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl , screenScale: view.ScreenScale );
                     }
 
                     args.Handled = true;
@@ -125,12 +158,12 @@ namespace HierarchyGrid
                 .Subscribe( args =>
                 {
                     var position = args.GetPosition( view.SkiaElement );
-                    viewModel.HandleMouseDown( position.X , position.Y , false , false , true );
+                    viewModel.HandleMouseDown( position.X , position.Y , false , false , true , view.ScreenScale );
 
                     // Show context menu
                     if ( viewModel.IsValid && viewModel.HasData )
                     {
-                        var contextMenu = BuildContextMenu( viewModel , position.X , position.Y );
+                        var contextMenu = BuildContextMenu( viewModel , position.X , position.Y , view.ScreenScale );
                         contextMenu.IsOpen = true;
                     }
                 } )
@@ -174,6 +207,30 @@ namespace HierarchyGrid
                 vm => vm.MaxVerticalOffset ,
                 v => v.VerticalScrollBar.Maximum )
                 .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.Theme ,
+                v => v.BorderPopup.Background ,
+                t => new SolidColorBrush( Color.FromArgb( t.BackgroundColor.A , t.BackgroundColor.R , t.BackgroundColor.G , t.BackgroundColor.B ) ) )
+                .DisposeWith( disposables );
+
+            view.OneWayBind( viewModel ,
+                vm => vm.Theme ,
+                v => v.BorderPopup.BorderBrush ,
+                t => new SolidColorBrush( Color.FromArgb( t.BorderColor.A , t.BorderColor.R , t.BorderColor.G , t.BorderColor.B ) ) )
+                .DisposeWith( disposables );
+
+            view.MenuItemScale100.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale100.CommandParameter = 1d;
+
+            view.MenuItemScale125.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale125.CommandParameter = 1.25d;
+
+            view.MenuItemScale150.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale150.CommandParameter = 1.5d;
+
+            view.MenuItemScale175.Command = view.SetScreenScaleCommand;
+            view.MenuItemScale175.CommandParameter = 1.75d;
 
             view.SkiaElement.InvalidateVisual();
         }
@@ -323,9 +380,9 @@ namespace HierarchyGrid
                 yield return i;
         }
 
-        private static ContextMenu BuildContextMenu( HierarchyGridViewModel viewModel , double x , double y )
+        private static ContextMenu BuildContextMenu( HierarchyGridViewModel viewModel , double x , double y , double screenScale )
         {
-            var coord = viewModel.FindCoordinates( x , y );
+            var coord = viewModel.FindCoordinates( x , y , screenScale );
             var contextMenu = new ContextMenu();
 
             var items = coord.Match( r =>
@@ -431,7 +488,8 @@ namespace HierarchyGrid
                                     .Where( x => x.Definition.Count() == 1 )
                                     .ToArray();
 
-            foreach ( var c in headers.Where( t => t.Definition is ConsumerDefinition ) )
+            foreach ( var c in
+                headers.Where( t => t.Definition is ConsumerDefinition ) )
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter( splitterCount++ );
@@ -463,7 +521,7 @@ namespace HierarchyGrid
                          view.Canvas.Children.Add( rect );
 
                          Canvas.SetTop( rect , coord.Top );
-                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
@@ -502,7 +560,7 @@ namespace HierarchyGrid
                          };
                          view.Canvas.Children.Add( rect );
 
-                         Canvas.SetTop( rect , posY + args.VerticalChange );
+                         Canvas.SetTop( rect , ( posY + args.VerticalChange ) );
                          Canvas.SetLeft( rect , coord.Left );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
@@ -550,7 +608,7 @@ namespace HierarchyGrid
                          view.Canvas.Children.Add( rect );
 
                          Canvas.SetTop( rect , currentY );
-                         Canvas.SetLeft( rect , posX + args.HorizontalChange );
+                         Canvas.SetLeft( rect , ( posX + args.HorizontalChange ) );
                      } ).Subscribe();
                 viewModel.ResizeObservables.Enqueue( delta );
 
