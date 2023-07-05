@@ -34,6 +34,7 @@ namespace Demo
             TestGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel.TextAlignment = CellTextAlignment.Left;
             TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
+            TestGrid.ViewModel.SelectionMode = SelectionMode.Single;
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()

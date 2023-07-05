@@ -10,6 +10,9 @@ namespace HierarchyGrid.Skia
             BackgroundColor = theme.BackgroundColor.ToSKColor();
             ForegroundColor = theme.ForegroundColor.ToSKColor();
             BorderColor = theme.BorderColor.ToSKColor();
+            
+            SelectionBorderColor = theme.SelectionBorderColor.ToSKColor();
+            SelectionBorderThickness = theme.SelectionBorderThickness;
 
             HeaderBackgroundColor = theme.HeaderBackgroundColor.ToSKColor();
             HeaderForegroundColor = theme.HeaderForegroundColor.ToSKColor();
@@ -46,6 +49,9 @@ namespace HierarchyGrid.Skia
         public SKColor BackgroundColor { get; init; }
         public SKColor ForegroundColor { get; init; }
         public SKColor BorderColor { get; init; }
+
+        public SKColor SelectionBorderColor { get; init; }
+        public float SelectionBorderThickness { get; init; }
 
         public SKColor HeaderBackgroundColor { get; init; }
         public SKColor HeaderForegroundColor { get; init; }

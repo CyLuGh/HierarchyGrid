@@ -11,6 +11,10 @@ namespace Demo
 
         public ThemeColor BorderColor => ThemeColors.SlateGray;
 
+        public ThemeColor SelectionBorderColor => ThemeColors.White;
+
+        public float SelectionBorderThickness => 2f;
+
         public ThemeColor HeaderBackgroundColor => ThemeColors.LightGray;
 
         public ThemeColor HeaderForegroundColor => ThemeColors.Black;
