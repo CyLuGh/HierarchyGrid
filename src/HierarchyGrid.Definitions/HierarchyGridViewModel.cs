@@ -33,7 +33,11 @@ namespace HierarchyGrid.Definitions
         internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
         public Seq<PositionedCell> Selections => SelectedCells.ToSeq();
-        public Subject<Seq<PositionedCell>> SelectionChanged { get; } = new();
+        private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
+        public IObservable<Seq<PositionedCell>> SelectionChanged => SelectionChangedSubject.AsObservable();
+
+        private Subject<Option<PositionedCell>> EditedCellChangedSubject { get; } = new();
+        public IObservable<Option<PositionedCell>> EditedCellChanged => EditedCellChangedSubject.AsObservable();
 
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
@@ -113,9 +117,10 @@ namespace HierarchyGrid.Definitions
 
         public ReactiveCommand<bool , Unit> DrawGridCommand { get; private set; }
         public Interaction<Unit , Unit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<PositionedCell , Unit> StartEditionCommand { get; private set; }
+        public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public ReactiveCommand<bool , Unit> EndEditionCommand { get; private set; }
         public Interaction<Unit , Unit> EndEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public CombinedReactiveCommand<bool , Unit> EndAndDrawCommand { get; private set; }
         public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
         public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
@@ -246,7 +251,8 @@ namespace HierarchyGrid.Definitions
                     .Throttle( TimeSpan.FromMilliseconds( 10 ) )
                     .Subscribe( _ =>
                     {
-                        SelectionChanged.OnNext( Selections );
+                        SelectionChangedSubject.OnNext( Selections );
+                        EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
                     } )
                     .DisposeWith( disposables );
             } );
@@ -277,8 +283,21 @@ namespace HierarchyGrid.Definitions
             @this.DrawGridCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
+            @this.StartEditionCommand = ReactiveCommand
+                .CreateFromObservable( ( PositionedCell positionedCell ) =>
+                {
+                    @this.EditedCellChangedSubject.OnNext( positionedCell );
+                    return @this.StartEditionInteraction.Handle( positionedCell );
+                } );
+            @this.StartEditionCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
             @this.EndEditionCommand = ReactiveCommand
-                .CreateFromObservable( ( bool _ ) => @this.EndEditionInteraction.Handle( Unit.Default ) );
+                .CreateFromObservable( ( bool _ ) =>
+                {
+                    @this.EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
+                    return @this.EndEditionInteraction.Handle( Unit.Default );
+                } );
             @this.EndEditionCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
@@ -508,6 +527,7 @@ namespace HierarchyGrid.Definitions
                 return;
 
             await EndEditionInteraction.Handle( Unit.Default );
+            EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
 
             // Find corresponding element
             if ( !isRightClick && x <= RowsHeadersWidth.Sum() && y <= ColumnsHeadersHeight.Sum() )
@@ -634,8 +654,8 @@ namespace HierarchyGrid.Definitions
             {
                 FindCoordinates( x , y , screenScale )
                     .IfRight( o
-                    => o.IfSome( async cell
-                        => await StartEditionInteraction.Handle( cell ) ) );
+                    => o.IfSome( cell
+                        => Observable.Return( cell ).InvokeCommand( StartEditionCommand ) ) );
             }
         }
 

@@ -36,6 +36,13 @@ namespace Demo
                 {
                     TextBlockSelection.Text = $"Selection count: {selections.Length}";
                 } );
+
+            HierarchyGrid.ViewModel.EditedCellChanged
+                .ObserveOn( RxApp.MainThreadScheduler )
+                .Subscribe( oec =>
+                {
+                    TextBlockEdition.Text = oec.Match( ec => $"Editing cell {ec}" , () => "No cell being edited." );
+                } );
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
@@ -144,6 +151,9 @@ namespace Demo
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
         {
             var definitions = new HierarchyDefinitions( _calendarBuilder.GetProducers() , _calendarBuilder.GetConsumers() );
+
+            //var cb = new CalendarBuilder();
+            //var definitions = new HierarchyDefinitions( cb.GetProducers() , cb.GetConsumers() );
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;

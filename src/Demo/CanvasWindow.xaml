@@ -16,8 +16,11 @@
                             Click="FillButton_Click"
                             Content="Fill"
                             DockPanel.Dock="Bottom" />
-                    <TextBlock x:Name="TextBlockSelection"
-                               DockPanel.Dock="Bottom" />
+                    <UniformGrid Rows="1"
+                                 DockPanel.Dock="Bottom">
+                        <TextBlock x:Name="TextBlockSelection" />
+                        <TextBlock x:Name="TextBlockEdition" />
+                    </UniformGrid>
                     <hierarchyGrid:Grid x:Name="HierarchyGrid"
                                         DefaultColumnWidth="250"
                                         DefaultHeaderHeight="40"
