@@ -1,9 +1,8 @@
 ﻿<Window x:Class="Demo.CanvasWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Demo"
         xmlns:hierarchyGrid="clr-namespace:HierarchyGrid;assembly=HierarchyGrid"
         mc:Ignorable="d"
         Title="CanvasWindow"
@@ -17,6 +16,8 @@
                             Click="FillButton_Click"
                             Content="Fill"
                             DockPanel.Dock="Bottom" />
+                    <TextBlock x:Name="TextBlockSelection"
+                               DockPanel.Dock="Bottom" />
                     <hierarchyGrid:Grid x:Name="HierarchyGrid"
                                         DefaultColumnWidth="250"
                                         DefaultHeaderHeight="40"
@@ -40,7 +41,7 @@
                                 Click="RestoreStateClick" />
                     </UniformGrid>
                     <hierarchyGrid:Grid  x:Name="FoldedSampleHierarchyGrid"
-                                        ScreenScale="1.25"
+                                         ScreenScale="1.25"
                                          Margin="10" />
                 </DockPanel>
             </TabItem>
@@ -53,6 +54,7 @@
                         <Button Content="Other theme"
                                 Click="OtherThemeClick" />
                     </UniformGrid>
+
                     <hierarchyGrid:Grid x:Name="TestGrid"
                                         DefaultColumnWidth="300"
                                         Margin="10" />

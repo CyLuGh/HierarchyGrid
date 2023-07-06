@@ -15,7 +15,7 @@ public sealed class HierarchyGridTheme : ITheme
     public ThemeColor BorderColor => ThemeColors.SlateGray;
 
     public ThemeColor SelectionBorderColor => ThemeColors.Black;
-    
+
     public float SelectionBorderThickness => 1f;
 
     public ThemeColor HeaderBackgroundColor => ThemeColors.LightGray;

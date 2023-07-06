@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 using LanguageExt;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -6,13 +7,10 @@ using Splat;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Text;
 using System.Threading.Tasks;
 using Unit = System.Reactive.Unit;
 
@@ -34,7 +32,8 @@ namespace HierarchyGrid.Definitions
 
         internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
-        public ReadOnlyObservableCollection<PositionedCell> Selections => new( SelectedCells );
+        public Seq<PositionedCell> Selections => SelectedCells.ToSeq();
+        public Subject<Seq<PositionedCell>> SelectionChanged { get; } = new();
 
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
@@ -241,6 +240,14 @@ namespace HierarchyGrid.Definitions
                 ToggleStatesCommand
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
+                SelectedCells.ObserveCollectionChanges()
+                    .Throttle( TimeSpan.FromMilliseconds( 10 ) )
+                    .Subscribe( _ =>
+                    {
+                        SelectionChanged.OnNext( Selections );
+                    } )
                     .DisposeWith( disposables );
             } );
         }

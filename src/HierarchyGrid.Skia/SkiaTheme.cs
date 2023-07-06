@@ -10,7 +10,7 @@ namespace HierarchyGrid.Skia
             BackgroundColor = theme.BackgroundColor.ToSKColor();
             ForegroundColor = theme.ForegroundColor.ToSKColor();
             BorderColor = theme.BorderColor.ToSKColor();
-            
+
             SelectionBorderColor = theme.SelectionBorderColor.ToSKColor();
             SelectionBorderThickness = theme.SelectionBorderThickness;
 

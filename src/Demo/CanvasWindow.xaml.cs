@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using HierarchyGrid.Definitions;
-using System.Linq;
+﻿using HierarchyGrid.Definitions;
 using LanguageExt;
-using MoreLinq;
+using ReactiveUI;
 using Splat;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Windows;
 using SelectionMode = HierarchyGrid.Definitions.SelectionMode;
 
 namespace Demo
@@ -25,16 +18,24 @@ namespace Demo
     {
         private HierarchyGridState _gridState;
         private readonly CalendarBuilder _calendarBuilder;
+
         public CanvasWindow()
         {
             InitializeComponent();
-            _calendarBuilder = new ( "#1" , "#2" , "#3" );
+            _calendarBuilder = new( "#1" , "#2" , "#3" );
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel.TextAlignment = CellTextAlignment.Left;
             TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
             TestGrid.ViewModel.SelectionMode = SelectionMode.Single;
+
+            HierarchyGrid.ViewModel.SelectionChanged
+                .ObserveOn( RxApp.MainThreadScheduler )
+                .Subscribe( selections =>
+                {
+                    TextBlockSelection.Text = $"Selection count: {selections.Length}";
+                } );
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
@@ -142,7 +143,6 @@ namespace Demo
 
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
         {
-            
             var definitions = new HierarchyDefinitions( _calendarBuilder.GetProducers() , _calendarBuilder.GetConsumers() );
             FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
