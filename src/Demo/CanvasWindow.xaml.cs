@@ -187,6 +187,15 @@ namespace Demo
             FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
         }
 
+        private void TestSimplifiedClick( object sender , RoutedEventArgs e )
+        {
+            var simples = _gridState.Selections.Map( cp => new SimplifiedCellPosition( cp ) );
+
+            var found = FoldedSampleHierarchyGrid.ViewModel.FindPositionedCells( simples );
+            System.Console.WriteLine( found.Length );
+            //FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
+        }
+
         private void DefaultThemeClick( object sender , RoutedEventArgs e )
         {
             TestGrid.ViewModel.Theme = HierarchyGridTheme.Default;

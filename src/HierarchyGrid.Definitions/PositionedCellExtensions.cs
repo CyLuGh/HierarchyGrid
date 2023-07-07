@@ -52,9 +52,11 @@ namespace HierarchyGrid.Definitions
             SimplifiedCellPosition simplifiedCellPosition )
         {
             var cell = from p in producers.Find( x => x.Position == simplifiedCellPosition.Producer.Position
-                            && string.Equals( x.ToString() , simplifiedCellPosition.Producer.FullPath , StringComparison.OrdinalIgnoreCase ) )
+                            && string.Equals( x.ToString() , simplifiedCellPosition.Producer.FullPath , StringComparison.OrdinalIgnoreCase )
+                            && simplifiedCellPosition.Producer.ChildrenPaths.SequenceEqual( x.Children.Select( c => c.ToString() ) ) )
                        from c in consumers.Find( x => x.Position == simplifiedCellPosition.Consumer.Position
-                && string.Equals( x.ToString() , simplifiedCellPosition.Consumer.FullPath , StringComparison.OrdinalIgnoreCase ) )
+                            && string.Equals( x.ToString() , simplifiedCellPosition.Consumer.FullPath , StringComparison.OrdinalIgnoreCase )
+                            && simplifiedCellPosition.Consumer.ChildrenPaths.SequenceEqual( x.Children.Select( c => c.ToString() ) ) )
                        select new PositionedCell { ProducerDefinition = p , ConsumerDefinition = c };
 
             return cell;
