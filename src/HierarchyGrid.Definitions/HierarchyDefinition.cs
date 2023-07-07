@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace HierarchyGrid.Definitions
 {
-    public abstract class HierarchyDefinition : ReactiveObject, IActivatableViewModel
+    public abstract class HierarchyDefinition : ReactiveObject, IActivatableViewModel, IComparable<HierarchyDefinition>
     {
         public ViewModelActivator Activator { get; }
         public Guid Guid { get; }
@@ -315,6 +315,28 @@ namespace HierarchyGrid.Definitions
                 .None( () => ResultSet.Default );
 
             return rs;
+        }
+
+        public int CompareTo( HierarchyDefinition other )
+        {
+            if ( other == null ) return 1;
+            if ( GetType() != other.GetType() ) return 1;
+
+            var compare = Position.CompareTo( other.Position );
+            if ( compare != 0 )
+                return compare;
+
+            compare = ToString().CompareTo( other.ToString() );
+            if ( compare != 0 )
+                return compare;
+
+            if ( Children.Count != other.Children.Count )
+                return 1;
+
+            return Enumerable.Range( 0 , Children.Count )
+                .Select( idx => Children[idx].CompareTo( other.Children[idx] ) )
+                .All( x => x == 0 )
+                ? 0 : 1;
         }
     }
 }

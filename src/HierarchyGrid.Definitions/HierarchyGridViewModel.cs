@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 using LanguageExt;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -6,13 +7,10 @@ using Splat;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Text;
 using System.Threading.Tasks;
 using Unit = System.Reactive.Unit;
 
@@ -34,7 +32,12 @@ namespace HierarchyGrid.Definitions
 
         internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
-        public ReadOnlyObservableCollection<PositionedCell> Selections => new( SelectedCells );
+        public Seq<PositionedCell> Selections => SelectedCells.ToSeq();
+        private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
+        public IObservable<Seq<PositionedCell>> SelectionChanged => SelectionChangedSubject.AsObservable();
+
+        private Subject<Option<PositionedCell>> EditedCellChangedSubject { get; } = new();
+        public IObservable<Option<PositionedCell>> EditedCellChanged => EditedCellChangedSubject.AsObservable();
 
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
@@ -73,50 +76,82 @@ namespace HierarchyGrid.Definitions
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
+        public HierarchyGridState GetGridState()
+            => new( this );
+
+        public void SetGridState( HierarchyGridState state , bool useCompare = false )
+        {
+            if ( state.Equals( default ) )
+                return;
+
+            try
+            {
+                var rowsFlat = RowsDefinitions.FlatList().ToArray();
+                if ( rowsFlat.Length == state.RowToggles.Length )
+                    Parallel.For( 0 , state.RowToggles.Length , i => rowsFlat[i].IsExpanded = state.RowToggles[i] );
+                else
+                    rowsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
+
+                var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
+                if ( columnsFlat.Length == state.ColumnToggles.Length )
+                    Parallel.For( 0 , state.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = state.ColumnToggles[i] );
+                else
+                    columnsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
+
+                VerticalOffset = state.VerticalOffset;
+                HorizontalOffset = state.HorizontalOffset;
+
+                SelectedCells.Clear();
+
+                if ( useCompare )
+                {
+                    var producers = ProducersCache.Items.FlatList().ToSeq();
+                    var consumers = ConsumersCache.Items.FlatList().ToSeq();
+
+                    var converted = state.Selections
+                        .AsParallel()
+                        .Select( pc =>
+                        {
+                            var producer = producers.Find( p => p.CompareTo( pc.ProducerDefinition ) == 0 );
+                            var consumer = consumers.Find( p => p.CompareTo( pc.ConsumerDefinition ) == 0 );
+
+                            return from p in producer
+                                   from c in consumer
+                                   select new PositionedCell { ProducerDefinition = p , ConsumerDefinition = c };
+                        } )
+                        .Somes()
+                        .ToArr();
+
+                    SelectedCells.AddRange( converted );
+                }
+                else
+                {
+                    SelectedCells.AddRange( state.Selections );
+                }
+
+            }
+            catch ( Exception )
+            {
+                VerticalOffset = 0;
+                HorizontalOffset = 0;
+            }
+
+            Observable.Return( false )
+                .InvokeCommand( DrawGridCommand );
+        }
+
         public HierarchyGridState GridState
         {
-            get { return new HierarchyGridState( this ); }
-            set
-            {
-                if ( value.Equals( default ) )
-                    return;
-
-                try
-                {
-                    var rowsFlat = RowsDefinitions.FlatList().ToArray();
-                    if ( rowsFlat.Length == value.RowToggles.Length )
-                        Parallel.For( 0 , value.RowToggles.Length , i => rowsFlat[i].IsExpanded = value.RowToggles[i] );
-                    else
-                        rowsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
-
-                    var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
-                    if ( columnsFlat.Length == value.ColumnToggles.Length )
-                        Parallel.For( 0 , value.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = value.ColumnToggles[i] );
-                    else
-                        columnsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
-
-                    VerticalOffset = value.VerticalOffset;
-                    HorizontalOffset = value.HorizontalOffset;
-
-                    SelectedCells.Clear();
-                    SelectedCells.AddRange( value.Selections );
-                }
-                catch ( Exception )
-                {
-                    VerticalOffset = 0;
-                    HorizontalOffset = 0;
-                }
-
-                Observable.Return( false )
-                    .InvokeCommand( DrawGridCommand );
-            }
+            get => GetGridState();
+            set => SetGridState( value );
         }
 
         public ReactiveCommand<bool , Unit> DrawGridCommand { get; private set; }
         public Interaction<Unit , Unit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<PositionedCell , Unit> StartEditionCommand { get; private set; }
+        public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public ReactiveCommand<bool , Unit> EndEditionCommand { get; private set; }
         public Interaction<Unit , Unit> EndEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
         public CombinedReactiveCommand<bool , Unit> EndAndDrawCommand { get; private set; }
         public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
         public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
@@ -242,6 +277,15 @@ namespace HierarchyGrid.Definitions
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
+
+                SelectedCells.ObserveCollectionChanges()
+                    .Throttle( TimeSpan.FromMilliseconds( 10 ) )
+                    .Subscribe( _ =>
+                    {
+                        SelectionChangedSubject.OnNext( Selections );
+                        EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
+                    } )
+                    .DisposeWith( disposables );
             } );
         }
 
@@ -270,8 +314,21 @@ namespace HierarchyGrid.Definitions
             @this.DrawGridCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
+            @this.StartEditionCommand = ReactiveCommand
+                .CreateFromObservable( ( PositionedCell positionedCell ) =>
+                {
+                    @this.EditedCellChangedSubject.OnNext( positionedCell );
+                    return @this.StartEditionInteraction.Handle( positionedCell );
+                } );
+            @this.StartEditionCommand.ThrownExceptions
+                .SubscribeSafe( e => @this.Log().Error( e ) );
+
             @this.EndEditionCommand = ReactiveCommand
-                .CreateFromObservable( ( bool _ ) => @this.EndEditionInteraction.Handle( Unit.Default ) );
+                .CreateFromObservable( ( bool _ ) =>
+                {
+                    @this.EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
+                    return @this.EndEditionInteraction.Handle( Unit.Default );
+                } );
             @this.EndEditionCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
@@ -501,6 +558,7 @@ namespace HierarchyGrid.Definitions
                 return;
 
             await EndEditionInteraction.Handle( Unit.Default );
+            EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
 
             // Find corresponding element
             if ( !isRightClick && x <= RowsHeadersWidth.Sum() && y <= ColumnsHeadersHeight.Sum() )
@@ -627,8 +685,8 @@ namespace HierarchyGrid.Definitions
             {
                 FindCoordinates( x , y , screenScale )
                     .IfRight( o
-                    => o.IfSome( async cell
-                        => await StartEditionInteraction.Handle( cell ) ) );
+                    => o.IfSome( cell
+                        => Observable.Return( cell ).InvokeCommand( StartEditionCommand ) ) );
             }
         }
 

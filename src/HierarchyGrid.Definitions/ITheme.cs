@@ -6,6 +6,9 @@ public interface ITheme
     public ThemeColor ForegroundColor { get; }
     public ThemeColor BorderColor { get; }
 
+    public ThemeColor SelectionBorderColor { get; }
+    public float SelectionBorderThickness { get; }
+
     public ThemeColor HeaderBackgroundColor { get; }
     public ThemeColor HeaderForegroundColor { get; }
 

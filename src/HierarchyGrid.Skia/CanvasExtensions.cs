@@ -472,11 +472,17 @@ namespace HierarchyGrid.Skia
 
             if ( viewModel.Selections.Contains( cell ) )
             {
-                rect = SKRect.Create( (float) ( cell.Left * screenScale ) + 1f , (float) ( cell.Top * screenScale ) + 1f , (float) ( cell.Width * screenScale ) - 2f , (float) ( cell.Height * screenScale ) - 2f );
+                paint.Color = theme.SelectionBorderColor;
+                paint.StrokeWidth = theme.SelectionBorderThickness;
+
+                rect = SKRect.Create( (float) ( cell.Left * screenScale ) + theme.SelectionBorderThickness ,
+                    (float) ( cell.Top * screenScale ) + theme.SelectionBorderThickness ,
+                    (float) ( cell.Width * screenScale ) - ( theme.SelectionBorderThickness + 1f ) ,
+                    (float) ( cell.Height * screenScale ) - ( theme.SelectionBorderThickness + 1f ) );
                 canvas.DrawRect( rect , paint );
             }
 
-            float textHPadding = (float) ( 6f * screenScale );
+            float textHPadding = (float) ( ( 6f + theme.SelectionBorderThickness ) * screenScale );
             var textVPadding = (float) ( cell.Height - ( TextSize * screenScale ) );
 
             TextDrawer.Clear();
