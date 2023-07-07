@@ -111,5 +111,26 @@ namespace HierarchyGrid.Definitions.Tests
             var producers = builder.GetProducers().ToArray();
             producers.Leaves().Length().Should().Be( 16 );
         }
+
+        [Fact]
+        public void TestCompare()
+        {
+            var rootConsumers1 = new ConsumerDefinition { Content = "Root" };
+            rootConsumers1.Add( new ConsumerDefinition { Content = "A1" } );
+            var consumer1 = rootConsumers1.Add( new ConsumerDefinition { Content = "B1" } );
+
+            var rootConsumers2 = new ConsumerDefinition { Content = "Root" };
+            rootConsumers2.Add( new ConsumerDefinition { Content = "A1" } );
+            var consumer2 = rootConsumers2.Add( new ConsumerDefinition { Content = "B1" } );
+
+            consumer1.Equals( consumer2 ).Should().BeFalse();
+            consumer1.CompareTo( consumer2 ).Should().Be( 0 );
+
+            var rootProducers = new ProducerDefinition { Content = "Root" };
+            rootProducers.Add( new ProducerDefinition { Content = "A1" } );
+            var producer = rootProducers.Add( new ProducerDefinition { Content = "B1" } );
+
+            consumer1.CompareTo( producer ).Should().NotBe( 0 );
+        }
     }
 }

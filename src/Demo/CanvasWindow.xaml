@@ -33,15 +33,21 @@
             </TabItem>
             <TabItem Header="Folded">
                 <DockPanel>
-                    <UniformGrid Rows="1"
+                    <UniformGrid Rows="3"
                                  DockPanel.Dock="Bottom">
                         <Button x:Name="FillFoldedSampleButton"
                                 Content="Fill grid with folded elements"
                                 Click="FillFoldedGrid_Click" />
+                        <Button x:Name="FillFoldedSampleNewBuilderButton"
+                                Content="Fill grid with folded elements (new builder each time)"
+                                Click="FillFoldedGridNewBuilder_Click" />
                         <Button Content="Save state"
                                 Click="SaveStateClick" />
-                        <Button Content="RestoreState"
+                        <Rectangle />
+                        <Button Content="Restore State"
                                 Click="RestoreStateClick" />
+                        <Button Content="Restore State with compare"
+                                Click="RestoreStateCompareClick" />
                     </UniformGrid>
                     <hierarchyGrid:Grid  x:Name="FoldedSampleHierarchyGrid"
                                          ScreenScale="1.25"

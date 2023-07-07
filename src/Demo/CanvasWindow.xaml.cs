@@ -161,6 +161,17 @@ namespace Demo
             FoldedSampleHierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiSimple;
         }
 
+        private void FillFoldedGridNewBuilder_Click( object sender , RoutedEventArgs e )
+        {
+            var cb = new CalendarBuilder( "#1" , "#2" , "#3" );
+            var definitions = new HierarchyDefinitions( cb.GetProducers() , cb.GetConsumers() );
+            FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
+            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
+            FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
+            FoldedSampleHierarchyGrid.ViewModel.TextAlignment = CellTextAlignment.Center;
+            FoldedSampleHierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiSimple;
+        }
+
         private void SaveStateClick( object sender , RoutedEventArgs e )
         {
             _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
@@ -169,6 +180,11 @@ namespace Demo
         private void RestoreStateClick( object sender , RoutedEventArgs e )
         {
             FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
+        }
+
+        private void RestoreStateCompareClick( object sender , RoutedEventArgs e )
+        {
+            FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
         }
 
         private void DefaultThemeClick( object sender , RoutedEventArgs e )

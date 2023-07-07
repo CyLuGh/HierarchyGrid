@@ -76,43 +76,74 @@ namespace HierarchyGrid.Definitions
         public HierarchyDefinition[] RowsDefinitions => IsTransposed ?
             ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray() : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
 
+        public HierarchyGridState GetGridState()
+            => new( this );
+
+        public void SetGridState( HierarchyGridState state , bool useCompare = false )
+        {
+            if ( state.Equals( default ) )
+                return;
+
+            try
+            {
+                var rowsFlat = RowsDefinitions.FlatList().ToArray();
+                if ( rowsFlat.Length == state.RowToggles.Length )
+                    Parallel.For( 0 , state.RowToggles.Length , i => rowsFlat[i].IsExpanded = state.RowToggles[i] );
+                else
+                    rowsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
+
+                var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
+                if ( columnsFlat.Length == state.ColumnToggles.Length )
+                    Parallel.For( 0 , state.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = state.ColumnToggles[i] );
+                else
+                    columnsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
+
+                VerticalOffset = state.VerticalOffset;
+                HorizontalOffset = state.HorizontalOffset;
+
+                SelectedCells.Clear();
+
+                if ( useCompare )
+                {
+                    var producers = ProducersCache.Items.FlatList().ToSeq();
+                    var consumers = ConsumersCache.Items.FlatList().ToSeq();
+
+                    var converted = state.Selections
+                        .AsParallel()
+                        .Select( pc =>
+                        {
+                            var producer = producers.Find( p => p.CompareTo( pc.ProducerDefinition ) == 0 );
+                            var consumer = consumers.Find( p => p.CompareTo( pc.ConsumerDefinition ) == 0 );
+
+                            return from p in producer
+                                   from c in consumer
+                                   select new PositionedCell { ProducerDefinition = p , ConsumerDefinition = c };
+                        } )
+                        .Somes()
+                        .ToArr();
+
+                    SelectedCells.AddRange( converted );
+                }
+                else
+                {
+                    SelectedCells.AddRange( state.Selections );
+                }
+
+            }
+            catch ( Exception )
+            {
+                VerticalOffset = 0;
+                HorizontalOffset = 0;
+            }
+
+            Observable.Return( false )
+                .InvokeCommand( DrawGridCommand );
+        }
+
         public HierarchyGridState GridState
         {
-            get { return new HierarchyGridState( this ); }
-            set
-            {
-                if ( value.Equals( default ) )
-                    return;
-
-                try
-                {
-                    var rowsFlat = RowsDefinitions.FlatList().ToArray();
-                    if ( rowsFlat.Length == value.RowToggles.Length )
-                        Parallel.For( 0 , value.RowToggles.Length , i => rowsFlat[i].IsExpanded = value.RowToggles[i] );
-                    else
-                        rowsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
-
-                    var columnsFlat = ColumnsDefinitions.FlatList().ToArray();
-                    if ( columnsFlat.Length == value.ColumnToggles.Length )
-                        Parallel.For( 0 , value.ColumnToggles.Length , i => columnsFlat[i].IsExpanded = value.ColumnToggles[i] );
-                    else
-                        columnsFlat.AsParallel().ForAll( x => { x.IsExpanded = true; } );
-
-                    VerticalOffset = value.VerticalOffset;
-                    HorizontalOffset = value.HorizontalOffset;
-
-                    SelectedCells.Clear();
-                    SelectedCells.AddRange( value.Selections );
-                }
-                catch ( Exception )
-                {
-                    VerticalOffset = 0;
-                    HorizontalOffset = 0;
-                }
-
-                Observable.Return( false )
-                    .InvokeCommand( DrawGridCommand );
-            }
+            get => GetGridState();
+            set => SetGridState( value );
         }
 
         public ReactiveCommand<bool , Unit> DrawGridCommand { get; private set; }
