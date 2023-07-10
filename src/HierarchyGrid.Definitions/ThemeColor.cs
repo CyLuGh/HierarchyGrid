@@ -3,7 +3,7 @@ using System.Text;
 
 namespace HierarchyGrid.Definitions;
 
-public struct ThemeColor
+public readonly struct ThemeColor
 {
     public ThemeColor( byte a , byte r , byte g , byte b )
     {
@@ -37,7 +37,7 @@ public struct ThemeColor
         }
     }
 
-    public ThemeColor With( byte? a = null , byte? r = null , byte? g = null , byte? b = null )
+    public readonly ThemeColor With( byte? a = null , byte? r = null , byte? g = null , byte? b = null )
         => new( a ?? A , r ?? R , g ?? G , b ?? B );
 
     public byte A { get; }

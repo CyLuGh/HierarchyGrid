@@ -470,6 +470,29 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect( rect , paint );
 
+            /* Add extra render on focus cells */
+            viewModel.FocusCells.Find( cell )
+                .IfSome( fci =>
+                {
+                    var borderThickness = fci.BorderThickness;
+
+                    /* Paint background */
+                    paint.Style = SKPaintStyle.Fill;
+                    paint.Color = fci.BackgroundColor.ToSKColor();
+
+                    rect = SKRect.Create( (float) ( cell.Left * screenScale ) + borderThickness ,
+                    (float) ( cell.Top * screenScale ) + borderThickness ,
+                    (float) ( cell.Width * screenScale ) - ( borderThickness + 1f ) ,
+                    (float) ( cell.Height * screenScale ) - ( borderThickness + 1f ) );
+                    canvas.DrawRect( rect , paint );
+
+                    /* Paint border */
+                    paint.Style = SKPaintStyle.Stroke;
+                    paint.Color = fci.BorderColor.ToSKColor();
+                    paint.StrokeWidth = fci.BorderThickness;
+                    canvas.DrawRect( rect , paint );
+                } );
+
             if ( viewModel.Selections.Contains( cell ) )
             {
                 paint.Color = theme.SelectionBorderColor;
