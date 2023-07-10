@@ -43,6 +43,9 @@ namespace Demo
                 {
                     TextBlockEdition.Text = oec.Match( ec => $"Editing cell {ec}" , () => "No cell being edited." );
                 } );
+
+
+
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
@@ -146,6 +149,20 @@ namespace Demo
             HierarchyGrid.ViewModel.Set( dg.GenerateSample() );
             HierarchyGrid.ViewModel.EnableCrosshair = true;
             HierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiExtended;
+
+            var pC = new PositionedCell
+            {
+                ProducerDefinition = (ProducerDefinition) HierarchyGrid.ViewModel.RowsDefinitions.Leaves().Skip( 3 ).First() ,
+                ConsumerDefinition = (ConsumerDefinition) HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip( 2 ).First()
+            };
+
+            HierarchyGrid.ViewModel.FocusCells = HashMap.create( (pC, new FocusCellInfo
+            {
+                BackgroundColor = ThemeColors.IndianRed.With( a: 100 ) ,
+                TooltipInfo = "Extra tooltip message" ,
+                BorderThickness = 1 ,
+                BorderColor = ThemeColors.Blue
+            }) );
         }
 
         private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
@@ -185,6 +202,15 @@ namespace Demo
         private void RestoreStateCompareClick( object sender , RoutedEventArgs e )
         {
             FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
+        }
+
+        private void TestSimplifiedClick( object sender , RoutedEventArgs e )
+        {
+            var simples = _gridState.Selections.Map( cp => new SimplifiedCellPosition( cp ) );
+
+            var found = FoldedSampleHierarchyGrid.ViewModel.FindPositionedCells( simples );
+            System.Console.WriteLine( found.Length );
+            //FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
         }
 
         private void DefaultThemeClick( object sender , RoutedEventArgs e )

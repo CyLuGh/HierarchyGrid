@@ -296,13 +296,17 @@ namespace HierarchyGrid
                 {
                     view._tooltip.IsOpen = false;
 
-                    ctx.Input.ResultSet.TooltipText
-                        .IfSome( text =>
-                        {
-                            view._tooltip.Content = text;
-                            view._tooltip.Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse;
-                            view._tooltip.IsOpen = true;
-                        } );
+                    var text = string.Join( Environment.NewLine ,
+                        ctx.Input.ResultSet.TooltipText.Match( text => text , () => string.Empty ) ,
+                        viewModel.FocusCells.Find( ctx.Input ).Match( fci => fci.TooltipInfo , () => string.Empty ) );
+
+                    if ( !string.IsNullOrWhiteSpace( text ) )
+                    {
+                        view._tooltip.Content = text.Trim(); /* Trim gets rid of the extra line if one of the text is empty */
+                        view._tooltip.Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse;
+                        view._tooltip.IsOpen = true;
+                    }
+
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );

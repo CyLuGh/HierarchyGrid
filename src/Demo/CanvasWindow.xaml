@@ -43,7 +43,8 @@
                                 Click="FillFoldedGridNewBuilder_Click" />
                         <Button Content="Save state"
                                 Click="SaveStateClick" />
-                        <Rectangle />
+                        <Button Content="Test simplified positions"
+                                Click="TestSimplifiedClick" />
                         <Button Content="Restore State"
                                 Click="RestoreStateClick" />
                         <Button Content="Restore State with compare"

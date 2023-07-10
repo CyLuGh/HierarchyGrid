@@ -39,6 +39,11 @@ namespace HierarchyGrid.Definitions
         private Subject<Option<PositionedCell>> EditedCellChangedSubject { get; } = new();
         public IObservable<Option<PositionedCell>> EditedCellChanged => EditedCellChangedSubject.AsObservable();
 
+        /// <summary>
+        /// Cells with extra rendering elements
+        /// </summary>
+        [Reactive] public HashMap<PositionedCell , FocusCellInfo> FocusCells { get; set; }
+
         public ConcurrentBag<(ElementCoordinates Coord, HierarchyDefinition Definition)> HeadersCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, PositionedCell Cell)> CellsCoordinates { get; } = new();
         public ConcurrentBag<(ElementCoordinates Coord, Guid Guid, Action Action)> GlobalHeadersCoordinates { get; } = new();
