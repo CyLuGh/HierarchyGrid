@@ -246,7 +246,7 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( EndAndDrawCommand )
                     .DisposeWith( disposables );
 
-                this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow , x => x.HoveredElementId )
+                this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow , x => x.HoveredElementId , x => x.FocusCells )
                     .Throttle( TimeSpan.FromMilliseconds( 2 ) )
                     .DistinctUntilChanged()
                     .Select( _ => false )
