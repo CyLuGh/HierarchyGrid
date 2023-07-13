@@ -21,18 +21,44 @@ namespace HierarchyGrid.Definitions
         public ViewModelActivator Activator { get; }
         public bool IsValid => RowsHeadersWidth?.Any() == true && ColumnsHeadersHeight?.Any() == true;
 
-        internal SourceCache<ProducerDefinition , int> ProducersCache { get; } = new SourceCache<ProducerDefinition , int>( x => x.Position );
-        internal SourceCache<ConsumerDefinition , int> ConsumersCache { get; } = new SourceCache<ConsumerDefinition , int>( x => x.Position );
+        internal SourceCache<ProducerDefinition , int> ProducersCache { get; } = new( x => x.Position );
+        internal SourceCache<ConsumerDefinition , int> ConsumersCache { get; } = new( x => x.Position );
 
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
 
-        internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; }
-            = new ConcurrentDictionary<(Guid, Guid) , ResultSet>();
+        internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; } = new();
 
         internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
-        public Seq<PositionedCell> Selections => SelectedCells.ToSeq();
+        public Seq<PositionedCell> Selections
+        {
+            get => SelectedCells.ToSeq();
+            set
+            {
+                SelectedCells.Clear();
+
+                if ( !value.IsEmpty && SelectionMode != SelectionMode.None )
+                {
+                    var cells = MatchPositionedCells( value );
+                    switch ( SelectionMode )
+                    {
+                        case SelectionMode.Single:
+                            SelectedCells.Add( cells.First() );
+                            break;
+
+                        case SelectionMode.MultiSimple:
+                        case SelectionMode.MultiExtended:
+                            SelectedCells.AddRange( cells );
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
         private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
         public IObservable<Seq<PositionedCell>> SelectionChanged => SelectionChangedSubject.AsObservable();
 
@@ -110,24 +136,7 @@ namespace HierarchyGrid.Definitions
 
                 if ( useCompare )
                 {
-                    var producers = ProducersCache.Items.FlatList().ToSeq();
-                    var consumers = ConsumersCache.Items.FlatList().ToSeq();
-
-                    var converted = state.Selections
-                        .AsParallel()
-                        .Select( pc =>
-                        {
-                            var producer = producers.Find( p => p.CompareTo( pc.ProducerDefinition ) == 0 );
-                            var consumer = consumers.Find( p => p.CompareTo( pc.ConsumerDefinition ) == 0 );
-
-                            return from p in producer
-                                   from c in consumer
-                                   select new PositionedCell { ProducerDefinition = p , ConsumerDefinition = c };
-                        } )
-                        .Somes()
-                        .ToArr();
-
-                    SelectedCells.AddRange( converted );
+                    SelectedCells.AddRange( MatchPositionedCells( state.Selections ) );
                 }
                 else
                 {
@@ -143,6 +152,25 @@ namespace HierarchyGrid.Definitions
 
             Observable.Return( false )
                 .InvokeCommand( DrawGridCommand );
+        }
+
+        private IEnumerable<PositionedCell> MatchPositionedCells( IEnumerable<PositionedCell> cells )
+        {
+            var producers = ProducersCache.Items.FlatList().ToSeq();
+            var consumers = ConsumersCache.Items.FlatList().ToSeq();
+
+            return cells
+                .AsParallel()
+                .Select( pc =>
+                {
+                    var producer = producers.Find( p => p.CompareTo( pc.ProducerDefinition ) == 0 );
+                    var consumer = consumers.Find( p => p.CompareTo( pc.ConsumerDefinition ) == 0 );
+
+                    return from p in producer
+                           from c in consumer
+                           select new PositionedCell { ProducerDefinition = p , ConsumerDefinition = c };
+                } )
+                .Somes();
         }
 
         public HierarchyGridState GridState
