@@ -61,17 +61,23 @@ namespace HierarchyGrid.Definitions
         }
 
         private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
-        public IObservable<Seq<PositionedCell>> SelectionChanged => SelectionChangedSubject.AsObservable();
+
+        public IObservable<Seq<PositionedCell>> SelectionChanged
+            => SelectionChangedSubject
+                .AsObservable()
+                .Publish()
+                .RefCount();
 
         [Reactive] public Option<PositionedCell> EditedCell { get; internal set; }
+
         public IObservable<Option<PositionedCell>> EditedCellChanged
             => this.WhenAnyValue( x => x.EditedCell )
-                    .Publish()
-                    .RefCount();
+                .Publish()
+                .RefCount();
+
         public bool IsEditing { [ObservableAsProperty] get; }
 
         public Interaction<Seq<PositionedCell> , RxUnit> DrawEditionTextBoxInteraction { get; } = new( RxApp.MainThreadScheduler );
-
 
         /// <summary>
         /// Cells with extra rendering elements
@@ -101,7 +107,6 @@ namespace HierarchyGrid.Definitions
 
         [Reactive] public SelectionMode SelectionMode { get; set; }
         [Reactive] public CellTextAlignment TextAlignment { get; set; } = CellTextAlignment.Right;
-
 
         [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
@@ -150,7 +155,6 @@ namespace HierarchyGrid.Definitions
                 {
                     SelectedCells.AddRange( state.Selections );
                 }
-
             }
             catch ( Exception )
             {
@@ -189,7 +193,6 @@ namespace HierarchyGrid.Definitions
 
         public ReactiveCommand<bool , RxUnit> DrawGridCommand { get; private set; }
         public Interaction<RxUnit , RxUnit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public CombinedReactiveCommand<bool , RxUnit> EndAndDrawCommand { get; private set; }
         public ReactiveCommand<Option<PositionedCell> , RxUnit> HandleTooltipCommand { get; private set; }
         public Interaction<RxUnit , RxUnit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
         public Interaction<PositionedCell , RxUnit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
@@ -276,11 +279,15 @@ namespace HierarchyGrid.Definitions
                     .DisposeWith( disposables );
 
                 /* Redraw grid when scrolling or changing scale */
-                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Scale , x => x.Width , x => x.Height )
+                this.WhenAnyValue( x => x.HorizontalOffset ,
+                        x => x.VerticalOffset ,
+                        x => x.Scale ,
+                        x => x.Width ,
+                        x => x.Height )
                     .Throttle( TimeSpan.FromMilliseconds( 5 ) )
                     .DistinctUntilChanged()
                     .Select( _ => false )
-                    .InvokeCommand( EndAndDrawCommand )
+                    .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
                 this.WhenAnyValue( x => x.HoveredColumn ,
@@ -294,6 +301,12 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
+                SelectionChanged
+                    .DistinctUntilChanged()
+                    .Select(_ => false)
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
                 this.WhenAnyValue( x => x.Theme )
                     .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
@@ -304,7 +317,8 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
-                _hoveredCell.Throttle( TimeSpan.FromMilliseconds( 600 ) )
+                _hoveredCell
+                    .Throttle( TimeSpan.FromMilliseconds( 600 ) )
                     .DistinctUntilChanged()
                     .InvokeCommand( HandleTooltipCommand )
                     .DisposeWith( disposables );
@@ -358,10 +372,6 @@ namespace HierarchyGrid.Definitions
 
             @this.DrawGridCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
-
-
-
-            @this.EndAndDrawCommand = ReactiveCommand.CreateCombined( new[] { @this.DrawGridCommand } );
 
             @this.HandleTooltipCommand = ReactiveCommand
                 .CreateFromTask( ( Option<PositionedCell> o ) =>
@@ -500,7 +510,6 @@ namespace HierarchyGrid.Definitions
             DrawnCells = GetDrawnCells( HorizontalOffset , VerticalOffset , width , height , Scale , invalidate );
             return DrawnCells;
         }
-
 
         private Seq<PositionedCell> GetDrawnCells( int hIndex , int vIndex , double width , double height , double scale , bool invalidate )
         {

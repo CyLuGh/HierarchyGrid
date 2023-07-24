@@ -450,6 +450,7 @@ namespace HierarchyGrid
                     textBox.Height = cell.Height;
                     textBox.VerticalContentAlignment = VerticalAlignment.Center;
                     textBox.TextAlignment = TextAlignment.Right;
+                    textBox.Text = cell.ResultSet.Result;
 
                     Canvas.SetLeft( textBox , cell.Left );
                     Canvas.SetTop( textBox , cell.Top );
