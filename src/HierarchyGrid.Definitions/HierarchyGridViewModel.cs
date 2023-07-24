@@ -589,7 +589,7 @@ namespace HierarchyGrid.Definitions
                     () => false ) , Option<PositionedCell>.None );
         }
 
-        internal async void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false , double screenScale = 1d )
+        internal void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false , double screenScale = 1d )
         {
             if ( !IsValid )
                 return;
@@ -626,9 +626,6 @@ namespace HierarchyGrid.Definitions
         private void CellClick( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
         {
             HandleSelection( cell , isShiftPressed , isCtrlPressed , isRightClick );
-
-            Observable.Return( false )
-                .InvokeCommand( DrawGridCommand );
         }
 
         private void HandleSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
