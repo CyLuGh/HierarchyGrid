@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 0.*
-      - 1.*
+      - 2.*
 env:
   configuration: Release
 
