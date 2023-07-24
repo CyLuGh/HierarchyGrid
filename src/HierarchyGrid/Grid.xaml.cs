@@ -1,5 +1,6 @@
 ﻿using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
+using LanguageExt;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
@@ -76,7 +77,6 @@ namespace HierarchyGrid
                 {
                     view.SkiaElement.InvalidateVisual();
                     DrawSplitters( view , viewModel );
-
                     ctx.SetOutput( Unit.Default );
                 } )
                 .DisposeWith( disposables );
@@ -89,13 +89,16 @@ namespace HierarchyGrid
                 } )
                 .DisposeWith( disposables );
 
-            RegisterStartEditionInteraction( view , viewModel , disposables );
-            RegisterEndEditionInteraction( view , viewModel , disposables );
             RegisterToolTipInteractions( view , viewModel , disposables );
+
+            viewModel.DrawEditionTextBoxInteraction.RegisterHandler( ctx =>
+            {
+                DrawEditingTextBox( view , viewModel , ctx.Input , disposables );
+            } );
 
             view.SkiaElement.Events()
                 .PaintSurface
-                .Subscribe( args =>
+                .Subscribe( async args =>
                 {
                     SKImageInfo info = args.Info;
                     SKSurface surface = args.Surface;
@@ -104,7 +107,7 @@ namespace HierarchyGrid
                     // TODO: Try to find the UI scaling that's applied in Display settings
                     var scale = view.ScreenScale;
 
-                    HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
+                    await HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
                 } )
                 .DisposeWith( disposables );
 
@@ -238,56 +241,9 @@ namespace HierarchyGrid
             viewModel.EnableCrosshair = view.EnableCrosshair;
         }
 
-        private static void RegisterStartEditionInteraction( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
-        {
-            viewModel.StartEditionInteraction
-                .RegisterHandler( ctx =>
-                {
-                    var cell = ctx.Input;
 
-                    cell.ResultSet.Editor.IfSome( editor =>
-                    {
-                        Clear<TextBox>( view );
-                        var textBox = new TextBox
-                        {
-                            Width = cell.Width ,
-                            Height = cell.Height ,
-                            VerticalContentAlignment = System.Windows.VerticalAlignment.Center ,
-                            TextAlignment = System.Windows.TextAlignment.Right
-                        };
 
-                        Canvas.SetLeft( textBox , cell.Left );
-                        Canvas.SetTop( textBox , cell.Top );
 
-                        textBox.Events()
-                            .KeyDown
-                            .Subscribe( e =>
-                            {
-                                switch ( e.Key )
-                                {
-                                    case Key.Escape:
-                                        Observable.Return( false )
-                                            .InvokeCommand( viewModel.EndEditionCommand );
-                                        break;
-
-                                    case Key.Enter:
-                                        Observable.Return( false )
-                                            .InvokeCommand( viewModel.EndEditionCommand );
-                                        Observable.Return( editor( textBox.Text ) )
-                                            .InvokeCommand( viewModel.DrawGridCommand );
-                                        break;
-                                }
-                            } )
-                            .DisposeWith( disposables );
-
-                        view.Canvas.Children.Add( textBox );
-                        textBox.Focus();
-                    } );
-
-                    ctx.SetOutput( Unit.Default );
-                } )
-                .DisposeWith( disposables );
-        }
 
         private static void RegisterToolTipInteractions( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
         {
@@ -320,16 +276,7 @@ namespace HierarchyGrid
                 .DisposeWith( disposables );
         }
 
-        private static void RegisterEndEditionInteraction( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
-        {
-            viewModel.EndEditionInteraction
-                .RegisterHandler( ctx =>
-                {
-                    Clear<TextBox>( view );
-                    ctx.SetOutput( Unit.Default );
-                } )
-                .DisposeWith( disposables );
-        }
+
 
         private static IEnumerable<MenuItem> BuildCustomItems( (string, ICommand)[] commands )
         {
@@ -449,6 +396,72 @@ namespace HierarchyGrid
             contextMenu.Items.Add( copyMenuItem );
 
             return contextMenu;
+        }
+
+        private static void DrawEditingTextBox( Grid view , HierarchyGridViewModel viewModel , Seq<PositionedCell> drawnCells , CompositeDisposable disposables )
+        {
+            /* Make sure there's no editing textbox when there is no edition */
+            if ( !viewModel.IsEditing )
+            {
+                Clear<TextBox>( view );
+                return;
+            }
+
+            var currentPositionEditedCell =
+                from editedCell in viewModel.EditedCell
+                from drawnCell in drawnCells.Find( x => x.Equals( editedCell ) )
+                from editor in drawnCell.ResultSet.Editor
+                select (drawnCell, editor);
+
+            currentPositionEditedCell
+                .Some( t =>
+                {
+                    var (cell, editor) = t;
+
+                    /* Create or reuse textbox */
+                    var textBox = FindUniqueComponent<TextBox>( view , v =>
+                    {
+                        var tb = new TextBox();
+
+                        tb.Events()
+                            .KeyDown
+                            .Subscribe( e =>
+                            {
+                                switch ( e.Key )
+                                {
+                                    case Key.Escape:
+                                        viewModel.EditedCell = Option<PositionedCell>.None;
+                                        break;
+
+                                    case Key.Enter:
+                                        viewModel.EditedCell = Option<PositionedCell>.None;
+                                        Observable.Return( editor( tb.Text ) )
+                                            .InvokeCommand( viewModel.DrawGridCommand );
+                                        break;
+                                }
+                            } )
+                            .DisposeWith( disposables );
+
+                        v.Canvas.Children.Add( tb );
+                        return tb;
+                    } );
+
+                    textBox.Width = cell.Width;
+                    textBox.Height = cell.Height;
+                    textBox.VerticalContentAlignment = VerticalAlignment.Center;
+                    textBox.TextAlignment = TextAlignment.Right;
+
+                    Canvas.SetLeft( textBox , cell.Left );
+                    Canvas.SetTop( textBox , cell.Top );
+
+                    textBox.Focus();
+                } )
+                .None( () =>
+                {
+                    Clear<TextBox>( view );
+                } );
+
+
         }
 
         private static void DrawSplitters( Grid view , HierarchyGridViewModel viewModel )
@@ -627,6 +640,11 @@ namespace HierarchyGrid
         {
             foreach ( var o in items )
                 view.Canvas.Children.Remove( o );
+        }
+
+        private static T FindUniqueComponent<T>( Grid view , Func<Grid , T> create ) where T : UIElement
+        {
+            return view.Canvas.Children.OfType<T>().SingleOrDefault() ?? create( view );
         }
     }
 }

@@ -45,7 +45,7 @@ namespace HierarchyGrid.Skia
                     vm => vm.RowsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
                     viewModel.RowsDefinitions.FlatList().Where( x => x.Level == lvl ).All( x => !x.IsExpanded ) ,
-                    currentX , currentY , width , viewModel.ColumnsHeadersHeight.Last() , screenScale );
+                    currentX , currentY , width , viewModel.ColumnsHeadersHeight[viewModel.ColumnsHeadersHeight.Length - 1] , screenScale );
                 currentX += width;
             }
 
@@ -64,7 +64,7 @@ namespace HierarchyGrid.Skia
                     vm => vm.ColumnsDefinitions.FlatList().Where( x => x.Level == lvl ) ,
                     ( hd , exp ) => hd.IsExpanded = exp ,
                     viewModel.ColumnsDefinitions.FlatList().Where( x => x.Level == lvl ).All( x => !x.IsExpanded ) ,
-                    currentX , currentY , viewModel.RowsHeadersWidth.Last() , height , screenScale );
+                    currentX , currentY , viewModel.RowsHeadersWidth[viewModel.RowsHeadersWidth.Length - 1] , height , screenScale );
                 currentY += height;
             }
 
@@ -74,7 +74,7 @@ namespace HierarchyGrid.Skia
                 vm => vm.ColumnsDefinitions.FlatList().Concat( vm.RowsDefinitions.FlatList() ) ,
                 ( hd , b ) => hd.IsExpanded = b ,
                 true ,
-                currentX , currentY , viewModel.RowsHeadersWidth.Last() , viewModel.ColumnsHeadersHeight.Last() , screenScale ,
+                currentX , currentY , viewModel.RowsHeadersWidth[viewModel.RowsHeadersWidth.Length - 1] , viewModel.ColumnsHeadersHeight[viewModel.ColumnsHeadersHeight.Length - 1] , screenScale ,
                 GlobalHeader.ExpandAll );
         }
 
@@ -429,7 +429,7 @@ namespace HierarchyGrid.Skia
         internal static void DrawCells( this SKCanvas canvas ,
             HierarchyGridViewModel viewModel ,
             SkiaTheme theme ,
-            PositionedCell[] cells ,
+            IEnumerable<PositionedCell> cells ,
             double screenScale = 1d )
         {
             foreach ( var cell in cells )
