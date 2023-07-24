@@ -12,7 +12,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using Unit = System.Reactive.Unit;
+using RxUnit = System.Reactive.Unit;
 
 namespace HierarchyGrid.Definitions
 {
@@ -27,7 +27,8 @@ namespace HierarchyGrid.Definitions
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
 
-        internal ConcurrentDictionary<(Guid, Guid) , ResultSet> ResultSets { get; } = new();
+        internal AtomHashMap<(Guid, Guid) , ResultSet> ResultSets { get; }
+            = Prelude.AtomHashMap<(Guid, Guid) , ResultSet>();
 
         internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
@@ -60,10 +61,23 @@ namespace HierarchyGrid.Definitions
         }
 
         private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
-        public IObservable<Seq<PositionedCell>> SelectionChanged => SelectionChangedSubject.AsObservable();
 
-        private Subject<Option<PositionedCell>> EditedCellChangedSubject { get; } = new();
-        public IObservable<Option<PositionedCell>> EditedCellChanged => EditedCellChangedSubject.AsObservable();
+        public IObservable<Seq<PositionedCell>> SelectionChanged
+            => SelectionChangedSubject
+                .AsObservable()
+                .Publish()
+                .RefCount();
+
+        [Reactive] public Option<PositionedCell> EditedCell { get; internal set; }
+
+        public IObservable<Option<PositionedCell>> EditedCellChanged
+            => this.WhenAnyValue( x => x.EditedCell )
+                .Publish()
+                .RefCount();
+
+        public bool IsEditing { [ObservableAsProperty] get; }
+
+        public Interaction<Seq<PositionedCell> , RxUnit> DrawEditionTextBoxInteraction { get; } = new( RxApp.MainThreadScheduler );
 
         /// <summary>
         /// Cells with extra rendering elements
@@ -93,7 +107,6 @@ namespace HierarchyGrid.Definitions
 
         [Reactive] public SelectionMode SelectionMode { get; set; }
         [Reactive] public CellTextAlignment TextAlignment { get; set; } = CellTextAlignment.Right;
-        [Reactive] public bool IsEditing { get; set; }
 
         [Reactive] public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
@@ -142,7 +155,6 @@ namespace HierarchyGrid.Definitions
                 {
                     SelectedCells.AddRange( state.Selections );
                 }
-
             }
             catch ( Exception )
             {
@@ -179,25 +191,20 @@ namespace HierarchyGrid.Definitions
             set => SetGridState( value );
         }
 
-        public ReactiveCommand<bool , Unit> DrawGridCommand { get; private set; }
-        public Interaction<Unit , Unit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public ReactiveCommand<PositionedCell , Unit> StartEditionCommand { get; private set; }
-        public Interaction<PositionedCell , Unit> StartEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public ReactiveCommand<bool , Unit> EndEditionCommand { get; private set; }
-        public Interaction<Unit , Unit> EndEditionInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public CombinedReactiveCommand<bool , Unit> EndAndDrawCommand { get; private set; }
-        public ReactiveCommand<Option<PositionedCell> , Unit> HandleTooltipCommand { get; private set; }
-        public Interaction<Unit , Unit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
-        public Interaction<PositionedCell , Unit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<bool , RxUnit> DrawGridCommand { get; private set; }
+        public Interaction<RxUnit , RxUnit> DrawGridInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<Option<PositionedCell> , RxUnit> HandleTooltipCommand { get; private set; }
+        public Interaction<RxUnit , RxUnit> CloseTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public Interaction<PositionedCell , RxUnit> ShowTooltipInteraction { get; } = new( RxApp.MainThreadScheduler );
 
-        public ReactiveCommand<CopyMode , Unit> CopyToClipboardCommand { get; private set; }
-        public Interaction<string , Unit> FillClipboardInteraction { get; } = new( RxApp.MainThreadScheduler );
+        public ReactiveCommand<CopyMode , RxUnit> CopyToClipboardCommand { get; private set; }
+        public Interaction<string , RxUnit> FillClipboardInteraction { get; } = new( RxApp.MainThreadScheduler );
 
-        public ReactiveCommand<bool , Unit> ToggleStatesCommand { get; private set; }
+        public ReactiveCommand<bool , RxUnit> ToggleStatesCommand { get; private set; }
 
-        public ReactiveCommand<Unit , Unit> ToggleCrosshairCommand { get; private set; }
-        public ReactiveCommand<Unit , Unit> ToggleTransposeCommand { get; private set; }
-        public ReactiveCommand<Unit , Unit> ClearHighlightsCommand { get; private set; }
+        public ReactiveCommand<RxUnit , RxUnit> ToggleCrosshairCommand { get; private set; }
+        public ReactiveCommand<RxUnit , RxUnit> ToggleTransposeCommand { get; private set; }
+        public ReactiveCommand<RxUnit , RxUnit> ClearHighlightsCommand { get; private set; }
 
         public Queue<IDisposable> ResizeObservables { get; } = new();
 
@@ -221,6 +228,11 @@ namespace HierarchyGrid.Definitions
                         } )
                         .ToPropertyEx( this , x => x.HasData , scheduler: RxApp.MainThreadScheduler )
                         .DisposeWith( disposables );
+
+                EditedCellChanged
+                    .Select( o => o.IsSome )
+                    .ToPropertyEx( this , x => x.IsEditing , initialValue: false , scheduler: RxApp.MainThreadScheduler )
+                    .DisposeWith( disposables );
 
                 /* Don't allow scale < 0.75 */
                 this.WhenAnyValue( x => x.Scale )
@@ -267,17 +279,31 @@ namespace HierarchyGrid.Definitions
                     .DisposeWith( disposables );
 
                 /* Redraw grid when scrolling or changing scale */
-                this.WhenAnyValue( x => x.HorizontalOffset , x => x.VerticalOffset , x => x.Scale , x => x.Width , x => x.Height )
+                this.WhenAnyValue( x => x.HorizontalOffset ,
+                        x => x.VerticalOffset ,
+                        x => x.Scale ,
+                        x => x.Width ,
+                        x => x.Height )
                     .Throttle( TimeSpan.FromMilliseconds( 5 ) )
                     .DistinctUntilChanged()
                     .Select( _ => false )
-                    .InvokeCommand( EndAndDrawCommand )
+                    .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
-                this.WhenAnyValue( x => x.HoveredColumn , x => x.HoveredRow , x => x.HoveredElementId , x => x.FocusCells )
+                this.WhenAnyValue( x => x.HoveredColumn ,
+                        x => x.HoveredRow ,
+                        x => x.HoveredElementId ,
+                        x => x.FocusCells ,
+                        x => x.EditedCell )
                     .Throttle( TimeSpan.FromMilliseconds( 2 ) )
                     .DistinctUntilChanged()
                     .Select( _ => false )
+                    .InvokeCommand( DrawGridCommand )
+                    .DisposeWith( disposables );
+
+                SelectionChanged
+                    .DistinctUntilChanged()
+                    .Select(_ => false)
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
@@ -291,7 +317,8 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 
-                _hoveredCell.Throttle( TimeSpan.FromMilliseconds( 600 ) )
+                _hoveredCell
+                    .Throttle( TimeSpan.FromMilliseconds( 600 ) )
                     .DistinctUntilChanged()
                     .InvokeCommand( HandleTooltipCommand )
                     .DisposeWith( disposables );
@@ -316,7 +343,7 @@ namespace HierarchyGrid.Definitions
                     .Subscribe( _ =>
                     {
                         SelectionChangedSubject.OnNext( Selections );
-                        EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
+                        EditedCell = Option<PositionedCell>.None;
                     } )
                     .DisposeWith( disposables );
             } );
@@ -324,60 +351,39 @@ namespace HierarchyGrid.Definitions
 
         private static void RegisterDefaultInteractions( HierarchyGridViewModel @this )
         {
-            @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            @this.StartEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            @this.EndEditionInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            @this.ShowTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            @this.CloseTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
-            @this.FillClipboardInteraction.RegisterHandler( ctx => ctx.SetOutput( Unit.Default ) );
+            @this.DrawGridInteraction.RegisterHandler( ctx => ctx.SetOutput( RxUnit.Default ) );
+            @this.ShowTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( RxUnit.Default ) );
+            @this.CloseTooltipInteraction.RegisterHandler( ctx => ctx.SetOutput( RxUnit.Default ) );
+            @this.FillClipboardInteraction.RegisterHandler( ctx => ctx.SetOutput( RxUnit.Default ) );
+            @this.DrawEditionTextBoxInteraction.RegisterHandler( ctx => ctx.SetOutput( RxUnit.Default ) );
         }
 
         private static void InitializeCommands( HierarchyGridViewModel @this )
         {
             @this.DrawGridCommand = ReactiveCommand
-                .CreateFromTask<bool , Unit>( async invalidate =>
+                .CreateFromTask<bool , RxUnit>( async invalidate =>
                 {
                     if ( invalidate )
                         @this.ResultSets.Clear();
 
-                    await @this.DrawGridInteraction.Handle( Unit.Default );
-                    return Unit.Default;
+                    await @this.DrawGridInteraction.Handle( RxUnit.Default );
+                    return RxUnit.Default;
                 } );
 
             @this.DrawGridCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
-            @this.StartEditionCommand = ReactiveCommand
-                .CreateFromObservable( ( PositionedCell positionedCell ) =>
-                {
-                    @this.EditedCellChangedSubject.OnNext( positionedCell );
-                    return @this.StartEditionInteraction.Handle( positionedCell );
-                } );
-            @this.StartEditionCommand.ThrownExceptions
-                .SubscribeSafe( e => @this.Log().Error( e ) );
-
-            @this.EndEditionCommand = ReactiveCommand
-                .CreateFromObservable( ( bool _ ) =>
-                {
-                    @this.EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
-                    return @this.EndEditionInteraction.Handle( Unit.Default );
-                } );
-            @this.EndEditionCommand.ThrownExceptions
-                .SubscribeSafe( e => @this.Log().Error( e ) );
-
-            @this.EndAndDrawCommand = ReactiveCommand.CreateCombined( new[] { @this.EndEditionCommand , @this.DrawGridCommand } );
-
             @this.HandleTooltipCommand = ReactiveCommand
                 .CreateFromTask( ( Option<PositionedCell> o ) =>
                     o.MatchAsync( async cell => await @this.ShowTooltipInteraction.Handle( cell ) ,
-                        async () => await @this.CloseTooltipInteraction.Handle( Unit.Default ) ) );
+                        async () => await @this.CloseTooltipInteraction.Handle( RxUnit.Default ) ) );
             @this.DrawGridCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
 
             @this.ToggleCrosshairCommand = ReactiveCommand.Create( () =>
             {
                 @this.EnableCrosshair = !@this.EnableCrosshair;
-                return Unit.Default;
+                return RxUnit.Default;
             } );
             @this.ToggleCrosshairCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
@@ -385,7 +391,7 @@ namespace HierarchyGrid.Definitions
             @this.ToggleTransposeCommand = ReactiveCommand.Create( () =>
             {
                 @this.IsTransposed = !@this.IsTransposed;
-                return Unit.Default;
+                return RxUnit.Default;
             } );
             @this.ToggleTransposeCommand.ThrownExceptions
                 .SubscribeSafe( e => @this.Log().Error( e ) );
@@ -497,10 +503,15 @@ namespace HierarchyGrid.Definitions
             }
         }
 
-        public PositionedCell[] DrawnCells( double width , double height , bool invalidate )
-            => DrawnCells( HorizontalOffset , VerticalOffset , width , height , Scale , invalidate );
+        public Seq<PositionedCell> DrawnCells { get; private set; }
 
-        private PositionedCell[] DrawnCells( int hIndex , int vIndex , double width , double height , double scale , bool invalidate )
+        public Seq<PositionedCell> GetDrawnCells( double width , double height , bool invalidate )
+        {
+            DrawnCells = GetDrawnCells( HorizontalOffset , VerticalOffset , width , height , Scale , invalidate );
+            return DrawnCells;
+        }
+
+        private Seq<PositionedCell> GetDrawnCells( int hIndex , int vIndex , double width , double height , double scale , bool invalidate )
         {
             static IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>( int startIndex , double offset , double maxSpace ,
                 Dictionary<int , double> sizes , T[] definitions ) where T : HierarchyDefinition
@@ -533,6 +544,7 @@ namespace HierarchyGrid.Definitions
 
             var rowDefinitions = RowsDefinitions.Leaves().ToArray();
             var colDefinitions = ColumnsDefinitions.Leaves().ToArray();
+
             // Determine which cells can be drawn.
             var firstColumn = hIndex;
             var firstRow = vIndex;
@@ -557,21 +569,13 @@ namespace HierarchyGrid.Definitions
                     ProducerDefinition = ( IsTransposed ? c.definition : r.definition ) as ProducerDefinition
                 };
 
-                if ( !ResultSets.TryGetValue( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) , out var rSet ) )
-                {
-                    rSet = HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition );
-                }
-                pCell.ResultSet = rSet;
+                pCell.ResultSet = ResultSets.FindOrAdd( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) ,
+                    () => HierarchyDefinition.Resolve( pCell.ProducerDefinition , pCell.ConsumerDefinition ) );
 
                 return pCell;
-            } ) ).ToArray();
+            } ) ).ToSeq();
 
-            ResultSets.Clear();
-            pCells
-                .AsParallel()
-                .ForAll( pCell => { var _ = ResultSets.TryAdd( (pCell.ProducerDefinition.Guid, pCell.ConsumerDefinition.Guid) , pCell.ResultSet ); } );
-
-            return pCells;
+            return pCells.Strict();
         }
 
         public Option<PositionedCell> FindHoveredCell()
@@ -585,13 +589,12 @@ namespace HierarchyGrid.Definitions
                     () => false ) , Option<PositionedCell>.None );
         }
 
-        internal async void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false , double screenScale = 1d )
+        internal void HandleMouseDown( double x , double y , bool isShiftPressed , bool isCtrlPressed , bool isRightClick = false , double screenScale = 1d )
         {
             if ( !IsValid )
                 return;
 
-            await EndEditionInteraction.Handle( Unit.Default );
-            EditedCellChangedSubject.OnNext( Option<PositionedCell>.None );
+            EditedCell = Option<PositionedCell>.None;
 
             // Find corresponding element
             if ( !isRightClick && x <= RowsHeadersWidth.Sum() && y <= ColumnsHeadersHeight.Sum() )
@@ -623,9 +626,6 @@ namespace HierarchyGrid.Definitions
         private void CellClick( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
         {
             HandleSelection( cell , isShiftPressed , isCtrlPressed , isRightClick );
-
-            Observable.Return( false )
-                .InvokeCommand( DrawGridCommand );
         }
 
         private void HandleSelection( PositionedCell cell , bool isShiftPressed , bool isCtrlPressed , bool isRightClick )
@@ -716,10 +716,8 @@ namespace HierarchyGrid.Definitions
         {
             if ( ColumnsDefinitions?.Length > 0 && RowsDefinitions?.Length > 0 )
             {
-                FindCoordinates( x , y , screenScale )
-                    .IfRight( o
-                    => o.IfSome( cell
-                        => Observable.Return( cell ).InvokeCommand( StartEditionCommand ) ) );
+                var cell = FindCoordinates( x , y , screenScale );
+                EditedCell = cell.Match( pc => pc , _ => Option<PositionedCell>.None );
             }
         }
 

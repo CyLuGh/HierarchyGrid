@@ -1,32 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
-	</PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
 
-	<PropertyGroup>
-		<PackageOutputPath>./nupkg</PackageOutputPath>
+  <PropertyGroup>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
 
-		<Authors>Demortier Jeremy</Authors>
-		<Description>Definitions used by HierarchyGrid</Description>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	</PropertyGroup>
+    <Authors>Demortier Jeremy</Authors>
+    <Description>Definitions used by HierarchyGrid</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<Compile Remove="nupkg\**" />
-		<EmbeddedResource Remove="nupkg\**" />
-		<None Remove="nupkg\**" />
-	</ItemGroup>
+  <ItemGroup>
+    <Compile Remove="nupkg\**" />
+    <EmbeddedResource Remove="nupkg\**" />
+    <None Remove="nupkg\**" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-			<_Parameter1>HierarchyGrid</_Parameter1>
-		</AssemblyAttribute>
-	</ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>HierarchyGrid</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="LanguageExt.Core" Version="4.4.3" />
-		<PackageReference Include="morelinq" Version="3.4.2" />
-		<PackageReference Include="ReactiveUI.Fody" Version="19.2.1" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="LanguageExt.Core" Version="4.4.3" />
+    <PackageReference Include="morelinq" Version="3.4.2" />
+    <PackageReference Include="ReactiveUI.Fody" Version="19.2.1" />
+  </ItemGroup>
 </Project>
