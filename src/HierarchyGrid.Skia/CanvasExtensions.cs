@@ -515,6 +515,7 @@ namespace HierarchyGrid.Skia
             TextDrawer.MaxWidth = (float) ( cell.Width * screenScale ) - textHPadding;
 
             TextDrawer.Paint( canvas , new SKPoint( (float) ( cell.Left * screenScale ) + ( textHPadding / 2 ) , (float) ( cell.Top * screenScale ) + ( textVPadding / 2 ) ) , TextPaintOptions );
+
             viewModel.CellsCoordinates.Add( (new( cell ), cell) );
         }
 

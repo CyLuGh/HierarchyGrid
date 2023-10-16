@@ -6,7 +6,8 @@
                           xmlns:rxui="http://reactiveui.net"
                           xmlns:definitions="clr-namespace:HierarchyGrid.Definitions;assembly=HierarchyGrid.Definitions"
                           xmlns:skia="clr-namespace:SkiaSharp.Views.WPF;assembly=SkiaSharp.Views.WPF">
-    <Grid>
+    <Grid SnapsToDevicePixels="True"
+          UseLayoutRounding="True">
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition Height="Auto" />

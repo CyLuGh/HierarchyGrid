@@ -25,6 +25,7 @@
 		</PackageReference>
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.1" />
 		<PackageReference Include="ReactiveUI.WPF" Version="19.5.1" />
+		<PackageReference Include="SkiaSharp.HarfBuzz" Version="2.88.6" />
 		<PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.6" />
 		<PackageReference Include="TextCopy" Version="6.2.1" />
 	</ItemGroup>
