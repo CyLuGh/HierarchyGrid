@@ -316,7 +316,12 @@ namespace HierarchyGrid.Skia
 
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
-            TextDrawer.AddText( hdef.Content.ToString() , new Style { FontSize = TextSize , TextColor = renderInfo.ForegroundColor } );
+            TextDrawer.AddText( hdef.Content.ToString() , new Style
+            {
+                FontSize = TextSize ,
+                TextColor = renderInfo.ForegroundColor ,
+                FontWeight = 600
+            } );
             TextDrawer.MaxHeight = (float) ( ( height - 10 ) * screenScale );
             TextDrawer.MaxWidth = (float) ( ( width - 22 ) * screenScale );
 
@@ -520,7 +525,7 @@ namespace HierarchyGrid.Skia
         }
 
         private static TextBlock TextDrawer { get; } = new TextBlock();
-        private static TextPaintOptions TextPaintOptions { get; } = new TextPaintOptions { Edging = SKFontEdging.Antialias };
+        private static TextPaintOptions TextPaintOptions { get; } = new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
         private const float TextSize = 14f;
     }
 }
