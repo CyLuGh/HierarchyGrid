@@ -2,6 +2,41 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:skia="using:SkiaSharp"
+             xmlns:local="using:HierarchyGrid.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="HierarchyGrid.Avalonia.Grid">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <local:SKXamlCanvas x:Name="SkiaElement" />
+
+    <Canvas x:Name="Canvas"
+            Grid.Row="0"
+            Grid.Column="0" />
+
+    <ScrollBar x:Name="VerticalScrollBar"
+               Minimum="0"
+               SmallChange="1"
+               LargeChange="5"
+               Grid.Column="1" />
+
+    <ScrollBar x:Name="HorizontalScrollBar"
+               Minimum="0"
+               SmallChange="1"
+               LargeChange="5"
+               Orientation="Horizontal"
+               Grid.Row="1" />
+
+    <Rectangle x:Name="Corner"
+               Grid.Row="1"
+               Grid.Column="1" />
+  </Grid>
 </UserControl>

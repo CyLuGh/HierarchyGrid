@@ -22,11 +22,11 @@ public class GridControl : Control
 
     public override void Render( DrawingContext context )
     {
-        var noSkia = new FormattedText()
-        {
-            Text = "Current rendering API is not Skia"
-        };
-        context.Custom( new GridCustomDrawOperation( new Rect( 0 , 0 , Bounds.Width , Bounds.Height ) , noSkia , _viewModel ) );
-        Dispatcher.UIThread.InvokeAsync( InvalidateVisual , DispatcherPriority.Background );
+        //var noSkia = new FormattedText()
+        //{
+        //    Text = "Current rendering API is not Skia"
+        //};
+        //context.Custom( new GridCustomDrawOperation( new Rect( 0 , 0 , Bounds.Width , Bounds.Height ) , noSkia , _viewModel ) );
+        //Dispatcher.UIThread.InvokeAsync( InvalidateVisual , DispatcherPriority.Background );
     }
 }
