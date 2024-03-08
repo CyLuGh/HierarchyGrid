@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="34.0.2" />
-    <PackageReference Include="NLog" Version="5.2.5" />
-    <PackageReference Include="Splat.NLog" Version="14.7.1" />
+    <PackageReference Include="Bogus" Version="35.4.1" />
+    <PackageReference Include="NLog" Version="5.2.8" />
+    <PackageReference Include="Splat.NLog" Version="14.8.12" />
   </ItemGroup>
 
   <ItemGroup>

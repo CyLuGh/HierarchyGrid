@@ -139,11 +139,11 @@ namespace Demo
             csr.ContextItems = o =>
                 o switch
                 {
-                    string region => new (string description, Action<ResultSet> action)[] {
+                    string region => [
                         ( $"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
                         ($"First|Second|Hide {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
                         ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
-                    },
+                    ],
                     _ => Array.Empty<(string description, Action<ResultSet> action)>()
                 };
 
