@@ -31,9 +31,24 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
             v => v.HierarchyGrid.ViewModel )
             .DisposeWith( disposables );
 
+        view.OneWayBind( viewModel ,
+           vm => vm.TestViewModel ,
+           v => v.HierarchyGridTest.ViewModel )
+           .DisposeWith( disposables );
+
         view.BindCommand( viewModel ,
             vm => vm.BuildSampleDefinitions ,
             v => v.ButtonFill )
+            .DisposeWith( disposables );
+
+        view.BindCommand( viewModel ,
+            vm => vm.BuildTestDefinitions ,
+            v => v.ButtonFillTest )
+            .DisposeWith( disposables );
+
+        view.BindCommand( viewModel ,
+            vm => vm.SwitchTestTheme ,
+            v => v.ButtonSwitchTheme )
             .DisposeWith( disposables );
     }
 }
