@@ -32,6 +32,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             this.WhenAnyValue( x => x.ViewModel )
                 .WhereNotNull()
+                .Throttle( TimeSpan.FromMilliseconds( 50 ) )
+                .ObserveOn( RxApp.MainThreadScheduler )
                 .Do( vm => PopulateFromViewModel( this , vm , disposables ) )
                 .Subscribe()
                 .DisposeWith( disposables );
@@ -74,6 +76,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             async ( sender , args ) => await SkiaElement_PaintSurface( args , viewModel ) ,
             handler => view.SkiaElement.PaintSurface += handler ,
             handler => view.SkiaElement.PaintSurface -= handler )
+            .ObserveOn( RxApp.MainThreadScheduler )
             .Subscribe()
             .DisposeWith( disposables );
 
@@ -81,6 +84,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             ( sender , args ) => SkiaElement_PointerMove( args , view.SkiaElement , viewModel ) ,
             handler => view.SkiaElement.PointerMoved += handler ,
             handler => view.SkiaElement.PointerMoved -= handler )
+            .ObserveOn( RxApp.MainThreadScheduler )
             .Subscribe()
             .DisposeWith( disposables );
 
@@ -95,6 +99,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             ( sender , args ) => SkiaElement_PointerPressed( args , view.SkiaElement , viewModel ) ,
             handler => view.SkiaElement.PointerPressed += handler ,
             handler => view.SkiaElement.PointerPressed -= handler )
+            .ObserveOn( RxApp.MainThreadScheduler )
             .Subscribe()
             .DisposeWith( disposables );
 
@@ -102,6 +107,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             ( sender , args ) => SkiaElement_PointerWheel( args , viewModel ) ,
             handler => view.SkiaElement.PointerWheelChanged += handler ,
             handler => view.SkiaElement.PointerWheelChanged -= handler )
+            .ObserveOn( RxApp.MainThreadScheduler )
             .Subscribe()
             .DisposeWith( disposables );
 
