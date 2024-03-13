@@ -8,20 +8,25 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using SkiaSharp.Views.Desktop;
 using Avalonia.Input;
-using System.Reactive;
 using System.Windows.Input;
 using Avalonia.Media;
 using Avalonia;
 using LanguageExt;
-using HierarchyGrid.Avalonia;
 
 namespace HierarchyGrid.Avalonia;
 
 public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 {
+    private readonly Flyout _tooltip;
+
     public Grid()
     {
         InitializeComponent();
+        _tooltip = new()
+        {
+            ShowMode = FlyoutShowMode.TransientWithDismissOnPointerMoveAway ,
+            OverlayInputPassThroughElement = this
+        };
 
         this.WhenActivated( disposables =>
         {
@@ -98,6 +103,32 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             handler => view.SkiaElement.PointerWheelChanged += handler ,
             handler => view.SkiaElement.PointerWheelChanged -= handler )
             .Subscribe()
+            .DisposeWith( disposables );
+
+        viewModel.ShowTooltipInteraction.RegisterHandler( ctx =>
+            {
+                view._tooltip.Hide();
+
+                var text = string.Join( Environment.NewLine ,
+                    ctx.Input.ResultSet.TooltipText.Match( text => text , () => string.Empty ) ,
+                    viewModel.FocusCells.Find( ctx.Input ).Match( fci => fci.TooltipInfo , () => string.Empty ) );
+
+                if ( !string.IsNullOrWhiteSpace( text ) )
+                {
+                    view._tooltip.Content = text.Trim();
+                    view._tooltip.Placement = PlacementMode.Pointer;
+                    view._tooltip.ShowAt( view );
+                }
+
+                ctx.SetOutput( System.Reactive.Unit.Default );
+            } )
+            .DisposeWith( disposables );
+
+        viewModel.CloseTooltipInteraction.RegisterHandler( ctx =>
+            {
+                // As of now, closing the flyout is handled through its mode
+                ctx.SetOutput( System.Reactive.Unit.Default );
+            } )
             .DisposeWith( disposables );
 
         view.Bind( viewModel ,
