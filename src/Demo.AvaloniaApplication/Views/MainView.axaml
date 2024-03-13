@@ -13,16 +13,39 @@
     <vm:MainViewModel />
   </Design.DataContext>
 
-  <DockPanel>
-    <UniformGrid HorizontalAlignment="Stretch"
-                 Rows="1"
-                 Margin="5"
-                 DockPanel.Dock="Bottom">
-      <Button x:Name="ButtonFill"
-              Content="Fill"
-              HorizontalAlignment="Stretch"
-              HorizontalContentAlignment="Center"/>
-    </UniformGrid>
-    <hierarchyGrid:Grid x:Name="HierarchyGrid" DockPanel.Dock="Top"/>
-  </DockPanel>
+  <TabControl>
+    <TabItem Header="Vehicles">
+      <DockPanel>
+        <UniformGrid HorizontalAlignment="Stretch"
+                     Rows="1"
+                     Margin="5"
+                     DockPanel.Dock="Bottom">
+          <Button x:Name="ButtonFill"
+                  Content="Fill"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+        </UniformGrid>
+        <hierarchyGrid:Grid x:Name="HierarchyGrid" DockPanel.Dock="Top"/>
+      </DockPanel>
+    </TabItem>
+    <TabItem Header="Test">
+      <DockPanel>
+        <UniformGrid HorizontalAlignment="Stretch"
+                     Rows="1"
+                     Margin="5"
+                     DockPanel.Dock="Bottom">
+          <Button x:Name="ButtonFillTest"
+                  Content="Fill"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonSwitchTheme"
+                  Content="Switch theme"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+        </UniformGrid>
+        <hierarchyGrid:Grid x:Name="HierarchyGridTest" DockPanel.Dock="Top"/>
+      </DockPanel>
+    </TabItem>
+  </TabControl>
+
 </UserControl>

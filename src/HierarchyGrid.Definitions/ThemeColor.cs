@@ -33,7 +33,7 @@ public readonly struct ThemeColor
         }
         else
         {
-            throw new Exception( "Invalid color code" );
+            throw new InvalidThemeColorCodeException( $"{code} is an invalid color code" );
         }
     }
 
