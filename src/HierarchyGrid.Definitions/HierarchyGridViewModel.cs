@@ -26,6 +26,7 @@ namespace HierarchyGrid.Definitions
 
         public bool HasData { [ObservableAsProperty] get; }
         [Reactive] public string StatusMessage { get; set; }
+        [Reactive] public string EditionContent { get; set; } = string.Empty;
 
         internal AtomHashMap<(Guid, Guid) , ResultSet> ResultSets { get; }
             = Prelude.AtomHashMap<(Guid, Guid) , ResultSet>();
@@ -230,6 +231,11 @@ namespace HierarchyGrid.Definitions
                         .DisposeWith( disposables );
 
                 EditedCellChanged
+                    .Do( cell =>
+                    {
+                        EditionContent = cell.Some( c => c.ResultSet.Result )
+                            .None( () => string.Empty );
+                    } )
                     .Select( o => o.IsSome )
                     .ToPropertyEx( this , x => x.IsEditing , initialValue: false , scheduler: RxApp.MainThreadScheduler )
                     .DisposeWith( disposables );
@@ -303,7 +309,7 @@ namespace HierarchyGrid.Definitions
 
                 SelectionChanged
                     .DistinctUntilChanged()
-                    .Select(_ => false)
+                    .Select( _ => false )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
 

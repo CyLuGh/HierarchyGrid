@@ -12,6 +12,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -237,7 +238,7 @@ namespace HierarchyGrid
             viewModel.DefaultRowHeight = view.DefaultRowHeight;
             viewModel.DefaultHeaderHeight = view.DefaultHeaderHeight;
             viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
-            viewModel.StatusMessage = view.StatusMessage;
+            viewModel.StatusMessage = view.StatusMessage ?? "No message";
             viewModel.EnableCrosshair = view.EnableCrosshair;
         }
 
@@ -423,6 +424,13 @@ namespace HierarchyGrid
                     {
                         var tb = new TextBox();
 
+                        var binding = new Binding( nameof( HierarchyGridViewModel.EditionContent ) )
+                        {
+                            Source = viewModel ,
+                            Mode = BindingMode.TwoWay ,
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                        };
+
                         tb.Events()
                             .KeyDown
                             .Subscribe( e =>
@@ -434,13 +442,16 @@ namespace HierarchyGrid
                                         break;
 
                                     case Key.Enter:
+                                        var content = viewModel.EditionContent;
                                         viewModel.EditedCell = Option<PositionedCell>.None;
-                                        Observable.Return( editor( tb.Text ) )
+                                        Observable.Return( editor( content ?? string.Empty ) )
                                             .InvokeCommand( viewModel.DrawGridCommand );
                                         break;
                                 }
                             } )
                             .DisposeWith( disposables );
+
+                        tb.SetBinding( TextBox.TextProperty , binding );
 
                         v.Canvas.Children.Add( tb );
                         return tb;
@@ -450,7 +461,6 @@ namespace HierarchyGrid
                     textBox.Height = cell.Height;
                     textBox.VerticalContentAlignment = VerticalAlignment.Center;
                     textBox.TextAlignment = TextAlignment.Right;
-                    textBox.Text = cell.ResultSet.Result;
 
                     Canvas.SetLeft( textBox , cell.Left );
                     Canvas.SetTop( textBox , cell.Top );

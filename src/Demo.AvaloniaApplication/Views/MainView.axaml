@@ -25,7 +25,14 @@
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
         </UniformGrid>
-        <hierarchyGrid:Grid x:Name="HierarchyGrid" DockPanel.Dock="Top"/>
+        <hierarchyGrid:Grid x:Name="HierarchyGrid"
+                            DefaultColumnWidth="250"
+                            DefaultHeaderHeight="40"
+                            DefaultHeaderWidth="120"
+                            DefaultRowHeight="60"
+                            StatusMessage="I'm a test message!"
+                            EnableCrosshair="True"
+                            DockPanel.Dock="Top"/>
       </DockPanel>
     </TabItem>
     <TabItem Header="Test">

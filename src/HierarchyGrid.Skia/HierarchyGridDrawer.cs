@@ -32,8 +32,6 @@ namespace HierarchyGrid.Skia
                     .ToList();
                 viewModel.ClearCoordinates();
 
-               
-
                 canvas.DrawGlobalHeaders( viewModel , theme , previousGlobalCoordinates , screenScale );
                 canvas.DrawCells( viewModel , theme , viewModel.GetDrawnCells( width , height , invalidate ) , screenScale );
                 canvas.DrawColumnHeaders( viewModel , theme , v => v.ColumnsDefinitions.Leaves().ToArray() , width , ref headerCount , screenScale );
