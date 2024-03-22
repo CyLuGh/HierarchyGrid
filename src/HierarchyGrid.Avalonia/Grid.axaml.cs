@@ -12,6 +12,7 @@ using System.Windows.Input;
 using Avalonia.Media;
 using Avalonia;
 using LanguageExt;
+using Avalonia.Data;
 
 namespace HierarchyGrid.Avalonia;
 
@@ -42,6 +43,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
     private static void PopulateFromViewModel( Grid view , HierarchyGridViewModel viewModel , CompositeDisposable disposables )
     {
+        ApplyDependencyProperties( view , viewModel );
+
         viewModel.DrawGridInteraction.RegisterHandler( ctx =>
             {
                 System.Diagnostics.Debug.WriteLine( "DrawGridInteraction" );
@@ -162,6 +165,16 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .DisposeWith( disposables );
 
         view.SkiaElement.Invalidate();
+    }
+
+    private static void ApplyDependencyProperties( Grid view , HierarchyGridViewModel viewModel )
+    {
+        viewModel.DefaultColumnWidth = view.DefaultColumnWidth;
+        viewModel.DefaultRowHeight = view.DefaultRowHeight;
+        viewModel.DefaultHeaderHeight = view.DefaultHeaderHeight;
+        viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
+        viewModel.StatusMessage = view.StatusMessage ?? "No message";
+        viewModel.EnableCrosshair = view.EnableCrosshair;
     }
 
     private static async Task SkiaElement_PaintSurface( SKPaintSurfaceEventArgs args , HierarchyGridViewModel viewModel )
@@ -464,8 +477,9 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 break;
 
             case Key.Enter:
+                var content = viewModel.EditionContent;
                 viewModel.EditedCell = Option<PositionedCell>.None;
-                Observable.Return( editor( tb.Text ?? string.Empty ) )
+                Observable.Return( editor( content ?? string.Empty ) )
                     .InvokeCommand( viewModel.DrawGridCommand );
                 break;
         }
@@ -496,11 +510,21 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     var tb = new TextBox();
 
+                    var binding = new Binding
+                    {
+                        Source = viewModel ,
+                        Mode = BindingMode.TwoWay ,
+                        Path = nameof( HierarchyGridViewModel.EditionContent )
+                    };
+
                     Observable.FromEventPattern<EventHandler<KeyEventArgs> , KeyEventArgs>( handler =>
                         ( sender , args ) => EditorKeyDown( tb , args , viewModel , editor ) ,
                         handler => tb.KeyDown += handler ,
                         handler => tb.KeyDown -= handler )
                         .Subscribe()
+                        .DisposeWith( disposables );
+
+                    tb.Bind( TextBox.TextProperty , binding )
                         .DisposeWith( disposables );
 
                     v.Canvas.Children.Add( tb );
@@ -510,7 +534,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 textBox.Width = cell.Width;
                 textBox.Height = cell.Height;
                 textBox.TextAlignment = TextAlignment.Right;
-                textBox.Text = cell.ResultSet.Result;
 
                 Canvas.SetLeft( textBox , cell.Left );
                 Canvas.SetTop( textBox , cell.Top );
