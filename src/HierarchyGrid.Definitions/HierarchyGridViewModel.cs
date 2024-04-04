@@ -284,66 +284,43 @@ namespace HierarchyGrid.Definitions
                     .SubscribeSafe( _ => VerticalOffset = 0 )
                     .DisposeWith( disposables );
 
-                /* Redraw grid when scrolling or changing scale */
-                this.WhenAnyValue( x => x.HorizontalOffset ,
-                        x => x.VerticalOffset ,
-                        x => x.Scale ,
-                        x => x.Width ,
-                        x => x.Height )
-                    .Throttle( TimeSpan.FromMilliseconds( 5 ) )
-                    .DistinctUntilChanged()
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                this.WhenAnyValue( x => x.HoveredColumn ,
-                        x => x.HoveredRow ,
-                        x => x.HoveredElementId ,
-                        x => x.FocusCells ,
-                        x => x.EditedCell )
-                    .Throttle( TimeSpan.FromMilliseconds( 2 ) )
-                    .DistinctUntilChanged()
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                SelectionChanged
-                    .DistinctUntilChanged()
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                this.WhenAnyValue( x => x.Theme )
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                this.WhenAnyValue( x => x.IsTransposed )
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
                 _hoveredCell
                     .Throttle( TimeSpan.FromMilliseconds( 600 ) )
                     .DistinctUntilChanged()
                     .InvokeCommand( HandleTooltipCommand )
                     .DisposeWith( disposables );
 
-                ToggleCrosshairCommand
-                    .Select( _ => false )
+                /* Redraw grid when scrolling or changing scale */
+                var gridLayoutEventsObservable = this.WhenAnyValue( x => x.HorizontalOffset ,
+                        x => x.VerticalOffset ,
+                        x => x.Scale ,
+                        x => x.Width ,
+                        x => x.Height )
+                    .Throttle( TimeSpan.FromMilliseconds( 5 ) )
+                    .DistinctUntilChanged();
+
+                var gridMouseEventsObservable = this.WhenAnyValue( x => x.HoveredColumn ,
+                        x => x.HoveredRow ,
+                        x => x.HoveredElementId ,
+                        x => x.FocusCells ,
+                        x => x.EditedCell )
+                    .Throttle( TimeSpan.FromMilliseconds( 2 ) )
+                    .DistinctUntilChanged();
+                
+                // Events starting a grid redraw
+                Observable.Merge(
+                        this.WhenAnyValue( x => x.IsTransposed ).Select( _ => false ),
+                        this.WhenAnyValue( x => x.Theme ).WhereNotNull().Select( _ => false ),
+                        SelectionChanged.DistinctUntilChanged().Select( _ => false ),
+                        gridLayoutEventsObservable.Select( _=> false ),
+                        gridMouseEventsObservable.Select( _=> false ),
+                        ToggleCrosshairCommand!.Select( _ => false ) ,
+                        ClearHighlightsCommand!.Select( _=>false ),
+                        ToggleStatesCommand!.Select( _=>false )
+                    ).Throttle( TimeSpan.FromMilliseconds( 10 ) )
                     .InvokeCommand( DrawGridCommand )
                     .DisposeWith( disposables );
-
-                ClearHighlightsCommand
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
-                ToggleStatesCommand
-                    .Select( _ => false )
-                    .InvokeCommand( DrawGridCommand )
-                    .DisposeWith( disposables );
-
+                
                 SelectedCells.ObserveCollectionChanges()
                     .Throttle( TimeSpan.FromMilliseconds( 10 ) )
                     .Subscribe( _ =>
