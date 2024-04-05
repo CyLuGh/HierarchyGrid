@@ -11,7 +11,7 @@ namespace Demo.AvaloniaApplication.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    public HierarchyGridViewModel DemoViewModel { get; } = new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
+    public HierarchyGridViewModel DemoViewModel { get; } = new HierarchyGridViewModel { SelectionMode = SelectionMode.MultiExtended };
     public HierarchyGridViewModel TestViewModel { get; } = new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
 
     public ReactiveCommand<Unit , HierarchyDefinitions> BuildSampleDefinitions { get; }

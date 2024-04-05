@@ -50,7 +50,9 @@
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
         </UniformGrid>
-        <hierarchyGrid:Grid x:Name="HierarchyGridTest" DockPanel.Dock="Top"/>
+        <hierarchyGrid:Grid x:Name="HierarchyGridTest" 
+                            DefaultColumnWidth="50"
+                            DockPanel.Dock="Top"/>
       </DockPanel>
     </TabItem>
   </TabControl>

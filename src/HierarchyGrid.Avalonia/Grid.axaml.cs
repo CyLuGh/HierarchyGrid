@@ -13,12 +13,14 @@ using Avalonia.Media;
 using Avalonia;
 using LanguageExt;
 using Avalonia.Data;
+using Avalonia.VisualTree;
 
 namespace HierarchyGrid.Avalonia;
 
 public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 {
     private readonly Flyout _tooltip;
+    private ContextMenu? _contextMenu;
 
     public Grid()
     {
@@ -183,8 +185,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         SKSurface surface = args.Surface;
         SKCanvas canvas = surface.Canvas;
 
-        //// TODO: Try to find the UI scaling that's applied in Display settings
-        //var scale = view.ScreenScale;
         var scale = 1d;
         await HierarchyGridDrawer.Draw( viewModel , canvas , info.Width , info.Height , scale , false );
     }
@@ -223,7 +223,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             if ( args.ClickCount == 2 )
             {
-                //viewModel.HandleDoubleClick( position.X , position.Y , view.ScreenScale );
                 viewModel.HandleDoubleClick( position.X , position.Y , 1 );
             }
             else
@@ -231,21 +230,23 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 var ctrl = args.KeyModifiers.HasFlag( KeyModifiers.Control );
                 var shift = args.KeyModifiers.HasFlag( KeyModifiers.Shift );
 
-                //viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl , screenScale: view.ScreenScale );
                 viewModel.HandleMouseDown( position.X , position.Y , shift , ctrl , screenScale: 1 );
             }
         }
         else
         {
-            //viewModel.HandleMouseDown( position.X , position.Y , false , false , screenScale: view.ScreenScale );
-            viewModel.HandleMouseDown( position.X , position.Y , false , false , screenScale: 1 );
+            viewModel.HandleMouseDown( position.X , position.Y , isShiftPressed: false , isCtrlPressed: false , isRightClick: true , screenScale: 1 );
 
             // Show context menu
             if ( viewModel.IsValid && viewModel.HasData )
             {
-                //var contextMenu = BuildContextMenu( viewModel , position.X , position.Y , view.ScreenScale );
-                var contextMenu = BuildContextMenu( viewModel , position.X , position.Y , 1 );
-                contextMenu.Open( element );
+                var view = (args.Source as Visual).FindAncestorOfType<Grid>();
+                if ( view is not null)
+                {
+                    view._contextMenu?.Close();
+                    view._contextMenu = BuildContextMenu( viewModel , position.X , position.Y , 1 );
+                    view._contextMenu.Open( element );
+                }
             }
         }
 
