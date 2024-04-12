@@ -506,7 +506,9 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         int splitterCount = 0;
 
-        var headers = viewModel.HeadersCoordinates.Where(x => x.Definition.Count() == 1).ToArray();
+        var headers = viewModel
+            .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
+            .ToArray();
 
         foreach (var c in headers.Where(t => t.Definition is ConsumerDefinition))
         {
@@ -518,7 +520,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
             var dsp = Observable
                 .FromEventPattern<EventHandler<VectorEventArgs>, VectorEventArgs>(
-                    handler => (sender, args) => Splitter_DragComplete(args, viewModel, def),
+                    handler =>
+                        (sender, args) => Splitter_DragComplete(args, viewModel, def.Definition),
                     handler => splitter.DragCompleted += handler,
                     handler => splitter.DragCompleted -= handler
                 )
