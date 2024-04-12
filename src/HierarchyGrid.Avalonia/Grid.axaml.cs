@@ -29,7 +29,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         InitializeComponent();
         _tooltip = new()
         {
-            ShowMode = FlyoutShowMode.TransientWithDismissOnPointerMoveAway,
+            ShowMode = FlyoutShowMode.Transient,
             OverlayInputPassThroughElement = this
         };
 
@@ -154,9 +154,17 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .DisposeWith(disposables);
 
         viewModel
+            .ShowHeaderTooltipInteraction.RegisterHandler(ctx =>
+            {
+                view.ShowHeaderTooltip(ctx.Input);
+                ctx.SetOutput(System.Reactive.Unit.Default);
+            })
+            .DisposeWith(disposables);
+
+        viewModel
             .CloseTooltipInteraction.RegisterHandler(ctx =>
             {
-                // As of now, closing the flyout is handled through its mode
+                view._tooltip.Hide();
                 ctx.SetOutput(System.Reactive.Unit.Default);
             })
             .DisposeWith(disposables);
@@ -297,13 +305,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     {
         _tooltip.Hide();
 
-        if (ViewModel is null)
+        if (ViewModel is null || pCell.ResultSet is null)
             return;
-
-        _tooltipRectangle.Width = pCell.Width;
-        _tooltipRectangle.Height = pCell.Height;
-        Canvas.SetLeft(_tooltipRectangle, pCell.Left);
-        Canvas.SetTop(_tooltipRectangle, pCell.Top);
 
         var text = string.Join(
             Environment.NewLine,
@@ -313,8 +316,38 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         if (!string.IsNullOrWhiteSpace(text))
         {
+            _tooltipRectangle.Width = pCell.Width;
+            _tooltipRectangle.Height = pCell.Height;
+            Canvas.SetLeft(_tooltipRectangle, pCell.Left);
+            Canvas.SetTop(_tooltipRectangle, pCell.Top);
+
             _tooltip.Content = text.Trim();
             _tooltip.Placement = PlacementMode.Bottom;
+            _tooltip.ShowAt(_tooltipRectangle);
+        }
+    }
+
+    private void ShowHeaderTooltip(PositionedDefinition pDefinition)
+    {
+        _tooltip.Hide();
+
+        if (ViewModel is null)
+            return;
+
+        var text = pDefinition.Definition.Tooltip;
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            _tooltipRectangle.Width = pDefinition.Coordinates.Width;
+            _tooltipRectangle.Height = pDefinition.Coordinates.Height;
+            Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left);
+            Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top);
+
+            _tooltip.Content = text.Trim();
+            _tooltip.Placement =
+                pDefinition.Definition is ConsumerDefinition
+                    ? PlacementMode.Bottom
+                    : PlacementMode.Right;
             _tooltip.ShowAt(_tooltipRectangle);
         }
     }

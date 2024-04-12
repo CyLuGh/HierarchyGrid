@@ -328,6 +328,27 @@ namespace HierarchyGrid
                 .DisposeWith(disposables);
 
             viewModel
+                .ShowHeaderTooltipInteraction.RegisterHandler(ctx =>
+                {
+                    view._tooltip.IsOpen = false;
+
+                    if (!string.IsNullOrWhiteSpace(ctx.Input.Definition.Tooltip))
+                    {
+                        view._tooltip.Content = ctx.Input.Definition.Tooltip.Trim(); /* Trim gets rid of the extra line if one of the text is empty */
+                        view._tooltip.Placement = System
+                            .Windows
+                            .Controls
+                            .Primitives
+                            .PlacementMode
+                            .Mouse;
+                        view._tooltip.IsOpen = true;
+                    }
+
+                    ctx.SetOutput(Unit.Default);
+                })
+                .DisposeWith(disposables);
+
+            viewModel
                 .CloseTooltipInteraction.RegisterHandler(ctx =>
                 {
                     view._tooltip.IsOpen = false;

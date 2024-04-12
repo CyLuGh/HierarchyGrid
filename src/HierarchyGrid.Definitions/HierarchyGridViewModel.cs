@@ -268,14 +268,17 @@ namespace HierarchyGrid.Definitions
         public ReactiveCommand<bool, RxUnit> DrawGridCommand { get; private set; }
         public Interaction<RxUnit, RxUnit> DrawGridInteraction { get; } =
             new(RxApp.MainThreadScheduler);
-        public ReactiveCommand<Option<PositionedCell>, RxUnit> HandleTooltipCommand
-        {
-            get;
-            private set;
-        }
+
+        public ReactiveCommand<
+            (Option<PositionedCell>, Option<PositionedDefinition>),
+            RxUnit
+        > HandleTooltipCommand { get; private set; }
+        public ReactiveCommand<RxUnit, RxUnit> CloseTooltip { get; }
         public Interaction<RxUnit, RxUnit> CloseTooltipInteraction { get; } =
             new(RxApp.MainThreadScheduler);
         public Interaction<PositionedCell, RxUnit> ShowTooltipInteraction { get; } =
+            new(RxApp.MainThreadScheduler);
+        public Interaction<PositionedDefinition, RxUnit> ShowHeaderTooltipInteraction { get; } =
             new(RxApp.MainThreadScheduler);
 
         public ReactiveCommand<CopyMode, RxUnit> CopyToClipboardCommand { get; private set; }
@@ -295,6 +298,10 @@ namespace HierarchyGrid.Definitions
             Activator = new ViewModelActivator();
 
             RegisterDefaultInteractions(this);
+
+            CloseTooltip = ReactiveCommand.CreateFromObservable(
+                () => CloseTooltipInteraction.Handle(RxUnit.Default)
+            );
             InitializeCommands(this);
 
             this.WhenActivated(disposables =>
@@ -383,8 +390,25 @@ namespace HierarchyGrid.Definitions
                     .DisposeWith(disposables);
 
                 _hoveredCell
-                    .Throttle(TimeSpan.FromMilliseconds(600))
                     .DistinctUntilChanged()
+                    .Where(x => x.IsNone)
+                    .ToSignal()
+                    .Merge(
+                        this.WhenAnyValue(x => x.HoveredDefinitionHeader)
+                            .DistinctUntilChanged()
+                            .Where(x => x.IsNone)
+                            .ToSignal()
+                    )
+                    .Throttle(TimeSpan.FromMilliseconds(50))
+                    .InvokeCommand(CloseTooltip)
+                    .DisposeWith(disposables);
+
+                _hoveredCell
+                    .DistinctUntilChanged()
+                    .CombineLatest(
+                        this.WhenAnyValue(x => x.HoveredDefinitionHeader).DistinctUntilChanged()
+                    )
+                    .Throttle(TimeSpan.FromMilliseconds(1000))
                     .InvokeCommand(HandleTooltipCommand)
                     .DisposeWith(disposables);
 
@@ -441,6 +465,9 @@ namespace HierarchyGrid.Definitions
         {
             @this.DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
             @this.ShowTooltipInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
+            @this.ShowHeaderTooltipInteraction.RegisterHandler(ctx =>
+                ctx.SetOutput(RxUnit.Default)
+            );
             @this.CloseTooltipInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
             @this.FillClipboardInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
             @this.DrawEditionTextBoxInteraction.RegisterHandler(ctx =>
@@ -462,13 +489,20 @@ namespace HierarchyGrid.Definitions
             @this.DrawGridCommand.ThrownExceptions.SubscribeSafe(e => @this.Log().Error(e));
 
             @this.HandleTooltipCommand = ReactiveCommand.CreateFromTask(
-                (Option<PositionedCell> o) =>
-                    o.MatchAsync(
-                        async cell => await @this.ShowTooltipInteraction.Handle(cell),
-                        async () => await @this.CloseTooltipInteraction.Handle(RxUnit.Default)
-                    )
+                async ((Option<PositionedCell>, Option<PositionedDefinition>) t) =>
+                {
+                    var (pCell, pDef) = t;
+
+                    await pCell.IfSomeAsync(async cell =>
+                        await @this.ShowTooltipInteraction.Handle(cell)
+                    );
+
+                    await pDef.IfSomeAsync(async definition =>
+                        await @this.ShowHeaderTooltipInteraction.Handle(definition)
+                    );
+                }
             );
-            @this.DrawGridCommand.ThrownExceptions.SubscribeSafe(e => @this.Log().Error(e));
+            @this.HandleTooltipCommand.ThrownExceptions.SubscribeSafe(e => @this.Log().Error(e));
 
             @this.ToggleCrosshairCommand = ReactiveCommand.Create(() =>
             {
@@ -948,7 +982,7 @@ namespace HierarchyGrid.Definitions
                 hdef =>
                 {
                     _hoveredCell.OnNext(Option<PositionedCell>.None);
-                    HoveredDefinitionHeader = Option<PositionedDefinition>.None;
+                    HoveredDefinitionHeader = hdef;
                     hdef.Match(
                         s =>
                         {
@@ -958,7 +992,6 @@ namespace HierarchyGrid.Definitions
                                 && consumer.Count() == 1
                             )
                             {
-                                HoveredDefinitionHeader = s;
                                 HoveredColumn = ColumnsDefinitions.GetPosition(consumer);
                                 HoveredRow = -1;
                             }
@@ -967,7 +1000,6 @@ namespace HierarchyGrid.Definitions
                                 && producer.Count() == 1
                             )
                             {
-                                HoveredDefinitionHeader = s;
                                 HoveredRow = RowsDefinitions.GetPosition(producer);
                                 HoveredColumn = -1;
                             }
