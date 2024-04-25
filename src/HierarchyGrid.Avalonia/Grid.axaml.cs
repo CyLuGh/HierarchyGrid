@@ -316,10 +316,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         if (!string.IsNullOrWhiteSpace(text))
         {
-            _tooltipRectangle.Width = pCell.Width;
-            _tooltipRectangle.Height = pCell.Height;
-            Canvas.SetLeft(_tooltipRectangle, pCell.Left);
-            Canvas.SetTop(_tooltipRectangle, pCell.Top);
+            _tooltipRectangle.Width = pCell.Width - 6;
+            _tooltipRectangle.Height = pCell.Height - 6;
+            Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
+            Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
 
             _tooltip.Content = text.Trim();
             _tooltip.Placement = PlacementMode.Bottom;
@@ -338,10 +338,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         if (!string.IsNullOrWhiteSpace(text))
         {
-            _tooltipRectangle.Width = pDefinition.Coordinates.Width;
-            _tooltipRectangle.Height = pDefinition.Coordinates.Height;
-            Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left);
-            Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top);
+            _tooltipRectangle.Width = pDefinition.Coordinates.Width - 6;
+            _tooltipRectangle.Height = pDefinition.Coordinates.Height - 6;
+            Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left + 3);
+            Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top + 3);
 
             _tooltip.Content = text.Trim();
             _tooltip.Placement =
@@ -543,7 +543,11 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
             .ToArray();
 
-        foreach (var c in headers.Where(t => t.Definition is ConsumerDefinition))
+        foreach (
+            var c in headers.Where(t =>
+                t.Definition is PositionedDefinition pdef && pdef.Definition is ConsumerDefinition
+            )
+        )
         {
             var (coord, def) = c;
             var splitter = GetSplitter(splitterCount++);
