@@ -643,7 +643,7 @@ namespace HierarchyGrid
                 .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
                 .ToArray();
 
-            foreach (var c in headers.Where(t => t.Definition is ConsumerDefinition))
+            foreach (var c in headers.Where(t => t.Definition.Definition is ConsumerDefinition))
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter(splitterCount++);
