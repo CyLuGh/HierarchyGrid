@@ -5,15 +5,12 @@ using Avalonia.Browser;
 using Avalonia.ReactiveUI;
 using Browser.AvaloniaApplication;
 
-[assembly: SupportedOSPlatform( "browser" )]
+[assembly: SupportedOSPlatform("browser")]
 
 internal sealed partial class Program
 {
-    private static Task Main( string[] args ) => BuildAvaloniaApp()
-        .WithInterFont()
-        .UseReactiveUI()
-        .StartBrowserAppAsync( "out" );
+    private static Task Main(string[] args) =>
+        BuildAvaloniaApp().WithInterFont().UseReactiveUI().StartBrowserAppAsync("out");
 
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>();
+    public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<App>();
 }

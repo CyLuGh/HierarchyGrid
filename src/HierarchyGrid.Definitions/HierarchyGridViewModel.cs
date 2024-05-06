@@ -159,7 +159,8 @@ namespace HierarchyGrid.Definitions
         [Reactive]
         public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
-        private readonly Subject<Option<PositionedCell>> _hoveredCell = new();
+        [Reactive]
+        public Option<PositionedCell> HoveredCell { get; set; }
 
         [Reactive]
         public Guid HoveredElementId { get; private set; }
@@ -389,7 +390,7 @@ namespace HierarchyGrid.Definitions
                     .SubscribeSafe(_ => VerticalOffset = 0)
                     .DisposeWith(disposables);
 
-                _hoveredCell
+                this.WhenAnyValue(x => x.HoveredCell)
                     .DistinctUntilChanged()
                     .Where(x => x.IsNone)
                     .ToSignal()
@@ -403,7 +404,7 @@ namespace HierarchyGrid.Definitions
                     .InvokeCommand(CloseTooltip)
                     .DisposeWith(disposables);
 
-                _hoveredCell
+                this.WhenAnyValue(x => x.HoveredCell)
                     .DistinctUntilChanged()
                     .CombineLatest(
                         this.WhenAnyValue(x => x.HoveredDefinitionHeader).DistinctUntilChanged()
@@ -943,7 +944,7 @@ namespace HierarchyGrid.Definitions
 
         internal void HandleMouseLeft()
         {
-            _hoveredCell.OnNext(Option<PositionedCell>.None);
+            HoveredCell = Option<PositionedCell>.None;
             HoveredElementId = Guid.Empty;
             ClearCrosshair();
         }
@@ -952,7 +953,7 @@ namespace HierarchyGrid.Definitions
         {
             if (RowsHeadersWidth?.Any() != true || ColumnsHeadersHeight?.Any() != true)
             {
-                _hoveredCell.OnNext(Option<PositionedCell>.None);
+                HoveredCell = Option<PositionedCell>.None;
                 HoveredDefinitionHeader = Option<PositionedDefinition>.None;
                 HoveredElementId = Guid.Empty;
                 return;
@@ -962,7 +963,7 @@ namespace HierarchyGrid.Definitions
             element.Match(
                 cell =>
                 {
-                    _hoveredCell.OnNext(cell);
+                    HoveredCell = cell;
                     HoveredDefinitionHeader = Option<PositionedDefinition>.None;
                     HoveredElementId = Guid.Empty;
 
@@ -981,7 +982,7 @@ namespace HierarchyGrid.Definitions
                 },
                 hdef =>
                 {
-                    _hoveredCell.OnNext(Option<PositionedCell>.None);
+                    HoveredCell = Option<PositionedCell>.None;
                     HoveredDefinitionHeader = hdef;
                     hdef.Match(
                         s =>

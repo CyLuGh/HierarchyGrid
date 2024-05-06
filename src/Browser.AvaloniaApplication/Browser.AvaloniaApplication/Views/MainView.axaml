@@ -24,10 +24,10 @@
                    Grid.Row="0" />
 
         <hierarchyGrid:Grid x:Name="HierarchyGridTest"
-                            DefaultColumnWidth="250"
+                            DefaultColumnWidth="150"
                             DefaultHeaderHeight="40"
                             DefaultHeaderWidth="120"
-                            DefaultRowHeight="60"
+                            DefaultRowHeight="30"
                             StatusMessage="I'm a test message!"
                             EnableCrosshair="True"
                             Grid.Row="1" />
