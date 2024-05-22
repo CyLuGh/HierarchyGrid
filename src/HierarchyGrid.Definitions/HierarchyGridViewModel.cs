@@ -946,6 +946,7 @@ namespace HierarchyGrid.Definitions
         {
             HoveredCell = Option<PositionedCell>.None;
             HoveredElementId = Guid.Empty;
+            Observable.Return(RxUnit.Default).InvokeCommand(CloseTooltip);
             ClearCrosshair();
         }
 
