@@ -41,32 +41,5 @@
                    Grid.Row="1"
                    Grid.Column="1" />
 
-        <ToggleButton x:Name="ToggleAdjustScale"
-                      ToolTip="Adjust scale"
-                      Grid.Row="1"
-                      Grid.Column="1">
-            <Popup IsOpen="{Binding ElementName=ToggleAdjustScale,Path=IsChecked}"
-                   PlacementTarget="{Binding ElementName=ToggleAdjustScale}"
-                   StaysOpen="False">
-                <Border x:Name="BorderPopup"
-                        Padding="2"
-                        BorderThickness="1">
-                    <StackPanel>
-                        <MenuItem x:Name="MenuItemScale100"
-                                  Header="Scale to 100%"
-                                  IsCheckable="True" />
-                        <MenuItem x:Name="MenuItemScale125"
-                                  Header="Scale to 125%"
-                                  IsCheckable="True" />
-                        <MenuItem x:Name="MenuItemScale150"
-                                  Header="Scale to 150%"
-                                  IsCheckable="True" />
-                        <MenuItem x:Name="MenuItemScale175"
-                                  Header="Scale to 175%"
-                                  IsCheckable="True" />
-                    </StackPanel>
-                </Border>
-            </Popup>
-        </ToggleButton>
     </Grid>
 </rxui:ReactiveUserControl>

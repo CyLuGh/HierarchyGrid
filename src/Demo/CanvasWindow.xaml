@@ -51,7 +51,6 @@
                                 Click="RestoreStateCompareClick" />
                     </UniformGrid>
                     <hierarchyGrid:Grid  x:Name="FoldedSampleHierarchyGrid"
-                                         ScreenScale="1.25"
                                          Margin="10" />
                 </DockPanel>
             </TabItem>

@@ -25,12 +25,11 @@ namespace HierarchyGrid
     {
         private readonly ToolTip _tooltip = new();
 
-        private ReactiveCommand<double, Unit>? SetScreenScaleCommand { get; set; }
+        public double ScreenScale { get; private set; }
 
         public Grid()
         {
             InitializeComponent();
-            InitializeCommands();
 
             this.WhenActivated(disposables =>
             {
@@ -46,25 +45,6 @@ namespace HierarchyGrid
             });
         }
 
-        private void InitializeCommands()
-        {
-            SetScreenScaleCommand = ReactiveCommand.Create(
-                (double scale) =>
-                {
-                    ScreenScale = scale;
-
-                    MenuItemScale100.IsChecked = scale == 1d;
-                    MenuItemScale125.IsChecked = scale == 1.25d;
-                    MenuItemScale150.IsChecked = scale == 1.5d;
-                    MenuItemScale175.IsChecked = scale == 1.75d;
-
-                    ToggleAdjustScale.IsChecked = false;
-                    InvalidateMeasure();
-                }
-            );
-            SetScreenScaleCommand.ThrownExceptions.Subscribe(ex => this.Log().Error(ex));
-        }
-
         private static void PopulateFromViewModel(
             Grid view,
             HierarchyGridViewModel viewModel,
@@ -72,11 +52,6 @@ namespace HierarchyGrid
         )
         {
             ApplyDependencyProperties(view, viewModel);
-
-            view.MenuItemScale100.IsChecked = view.ScreenScale == 1d;
-            view.MenuItemScale125.IsChecked = view.ScreenScale == 1.25d;
-            view.MenuItemScale150.IsChecked = view.ScreenScale == 1.5d;
-            view.MenuItemScale175.IsChecked = view.ScreenScale == 1.75d;
 
             viewModel
                 .DrawGridInteraction.RegisterHandler(ctx =>
@@ -109,15 +84,16 @@ namespace HierarchyGrid
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
 
-                    // TODO: Try to find the UI scaling that's applied in Display settings
-                    var scale = view.ScreenScale;
+                    // Find screen scale
+                    PresentationSource source = PresentationSource.FromVisual(view);
+                    view.ScreenScale = source?.CompositionTarget.TransformToDevice.M11 ?? 1;
 
                     await HierarchyGridDrawer.Draw(
                         viewModel,
                         canvas,
                         info.Width,
                         info.Height,
-                        scale,
+                        view.ScreenScale,
                         false
                     );
                 })
@@ -236,48 +212,6 @@ namespace HierarchyGrid
 
             view.OneWayBind(viewModel, vm => vm.MaxVerticalOffset, v => v.VerticalScrollBar.Maximum)
                 .DisposeWith(disposables);
-
-            view.OneWayBind(
-                    viewModel,
-                    vm => vm.Theme,
-                    v => v.BorderPopup.Background,
-                    t => new SolidColorBrush(
-                        Color.FromArgb(
-                            t.BackgroundColor.A,
-                            t.BackgroundColor.R,
-                            t.BackgroundColor.G,
-                            t.BackgroundColor.B
-                        )
-                    )
-                )
-                .DisposeWith(disposables);
-
-            view.OneWayBind(
-                    viewModel,
-                    vm => vm.Theme,
-                    v => v.BorderPopup.BorderBrush,
-                    t => new SolidColorBrush(
-                        Color.FromArgb(
-                            t.BorderColor.A,
-                            t.BorderColor.R,
-                            t.BorderColor.G,
-                            t.BorderColor.B
-                        )
-                    )
-                )
-                .DisposeWith(disposables);
-
-            view.MenuItemScale100.Command = view.SetScreenScaleCommand;
-            view.MenuItemScale100.CommandParameter = 1d;
-
-            view.MenuItemScale125.Command = view.SetScreenScaleCommand;
-            view.MenuItemScale125.CommandParameter = 1.25d;
-
-            view.MenuItemScale150.Command = view.SetScreenScaleCommand;
-            view.MenuItemScale150.CommandParameter = 1.5d;
-
-            view.MenuItemScale175.Command = view.SetScreenScaleCommand;
-            view.MenuItemScale175.CommandParameter = 1.75d;
 
             view.SkiaElement.InvalidateVisual();
         }
