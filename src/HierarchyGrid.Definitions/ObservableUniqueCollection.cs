@@ -11,7 +11,7 @@ public class ObservableUniqueCollection<T> : ObservableCollection<T>
     {
     }
 
-    public ObservableUniqueCollection( IEqualityComparer<T> equalityComparer )
+    private ObservableUniqueCollection( IEqualityComparer<T> equalityComparer )
         => _hashSet = new HashSet<T>( equalityComparer );
 
     public void AddRange( IEnumerable<T> items )

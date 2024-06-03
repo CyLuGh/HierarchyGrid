@@ -2,38 +2,31 @@
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace HierarchyGrid.Definitions
+namespace HierarchyGrid.Definitions;
+
+/// <summary>
+/// Represents the default structure of a grid, with rows as producers and columns as consumers.
+/// </summary>
+public class HierarchyDefinitions
 {
-    /// <summary>
-    /// Represents the default structure of a grid, with rows as producers and columns as consumers.
-    /// </summary>
-    public class HierarchyDefinitions
+    public ImmutableList<ProducerDefinition> Producers { get; }
+    public ImmutableList<ConsumerDefinition> Consumers { get; }
+
+    public bool HasDefinitions => Producers?.Any() == true && Consumers?.Any() == true;
+
+    public HierarchyDefinitions(IEnumerable<ProducerDefinition> producers, IEnumerable<ConsumerDefinition> consumers)
     {
-        public ImmutableList<ProducerDefinition> Producers { get; }
-        public ImmutableList<ConsumerDefinition> Consumers { get; }
+        Producers = Build(producers).ToImmutableList();
+        Consumers = Build(consumers).ToImmutableList();
+    }
 
-        public bool HasDefinitions => Producers?.Any() == true && Consumers?.Any() == true;
-
-        public HierarchyDefinitions(IEnumerable<ProducerDefinition> producers, IEnumerable<ConsumerDefinition> consumers)
+    private IEnumerable<T> Build<T>(IEnumerable<T> input) where T : HierarchyDefinition
+    {
+        int position = -1;
+        return input.Select(s =>
         {
-            Producers = Build(producers).ToImmutableList();
-            Consumers = Build(consumers).ToImmutableList();
-        }
-
-        public IEnumerable<T> Build<T>(IEnumerable<T> input) where T : HierarchyDefinition
-        {
-            int position = -1;
-            return input.Select(s =>
-            {
-                s.UpdatePosition(ref position);
-                return s;
-            });
-        }
-
-        //=> input.FlatList().Select((s, i) =>
-        //{
-        //    s.Position = i;
-        //    return s;
-        //});
+            s.UpdatePosition(ref position);
+            return s;
+        });
     }
 }
