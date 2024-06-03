@@ -291,7 +291,7 @@ namespace HierarchyGrid
                 .DisposeWith(disposables);
         }
 
-        private static IEnumerable<MenuItem> BuildCustomItems((string, ICommand)[] commands)
+        private static IEnumerable<MenuItem> BuildCustomItems((string, ReactiveCommand<ResultSet,System.Reactive.Unit>)[] commands, ResultSet resultSet)
         {
             var items = new Dictionary<(int, string), MenuItem>();
 
@@ -302,7 +302,7 @@ namespace HierarchyGrid
 
                 if (splits.Length == 1)
                 {
-                    yield return new MenuItem { Header = header, Command = command };
+                    yield return new MenuItem { Header = header, Command = command};
                 }
                 else
                 {
@@ -312,7 +312,7 @@ namespace HierarchyGrid
                         if (i == splits.Length - 1 && parent != null)
                         {
                             parent.Items.Add(
-                                new MenuItem { Header = splits[i], Command = command }
+                                new MenuItem { Header = splits[i], Command = command, CommandParameter = resultSet }
                             );
                         }
                         else
@@ -354,7 +354,7 @@ namespace HierarchyGrid
                     r.Match(
                         c =>
                             c.ResultSet.ContextCommands.Match(
-                                cmds => BuildCustomItems(cmds).ToArray(),
+                                cmds => BuildCustomItems(cmds,c.ResultSet).ToArray(),
                                 () => Array.Empty<MenuItem>()
                             ),
                         () => Array.Empty<MenuItem>()

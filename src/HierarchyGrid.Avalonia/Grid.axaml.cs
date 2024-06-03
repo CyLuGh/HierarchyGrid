@@ -305,7 +305,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     {
         _tooltip.Hide();
 
-        if (ViewModel is null || pCell.ResultSet is null)
+        if (ViewModel is null || pCell.ResultSet == ResultSet.Default)
             return;
 
         var text = string.Join(
@@ -352,7 +352,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         }
     }
 
-    private static IEnumerable<MenuItem> BuildCustomItems((string, ICommand)[] commands)
+    private static IEnumerable<MenuItem> BuildCustomItems((string, ReactiveCommand<ResultSet,System.Reactive.Unit>)[] commands,
+        ResultSet resultSet)
     {
         var items = new Dictionary<(int, string), MenuItem>();
 
@@ -363,7 +364,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
             if (splits.Length == 1)
             {
-                yield return new MenuItem { Header = header, Command = command };
+                yield return new MenuItem { Header = header, Command = command , CommandParameter = resultSet};
             }
             else
             {
@@ -372,7 +373,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     if (i == splits.Length - 1 && parent != null)
                     {
-                        parent.Items.Add(new MenuItem { Header = splits[i], Command = command });
+                        parent.Items.Add(new MenuItem { Header = splits[i], Command = command, CommandParameter = resultSet });
                     }
                     else
                     {
@@ -413,7 +414,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 r.Match(
                     c =>
                         c.ResultSet.ContextCommands.Match(
-                            cmds => BuildCustomItems(cmds).ToArray(),
+                            cmds => BuildCustomItems(cmds,c.ResultSet).ToArray(),
                             () => Array.Empty<MenuItem>()
                         ),
                     () => Array.Empty<MenuItem>()

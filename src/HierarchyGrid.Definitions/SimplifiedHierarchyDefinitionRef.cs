@@ -2,26 +2,21 @@ using System.Linq;
 
 namespace HierarchyGrid.Definitions;
 
-public record SimplifiedHierarchyDefinitionRef
+public readonly record struct SimplifiedHierarchyDefinitionRef
 {
-    public bool IsProducer { get; set; }
-    public bool IsConsumer { get; set; }
-    public int Position { get; set; }
-    public string FullPath { get; set; }
-    public string[] ChildrenPaths { get; set; }
+    public bool IsProducer { get; init; }
+    public bool IsConsumer { get; init; }
+    public int Position { get; init; }
+    public string FullPath { get; init; }
+    public string[] ChildrenPaths { get; init; }
 
-    public SimplifiedHierarchyDefinitionRef()
-    {
-
-    }
-
-    public SimplifiedHierarchyDefinitionRef( HierarchyDefinition definition )
+    public SimplifiedHierarchyDefinitionRef(HierarchyDefinition definition)
     {
         IsProducer = definition is ProducerDefinition;
         IsConsumer = definition is ConsumerDefinition;
 
         Position = definition.Position;
         FullPath = definition.ToString();
-        ChildrenPaths = definition.Children.Select( c => c.ToString() ).ToArray();
+        ChildrenPaths = definition.Children.Select(c => c.ToString()).ToArray();
     }
 }

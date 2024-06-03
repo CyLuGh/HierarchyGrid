@@ -1,18 +1,13 @@
 namespace HierarchyGrid.Definitions;
 
-public record SimplifiedCellPosition
+public readonly record struct SimplifiedCellPosition
 {
-    public SimplifiedHierarchyDefinitionRef Producer { get; set; }
-    public SimplifiedHierarchyDefinitionRef Consumer { get; set; }
+    public SimplifiedHierarchyDefinitionRef Producer { get; }
+    public SimplifiedHierarchyDefinitionRef Consumer { get; }
 
-    public SimplifiedCellPosition()
+    public SimplifiedCellPosition(PositionedCell positionedCell)
     {
-
-    }
-
-    public SimplifiedCellPosition( PositionedCell positionedCell )
-    {
-        Producer = new( positionedCell.ProducerDefinition );
-        Consumer = new( positionedCell.ConsumerDefinition );
+        Producer = new(positionedCell.ProducerDefinition);
+        Consumer = new(positionedCell.ConsumerDefinition);
     }
 }
