@@ -4,8 +4,8 @@ namespace HierarchyGrid.Definitions;
 
 public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<PositionedCell>
 {
-    public ProducerDefinition? ProducerDefinition { get; init; }
-    public ConsumerDefinition? ConsumerDefinition { get; init; }
+    public required ProducerDefinition ProducerDefinition { get; init; }
+    public required ConsumerDefinition ConsumerDefinition { get; init; }
     public int HorizontalPosition { get; init; }
     public int VerticalPosition { get; init; }
     public double Top { get; init; }
@@ -22,8 +22,8 @@ public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<Pos
         return
             ProducerDefinition?.CompareTo(other.ProducerDefinition) == 0
             && ConsumerDefinition?.CompareTo(other.ConsumerDefinition) == 0
-                ? 0
-                : 1;
+            ? 0
+            : 1;
     }
 
     public bool Equals(PositionedCell? other)
@@ -32,7 +32,7 @@ public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<Pos
             return false;
 
         return ProducerDefinition?.Guid == other.ProducerDefinition?.Guid
-               && ConsumerDefinition?.Guid == other.ConsumerDefinition?.Guid;
+            && ConsumerDefinition?.Guid == other.ConsumerDefinition?.Guid;
     }
 
     public override bool Equals(object? obj) => Equals(obj as PositionedCell);

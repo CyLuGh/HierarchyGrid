@@ -162,15 +162,15 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public Guid HoveredElementId { get; private set; }
 
-    public HierarchyDefinition[] ColumnsDefinitions =>
+    public Seq<HierarchyDefinition> ColumnsDefinitions =>
         IsTransposed
-            ? ProducersCache.Items.Cast<HierarchyDefinition>().ToArray()
-            : ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray();
+            ? ProducersCache.Items.Cast<HierarchyDefinition>().ToSeq()
+            : ConsumersCache.Items.Cast<HierarchyDefinition>().ToSeq();
 
-    public HierarchyDefinition[] RowsDefinitions =>
+    public Seq<HierarchyDefinition> RowsDefinitions =>
         IsTransposed
-            ? ConsumersCache.Items.Cast<HierarchyDefinition>().ToArray()
-            : ProducersCache.Items.Cast<HierarchyDefinition>().ToArray();
+            ? ConsumersCache.Items.Cast<HierarchyDefinition>().ToSeq()
+            : ProducersCache.Items.Cast<HierarchyDefinition>().ToSeq();
 
     public HierarchyGridState GetGridState() => new(this);
 
@@ -922,7 +922,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
     internal void HandleDoubleClick(double x, double y, double screenScale)
     {
-        if (ColumnsDefinitions?.Length > 0 && RowsDefinitions?.Length > 0)
+        if (ColumnsDefinitions.Length > 0 && RowsDefinitions.Length > 0)
         {
             var cell = FindCoordinates(x, y, screenScale);
             EditedCell = cell.Match(pc => pc, _ => Option<PositionedCell>.None);

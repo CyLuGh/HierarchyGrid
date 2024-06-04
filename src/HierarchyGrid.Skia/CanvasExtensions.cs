@@ -69,7 +69,7 @@ namespace HierarchyGrid.Skia
                     currentX,
                     currentY,
                     width,
-                    viewModel.ColumnsHeadersHeight[viewModel.ColumnsHeadersHeight.Length - 1],
+                    viewModel.ColumnsHeadersHeight[^1],
                     screenScale
                 );
                 currentX += width;
@@ -96,7 +96,7 @@ namespace HierarchyGrid.Skia
                         .All(x => !x.IsExpanded),
                     currentX,
                     currentY,
-                    viewModel.RowsHeadersWidth[viewModel.RowsHeadersWidth.Length - 1],
+                    viewModel.RowsHeadersWidth[^1],
                     height,
                     screenScale
                 );
@@ -112,8 +112,8 @@ namespace HierarchyGrid.Skia
                 true,
                 currentX,
                 currentY,
-                viewModel.RowsHeadersWidth[viewModel.RowsHeadersWidth.Length - 1],
-                viewModel.ColumnsHeadersHeight[viewModel.ColumnsHeadersHeight.Length - 1],
+                viewModel.RowsHeadersWidth[^1],
+                viewModel.ColumnsHeadersHeight[^1],
                 screenScale,
                 GlobalHeader.ExpandAll
             );
@@ -176,13 +176,13 @@ namespace HierarchyGrid.Skia
             paint.Style = SKPaintStyle.StrokeAndFill;
             canvas.DrawPath(decorator, paint);
 
-            var act = () =>
+            void Act()
             {
                 foreach (var hd in selector(viewModel))
                     action(hd, expanded);
-            };
+            }
 
-            viewModel.GlobalHeadersCoordinates.Add(new(coordinates, Guid.NewGuid(), act));
+            viewModel.GlobalHeadersCoordinates.Add(new(coordinates, Guid.NewGuid(), Act));
         }
 
         internal static void DrawColumnHeaders(
@@ -254,13 +254,12 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
-            var height =
-                hdef.IsExpanded && hdef.HasChild
-                    ? viewModel.ColumnsHeadersHeight[hdef.Level]
-                    : Enumerable
-                        .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
-                        .Select(x => viewModel.ColumnsHeadersHeight[x])
-                        .Sum();
+            var height = hdef is { IsExpanded: true, HasChild: true }
+                ? viewModel.ColumnsHeadersHeight[hdef.Level]
+                : Enumerable
+                    .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
+                    .Select(x => viewModel.ColumnsHeadersHeight[x])
+                    .Sum();
 
             var top = Enumerable
                 .Range(0, hdef.Level)
@@ -314,7 +313,7 @@ namespace HierarchyGrid.Skia
 
             var width = Enumerable
                 .Range(column, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.ColumnsWidths.TryGetValue(x, out var size) ? size : 0)
+                .Select(x => viewModel.ColumnsWidths.GetValueOrDefault(x, 0))
                 .Sum();
 
             var top = Enumerable
@@ -418,14 +417,13 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
-            var width =
-                hdef.IsExpanded && hdef.HasChild
-                    ? viewModel.RowsHeadersWidth[hdef.Level]
-                    : Enumerable
-                        .Range(hdef.Level, viewModel.RowsHeadersWidth.Length - hdef.Level)
-                        .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                        .Select(x => viewModel.RowsHeadersWidth[x])
-                        .Sum();
+            var width = hdef is { IsExpanded: true, HasChild: true }
+                ? viewModel.RowsHeadersWidth[hdef.Level]
+                : Enumerable
+                    .Range(hdef.Level, viewModel.RowsHeadersWidth.Length - hdef.Level)
+                    .Where(x => x < viewModel.RowsHeadersWidth.Length)
+                    .Select(x => viewModel.RowsHeadersWidth[x])
+                    .Sum();
 
             var left = Enumerable
                 .Range(0, hdef.Level)
@@ -481,7 +479,7 @@ namespace HierarchyGrid.Skia
 
             var height = Enumerable
                 .Range(row, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.RowsHeights.TryGetValue(x, out var size) ? size : 0)
+                .Select(x => viewModel.RowsHeights.GetValueOrDefault(x, 0))
                 .Sum();
 
             var left = Enumerable
@@ -551,15 +549,16 @@ namespace HierarchyGrid.Skia
             GetHeaderDecorator(hdef, left * screenScale, top * screenScale)
                 .IfSome(decorator =>
                 {
-                    paint.Color = renderInfo.ForegroundColor;
-                    paint.Style = SKPaintStyle.StrokeAndFill;
-                    canvas.DrawPath(decorator, paint);
+                    using var localPaint = new SKPaint();
+                    localPaint.Color = renderInfo.ForegroundColor;
+                    localPaint.Style = SKPaintStyle.StrokeAndFill;
+                    canvas.DrawPath(decorator, localPaint);
                 });
 
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
             TextDrawer.AddText(
-                hdef.Content.ToString(),
+                hdef.Content?.ToString() ?? string.Empty,
                 new Style
                 {
                     FontSize = TextSize,
@@ -751,9 +750,11 @@ namespace HierarchyGrid.Skia
                 {
                     var borderThickness = fci.BorderThickness;
 
+                    using var localPaint = new SKPaint();
+
                     /* Paint background */
-                    paint.Style = SKPaintStyle.Fill;
-                    paint.Color = fci.BackgroundColor.ToSKColor();
+                    localPaint.Style = SKPaintStyle.Fill;
+                    localPaint.Color = fci.BackgroundColor.ToSKColor();
 
                     rect = SKRect.Create(
                         (float)(cell.Left * screenScale) + borderThickness,
@@ -761,13 +762,13 @@ namespace HierarchyGrid.Skia
                         (float)(cell.Width * screenScale) - (borderThickness + 1f),
                         (float)(cell.Height * screenScale) - (borderThickness + 1f)
                     );
-                    canvas.DrawRect(rect, paint);
+                    canvas.DrawRect(rect, localPaint);
 
                     /* Paint border */
-                    paint.Style = SKPaintStyle.Stroke;
-                    paint.Color = fci.BorderColor.ToSKColor();
-                    paint.StrokeWidth = fci.BorderThickness;
-                    canvas.DrawRect(rect, paint);
+                    localPaint.Style = SKPaintStyle.Stroke;
+                    localPaint.Color = fci.BorderColor.ToSKColor();
+                    localPaint.StrokeWidth = fci.BorderThickness;
+                    canvas.DrawRect(rect, localPaint);
                 });
 
             if (viewModel.Selections.Contains(cell))
