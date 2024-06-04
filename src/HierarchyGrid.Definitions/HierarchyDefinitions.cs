@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
+using LanguageExt;
 
 namespace HierarchyGrid.Definitions;
 
@@ -9,24 +9,31 @@ namespace HierarchyGrid.Definitions;
 /// </summary>
 public class HierarchyDefinitions
 {
-    public ImmutableList<ProducerDefinition> Producers { get; }
-    public ImmutableList<ConsumerDefinition> Consumers { get; }
+    public Seq<ProducerDefinition> Producers { get; }
+    public Seq<ConsumerDefinition> Consumers { get; }
 
-    public bool HasDefinitions => Producers?.Any() == true && Consumers?.Any() == true;
+    public bool HasDefinitions => !Producers.IsEmpty && !Consumers.IsEmpty;
 
-    public HierarchyDefinitions(IEnumerable<ProducerDefinition> producers, IEnumerable<ConsumerDefinition> consumers)
+    public HierarchyDefinitions(
+        IEnumerable<ProducerDefinition> producers,
+        IEnumerable<ConsumerDefinition> consumers
+    )
     {
-        Producers = Build(producers).ToImmutableList();
-        Consumers = Build(consumers).ToImmutableList();
+        Producers = Build(producers);
+        Consumers = Build(consumers);
     }
 
-    private IEnumerable<T> Build<T>(IEnumerable<T> input) where T : HierarchyDefinition
+    private Seq<T> Build<T>(IEnumerable<T> input)
+        where T : HierarchyDefinition
     {
         int position = -1;
-        return input.Select(s =>
-        {
-            s.UpdatePosition(ref position);
-            return s;
-        });
+        return input
+            .Select(s =>
+            {
+                s.UpdatePosition(ref position);
+                return s;
+            })
+            .ToSeq()
+            .Strict();
     }
 }
