@@ -1,12 +1,12 @@
-﻿using HierarchyGrid.Definitions;
-using LanguageExt;
-using ReactiveUI;
-using Splat;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Windows;
+using HierarchyGrid.Definitions;
+using LanguageExt;
+using ReactiveUI;
+using Splat;
 using SelectionMode = HierarchyGrid.Definitions.SelectionMode;
 
 namespace Demo
@@ -22,44 +22,46 @@ namespace Demo
         public CanvasWindow()
         {
             InitializeComponent();
-            _calendarBuilder = new( "#1" , "#2" , "#3" );
+            _calendarBuilder = new("#1", "#2", "#3");
             HierarchyGrid.ViewModel = new HierarchyGridViewModel();
             FoldedSampleHierarchyGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel = new HierarchyGridViewModel();
             TestGrid.ViewModel.TextAlignment = CellTextAlignment.Left;
-            TestGrid.ViewModel.Set( new HierarchyDefinitions( BuildRows() , BuildColumns() ) );
+            TestGrid.ViewModel.Set(new HierarchyDefinitions(BuildRows(), BuildColumns()));
             TestGrid.ViewModel.SelectionMode = SelectionMode.Single;
 
-            HierarchyGrid.ViewModel.SelectionChanged
-                .ObserveOn( RxApp.MainThreadScheduler )
-                .Subscribe( selections =>
+            HierarchyGrid
+                .ViewModel.SelectionChanged.ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(selections =>
                 {
                     TextBlockSelection.Text = $"Selection count: {selections.Length}";
-                } );
+                });
 
-            HierarchyGrid.ViewModel.EditedCellChanged
-                .ObserveOn( RxApp.MainThreadScheduler )
-                .Subscribe( oec =>
+            HierarchyGrid
+                .ViewModel.EditedCellChanged.ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(oec =>
                 {
-                    TextBlockEdition.Text = oec.Match( ec => $"Editing cell {ec}" , () => "No cell being edited." );
-                } );
-
-
-
+                    TextBlockEdition.Text = oec.Match(
+                        ec => $"Editing cell {ec}",
+                        () => "No cell being edited."
+                    );
+                });
         }
 
         private IEnumerable<ProducerDefinition> BuildRows()
         {
-            return Enumerable.Range( 0 , 20 ).Select( x =>
+            return Enumerable
+                .Range(0, 20)
+                .Select(x =>
                 {
                     var hpd = new ProducerDefinition
                     {
-                        Content = x.ToString() ,
-                        Producer = () => x ,
+                        Content = x.ToString(),
+                        Producer = () => x,
                         IsExpanded = true
                     };
 
-                    if ( x == 0 )
+                    if (x == 0)
                     {
                         //hpd.ContextMenuBuilder = () =>
                         //{
@@ -71,154 +73,193 @@ namespace Demo
                         hpd.Frozen = true;
                     }
                     else
-                        AddChildRows( hpd , 3 );
+                        AddChildRows(hpd, 3);
                     return hpd;
-                } );
+                });
         }
 
-        private void AddChildRows( ProducerDefinition parent , int childCount , bool addChild = true )
+        private void AddChildRows(ProducerDefinition parent, int childCount, bool addChild = true)
         {
-            for ( int i = 0 ; i < childCount ; i++ )
+            for (int i = 0; i < childCount; i++)
             {
                 var idx = i;
-                var node = parent.Add( new ProducerDefinition
-                {
-                    Content = idx.ToString() ,
-                    Producer = () => idx ,
-                    //Qualify = () => idx == 3 ? Qualification.Remark : Qualification.Normal
-                } );
+                var node = parent.Add(
+                    new ProducerDefinition
+                    {
+                        Content = idx.ToString(),
+                        Producer = () => idx,
+                        //Qualify = () => idx == 3 ? Qualification.Remark : Qualification.Normal
+                    }
+                );
 
-                if ( addChild )
-                    AddChildRows( node , 4 , false );
+                if (addChild)
+                    AddChildRows(node, 4, false);
             }
         }
 
         private IEnumerable<ConsumerDefinition> BuildColumns()
         {
-            return Enumerable.Range( 0 , 10 ).Select( a =>
+            return Enumerable
+                .Range(0, 10)
+                .Select(a =>
                 {
                     var hdef = new ConsumerDefinition
                     {
-                        Content = string.Format( "Parent {0}" , a ) ,
-                        IsExpanded = a != 3 ,
-                        Consumer = o => o is int idx ? (object) ( idx * a ) : "Oops" ,
+                        Content = $"Parent {a}",
+                        IsExpanded = a != 3,
+                        Consumer = o => o is int idx ? (object)(idx * a) : "Oops",
                         Formatter = o => $"Parent: {o}"
                     };
 
-                    if ( a > 1 )
-                        foreach ( var child in Enumerable.Range( 0 , a ).Select( x => new ConsumerDefinition
+                    if (a > 1)
+                        foreach (
+                            var child in Enumerable
+                                .Range(0, a)
+                                .Select(x => new ConsumerDefinition
+                                {
+                                    Content = x.ToString(),
+                                    Consumer = o => o is int idx ? (object)(idx + (2 * x)) : "Oops",
+                                    Formatter = o => $"Res: {o}",
+                                    Qualify = o =>
+                                        int.TryParse(o.ToString(), out var i)
+                                            ? i switch
+                                            {
+                                                4 => Qualification.Remark,
+                                                6 => Qualification.Warning,
+                                                9 => Qualification.Error,
+                                                10 => Qualification.ReadOnly,
+                                                17 => Qualification.Custom,
+                                                18 => Qualification.Custom,
+                                                _ => Qualification.Normal
+                                            }
+                                            : Qualification.Normal,
+                                    Colorize = o =>
+                                        int.TryParse(o.ToString(), out var i)
+                                            ? i switch
+                                            {
+                                                17
+                                                    => (
+                                                        new ThemeColor(150, 100, 120, 0),
+                                                        new ThemeColor(255, 0, 0, 0)
+                                                    ),
+                                                18
+                                                    => (
+                                                        new ThemeColor(150, 0, 100, 120),
+                                                        new ThemeColor(255, 255, 0, 0)
+                                                    ),
+                                                _
+                                                    => (
+                                                        new ThemeColor(0, 0, 0, 0),
+                                                        new ThemeColor(0, 255, 0, 0)
+                                                    )
+                                            }
+                                            : (
+                                                new ThemeColor(0, 0, 0, 0),
+                                                new ThemeColor(0, 0, 0, 0)
+                                            ),
+                                    Editor = (p, c, s) =>
+                                    {
+                                        this.Log().Debug($"{p} _ {c} _ {s}");
+                                        return !string.IsNullOrWhiteSpace(s);
+                                    }
+                                })
+                        )
                         {
-                            Content = x.ToString() ,
-                            Consumer = o => o is int idx ? (object) ( idx + ( 2 * x ) ) : "Oops" ,
-                            Formatter = o => $"Res: {o}" ,
-                            Qualify = o => int.TryParse( o.ToString() , out var i ) ? i switch
-                            {
-                                4 => Qualification.Remark,
-                                6 => Qualification.Warning,
-                                9 => Qualification.Error,
-                                10 => Qualification.ReadOnly,
-                                17 => Qualification.Custom,
-                                18 => Qualification.Custom,
-                                _ => Qualification.Normal
-                            } : Qualification.Normal ,
-                            Colorize = o => int.TryParse( o.ToString() , out var i ) ? i switch
-                            {
-                                17 => (new ThemeColor( 150 , 100 , 120 , 0 ), new ThemeColor( 255 , 0 , 0 , 0 )),
-                                18 => (new ThemeColor( 150 , 0 , 100 , 120 ), new ThemeColor( 255 , 255 , 0 , 0 )),
-                                _ => (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 255 , 0 , 0 ))
-                            } : (new ThemeColor( 0 , 0 , 0 , 0 ), new ThemeColor( 0 , 0 , 0 , 0 )) ,
-                            Editor = ( p , c , s ) =>
-                            {
-                                this.Log().Debug( $"{p} _ {c} _ {s}" );
-                                return !string.IsNullOrWhiteSpace( s );
-                            }
-                        } ) )
-                        {
-                            hdef.Add( child );
+                            hdef.Add(child);
                         }
                     else
                         hdef.Frozen = true;
 
                     return hdef;
-                } );
+                });
         }
 
-        private void FillButton_Click( object sender , RoutedEventArgs e )
+        private void FillButton_Click(object sender, RoutedEventArgs e)
         {
             var dg = new DataGenerator();
-            HierarchyGrid.ViewModel.Set( dg.GenerateSample() );
+            HierarchyGrid.ViewModel!.Set(dg.GenerateSample());
             HierarchyGrid.ViewModel.EnableCrosshair = true;
             HierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiExtended;
 
             var pC = new PositionedCell
             {
-                ProducerDefinition = (ProducerDefinition) HierarchyGrid.ViewModel.RowsDefinitions.Leaves().Skip( 3 ).First() ,
-                ConsumerDefinition = (ConsumerDefinition) HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip( 2 ).First()
+                ProducerDefinition = (ProducerDefinition)
+                    HierarchyGrid.ViewModel.RowsDefinitions.Leaves().Skip(3).First(),
+                ConsumerDefinition = (ConsumerDefinition)
+                    HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip(2).First()
             };
 
-            HierarchyGrid.ViewModel.FocusCells = HashMap.create( (pC, new FocusCellInfo
-            {
-                BackgroundColor = ThemeColors.IndianRed.With( a: 100 ) ,
-                TooltipInfo = "Extra tooltip message" ,
-                BorderThickness = 1 ,
-                BorderColor = ThemeColors.Blue
-            }) );
+            HierarchyGrid.ViewModel.FocusCells = HashMap.create(
+                (
+                    pC,
+                    new FocusCellInfo
+                    {
+                        BackgroundColor = ThemeColors.IndianRed.With(a: 100),
+                        TooltipInfo = "Extra tooltip message",
+                        BorderThickness = 1,
+                        BorderColor = ThemeColors.Blue
+                    }
+                )
+            );
         }
 
-        private void FillFoldedGrid_Click( object sender , RoutedEventArgs e )
+        private void FillFoldedGrid_Click(object sender, RoutedEventArgs e)
         {
-            var definitions = new HierarchyDefinitions( _calendarBuilder.GetProducers() , _calendarBuilder.GetConsumers() );
+            var definitions = new HierarchyDefinitions(
+                _calendarBuilder.GetProducers(),
+                _calendarBuilder.GetConsumers()
+            );
 
             //var cb = new CalendarBuilder();
             //var definitions = new HierarchyDefinitions( cb.GetProducers() , cb.GetConsumers() );
-            FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
-            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
+            FoldedSampleHierarchyGrid.ViewModel.Set(definitions, true);
+            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths(50);
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
             FoldedSampleHierarchyGrid.ViewModel.TextAlignment = CellTextAlignment.Center;
             FoldedSampleHierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiSimple;
         }
 
-        private void FillFoldedGridNewBuilder_Click( object sender , RoutedEventArgs e )
+        private void FillFoldedGridNewBuilder_Click(object sender, RoutedEventArgs e)
         {
-            var cb = new CalendarBuilder( "#1" , "#2" , "#3" );
-            var definitions = new HierarchyDefinitions( cb.GetProducers() , cb.GetConsumers() );
-            FoldedSampleHierarchyGrid.ViewModel.Set( definitions , true );
-            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths( 50 );
+            var cb = new CalendarBuilder("#1", "#2", "#3");
+            var definitions = new HierarchyDefinitions(cb.GetProducers(), cb.GetConsumers());
+            FoldedSampleHierarchyGrid.ViewModel.Set(definitions, true);
+            FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths(50);
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
             FoldedSampleHierarchyGrid.ViewModel.TextAlignment = CellTextAlignment.Center;
             FoldedSampleHierarchyGrid.ViewModel.SelectionMode = SelectionMode.MultiSimple;
         }
 
-        private void SaveStateClick( object sender , RoutedEventArgs e )
+        private void SaveStateClick(object sender, RoutedEventArgs e)
         {
             _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
         }
 
-        private void RestoreStateClick( object sender , RoutedEventArgs e )
+        private void RestoreStateClick(object sender, RoutedEventArgs e)
         {
             FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
         }
 
-        private void RestoreStateCompareClick( object sender , RoutedEventArgs e )
+        private void RestoreStateCompareClick(object sender, RoutedEventArgs e)
         {
-            FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
+            FoldedSampleHierarchyGrid.ViewModel.SetGridState(_gridState, true);
         }
 
-        private void TestSimplifiedClick( object sender , RoutedEventArgs e )
+        private void TestSimplifiedClick(object sender, RoutedEventArgs e)
         {
-            var simples = _gridState.Selections.Map( cp => new SimplifiedCellPosition( cp ) );
+            var simples = _gridState.Selections.Map(cp => new SimplifiedCellPosition(cp));
 
-            var found = FoldedSampleHierarchyGrid.ViewModel.FindPositionedCells( simples );
-            System.Console.WriteLine( found.Length );
+            var found = FoldedSampleHierarchyGrid.ViewModel.FindPositionedCells(simples);
+            System.Console.WriteLine(found.Length);
             //FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
         }
 
-        private void DefaultThemeClick( object sender , RoutedEventArgs e )
+        private void DefaultThemeClick(object sender, RoutedEventArgs e)
         {
             TestGrid.ViewModel.Theme = HierarchyGridTheme.Default;
         }
 
-        private void OtherThemeClick( object sender , RoutedEventArgs e )
+        private void OtherThemeClick(object sender, RoutedEventArgs e)
         {
             TestGrid.ViewModel.Theme = new OtherTheme();
         }

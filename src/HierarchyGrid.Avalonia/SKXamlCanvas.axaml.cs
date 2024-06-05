@@ -1,15 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.Media.Imaging;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Skia;
 using Avalonia.Threading;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
-using System;
-using Avalonia.Skia;
 
 namespace HierarchyGrid.Avalonia
 {
@@ -18,18 +16,16 @@ namespace HierarchyGrid.Avalonia
         /// <summary>
         /// Event to externally paint the Skia surface (using the <see cref="SKCanvas"/>).
         /// </summary>
-        public event EventHandler<SKPaintSurfaceEventArgs> PaintSurface;
+        public event EventHandler<SKPaintSurfaceEventArgs>? PaintSurface;
 
-        private static readonly Vector Dpi = new Vector( 96 , 96 );
+        private static readonly Vector Dpi = new Vector(96, 96);
 
-        private bool _IgnorePixelScaling;
+        private bool _ignorePixelScaling;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SKXamlCanvas"/> class.
         /// </summary>
-        public SKXamlCanvas()
-        {
-        }
+        public SKXamlCanvas() { }
 
         /// <summary>
         /// Gets the current pixel size of the canvas.
@@ -48,10 +44,10 @@ namespace HierarchyGrid.Avalonia
         /// </summary>
         public bool IgnorePixelScaling
         {
-            get => this._IgnorePixelScaling;
+            get => this._ignorePixelScaling;
             set
             {
-                this._IgnorePixelScaling = value;
+                this._ignorePixelScaling = value;
                 this.Invalidate();
             }
         }
@@ -70,7 +66,7 @@ namespace HierarchyGrid.Avalonia
         /// </summary>
         public void Invalidate()
         {
-            Dispatcher.UIThread.Post( () => this.RepaintSurface() );
+            Dispatcher.UIThread.Post(() => this.RepaintSurface());
         }
 
         /// <summary>
@@ -78,7 +74,7 @@ namespace HierarchyGrid.Avalonia
         /// </summary>
         private void RepaintSurface()
         {
-            if ( !this.IsVisible )
+            if (!this.IsVisible)
             {
                 return;
             }
@@ -94,43 +90,44 @@ namespace HierarchyGrid.Avalonia
             // This means external code can use logical pixel size and the canvas will transform as needed.
             // Then the underlying bitmap is still at physical device pixel resolution.
 
-            if ( this.IgnorePixelScaling )
+            if (this.IgnorePixelScaling)
             {
                 this.Scale = 1;
             }
             else
             {
-                this.Scale = LayoutHelper.GetLayoutScale( this );
+                this.Scale = LayoutHelper.GetLayoutScale(this);
             }
 
-            int pixelWidth = Convert.ToInt32( this.Bounds.Width * this.Scale );
-            int pixelHeight = Convert.ToInt32( this.Bounds.Height * this.Scale );
-            this.CanvasSize = new Size( pixelWidth , pixelHeight );
+            int pixelWidth = Convert.ToInt32(this.Bounds.Width * this.Scale);
+            int pixelHeight = Convert.ToInt32(this.Bounds.Height * this.Scale);
+            this.CanvasSize = new Size(pixelWidth, pixelHeight);
 
             // WriteableBitmap does not support zero-size dimensions
             // Therefore, to avoid a crash, exit here if size is zero
-            if ( pixelWidth == 0 ||
-                pixelHeight == 0 )
+            if (pixelWidth == 0 || pixelHeight == 0)
             {
                 this.Background = null;
                 return;
             }
 
             var bitmap = new WriteableBitmap(
-                new PixelSize( pixelWidth , pixelHeight ) ,
-                Dpi ,
-                PixelFormat.Bgra8888 ,
-                AlphaFormat.Premul );
+                new PixelSize(pixelWidth, pixelHeight),
+                Dpi,
+                PixelFormat.Bgra8888,
+                AlphaFormat.Premul
+            );
 
-            using ( var framebuffer = bitmap.Lock() )
+            using (var framebuffer = bitmap.Lock())
             {
                 var info = new SKImageInfo(
-                    framebuffer.Size.Width ,
-                    framebuffer.Size.Height ,
-                    framebuffer.Format.ToSkColorType() ,
-                    SKAlphaType.Premul );
+                    framebuffer.Size.Width,
+                    framebuffer.Size.Height,
+                    framebuffer.Format.ToSkColorType(),
+                    SKAlphaType.Premul
+                );
 
-                var properties = new SKSurfaceProperties( SKPixelGeometry.RgbHorizontal );
+                var properties = new SKSurfaceProperties(SKPixelGeometry.RgbHorizontal);
 
                 // It is not too expensive to re-create the SKSurface on each re-paint.
                 // See: https://groups.google.com/g/skia-discuss/c/3c10MvyaSug/m/UOr238asCgAJ
@@ -138,82 +135,59 @@ namespace HierarchyGrid.Avalonia
                 // When creating the SKSurface it is important to specify a pixel geometry
                 // A defined pixel geometry is required for some anti-aliasing algorithms such as ClearType
                 // Also see: https://github.com/AvaloniaUI/Avalonia/pull/9558
-                using ( var surface = SKSurface.Create( info , framebuffer.Address , framebuffer.RowBytes , properties ) )
+                using (
+                    var surface = SKSurface.Create(
+                        info,
+                        framebuffer.Address,
+                        framebuffer.RowBytes,
+                        properties
+                    )
+                )
                 {
-                    if ( !this.IgnorePixelScaling )
+                    if (!this.IgnorePixelScaling)
                     {
-                        surface.Canvas.Scale( Convert.ToSingle( this.Scale ) );
+                        surface.Canvas.Scale(Convert.ToSingle(this.Scale));
                     }
 
-                    this.OnPaintSurface( new SKPaintSurfaceEventArgs( surface , info , info ) );
+                    this.OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info, info));
                 }
 
                 properties.Dispose();
             }
 
-            this.Background = new ImageBrush( bitmap )
+            this.Background = new ImageBrush(bitmap)
             {
-                AlignmentX = AlignmentX.Left ,
-                AlignmentY = AlignmentY.Top ,
+                AlignmentX = AlignmentX.Left,
+                AlignmentY = AlignmentY.Top,
                 Stretch = Stretch.Fill
             };
-
-            return;
         }
 
         /// <inheritdoc/>
-        protected override void OnLoaded( RoutedEventArgs e )
+        protected override void OnSizeChanged(SizeChangedEventArgs e)
         {
-            base.OnLoaded( e );
-
-            /*
-            var display = DisplayInformation.GetForCurrentView();
-            display.DpiChanged += OnDpiChanged;
-
-            OnDpiChanged(display);
-            */
-        }
-
-        /// <inheritdoc/>
-        protected override void OnUnloaded( RoutedEventArgs e )
-        {
-            base.OnUnloaded( e );
-
-            /*
-            var display = DisplayInformation.GetForCurrentView();
-            display.DpiChanged -= OnDpiChanged;
-            */
-        }
-
-        /// <inheritdoc/>
-        protected override void OnSizeChanged( SizeChangedEventArgs e )
-        {
-            base.OnSizeChanged( e );
-
+            base.OnSizeChanged(e);
             this.Invalidate();
-            return;
         }
 
         /// <summary>
         /// Called when the canvas should repaint its surface.
         /// </summary>
         /// <param name="e">The event args.</param>
-        protected virtual void OnPaintSurface( SKPaintSurfaceEventArgs e )
+        protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
         {
-            this.PaintSurface?.Invoke( this , e );
+            this.PaintSurface?.Invoke(this, e);
         }
 
         /// <inheritdoc/>
-        protected override void OnPropertyChanged( AvaloniaPropertyChangedEventArgs change )
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
-            base.OnPropertyChanged( change );
+            base.OnPropertyChanged(change);
 
-            if ( change.Property == IsVisibleProperty )
+            if (change.Property == IsVisibleProperty)
             {
                 this.Invalidate();
             }
-
-            return;
         }
     }
 }

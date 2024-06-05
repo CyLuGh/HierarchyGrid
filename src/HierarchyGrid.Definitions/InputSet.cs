@@ -1,5 +1,5 @@
-﻿using LanguageExt;
-using System;
+﻿using System;
+using LanguageExt;
 
 namespace HierarchyGrid.Definitions;
 
@@ -7,13 +7,12 @@ public readonly record struct InputSet
 {
     public InputSet()
     {
-        Input = null;
         Qualifier = Qualification.Unset;
         IsLocked = false;
         ProducerId = default;
     }
 
-    public object? Input { get; init; }
+    public required object Input { get; init; }
 
     /// <summary>
     /// Qualifier required by producer for all consumer results

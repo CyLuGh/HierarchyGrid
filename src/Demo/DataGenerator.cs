@@ -113,7 +113,7 @@ namespace Demo
                 foreach (var vhc in vehicles)
                     csr.Add(BuildConsumer(vhc));
 
-                csr.IsLocked = (_, __) => true;
+                csr.IsLocked = (_, _) => true;
             }
             else
             {
@@ -143,7 +143,7 @@ namespace Demo
                 o switch
                 {
                     int i => i.ToString("N0"),
-                    _ => o.ToString()
+                    _ => o.ToString() ?? string.Empty
                 };
 
             csr.ContextItems = o =>
@@ -152,14 +152,11 @@ namespace Demo
                     string region
                         =>
                         [
-                            ($"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
-                            (
-                                $"First|Second|Hide {region}",
-                                (ResultSet rs) => Console.WriteLine(rs.Result)
-                            ),
-                            ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
+                            ($"Show {region}", rs => Console.WriteLine(rs.Result)),
+                            ($"First|Second|Hide {region}", rs => Console.WriteLine(rs.Result)),
+                            ("First|Other", rs => Console.WriteLine(rs.Result))
                         ],
-                    _ => Array.Empty<(string description, Action<ResultSet> action)>()
+                    _ => []
                 };
 
             csr.Qualify = o =>
