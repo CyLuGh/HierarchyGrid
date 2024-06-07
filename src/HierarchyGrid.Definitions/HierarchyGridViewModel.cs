@@ -108,6 +108,8 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         PositionedCell Cell
     )> CellsCoordinates { get; } = new();
 
+    private HashMap<(int Row, int Column), PositionedCell> CellsCoordinatesMap { get; set; }
+
     public ConcurrentBag<(
         ElementCoordinates Coord,
         Guid Guid,
@@ -637,6 +639,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         HeadersCoordinates.Clear();
         CellsCoordinates.Clear();
         GlobalHeadersCoordinates.Clear();
+        CellsCoordinatesMap = CellsCoordinatesMap.Clear();
     }
 
     private void ClearHighlights()
@@ -779,18 +782,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         if (HoveredColumn == -1 || HoveredRow == -1)
             return Option<PositionedCell>.None;
 
-        return CellsCoordinates
-            .Select(t => Option<PositionedCell>.Some(t.Cell))
-            .FirstOrDefault(
-                o =>
-                    o.Match(
-                        c =>
-                            c.VerticalPosition == HoveredRow
-                            && c.HorizontalPosition == HoveredColumn,
-                        () => false
-                    ),
-                Option<PositionedCell>.None
-            );
+        if (CellsCoordinatesMap.IsEmpty)
+        {
+            CellsCoordinatesMap = CellsCoordinates
+                .Select(t => ((t.Cell.HorizontalPosition, t.Cell.VerticalPosition), t.Cell))
+                .ToHashMap();
+        }
+
+        return CellsCoordinatesMap.Find((HoveredColumn, HoveredRow));
     }
 
     internal void HandleMouseDown(

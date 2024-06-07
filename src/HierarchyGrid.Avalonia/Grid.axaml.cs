@@ -14,7 +14,6 @@ using HierarchyGrid.Skia;
 using LanguageExt;
 using ReactiveUI;
 using SkiaSharp;
-using SkiaSharp.Views.Desktop;
 
 namespace HierarchyGrid.Avalonia;
 
@@ -352,8 +351,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         }
     }
 
-    private static IEnumerable<MenuItem> BuildCustomItems((string, ReactiveCommand<ResultSet,System.Reactive.Unit>)[] commands,
-        ResultSet resultSet)
+    private static IEnumerable<MenuItem> BuildCustomItems(
+        (string, ReactiveCommand<ResultSet, System.Reactive.Unit>)[] commands,
+        ResultSet resultSet
+    )
     {
         var items = new Dictionary<(int, string), MenuItem>();
 
@@ -364,7 +365,12 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
             if (splits.Length == 1)
             {
-                yield return new MenuItem { Header = header, Command = command , CommandParameter = resultSet};
+                yield return new MenuItem
+                {
+                    Header = header,
+                    Command = command,
+                    CommandParameter = resultSet
+                };
             }
             else
             {
@@ -373,7 +379,14 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     if (i == splits.Length - 1 && parent != null)
                     {
-                        parent.Items.Add(new MenuItem { Header = splits[i], Command = command, CommandParameter = resultSet });
+                        parent.Items.Add(
+                            new MenuItem
+                            {
+                                Header = splits[i],
+                                Command = command,
+                                CommandParameter = resultSet
+                            }
+                        );
                     }
                     else
                     {
@@ -414,7 +427,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 r.Match(
                     c =>
                         c.ResultSet.ContextCommands.Match(
-                            cmds => BuildCustomItems(cmds,c.ResultSet).ToArray(),
+                            cmds => BuildCustomItems(cmds, c.ResultSet).ToArray(),
                             () => Array.Empty<MenuItem>()
                         ),
                     () => Array.Empty<MenuItem>()
