@@ -7,7 +7,6 @@ using Avalonia.Platform;
 using Avalonia.Skia;
 using Avalonia.Threading;
 using SkiaSharp;
-using SkiaSharp.Views.Desktop;
 
 namespace HierarchyGrid.Avalonia
 {

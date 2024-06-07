@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>default</LangVersion>
@@ -16,7 +16,7 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+    <PackageReference Include="SkiaSharp" Version="3.0.0-preview.3.1" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.167" />
   </ItemGroup>
 
