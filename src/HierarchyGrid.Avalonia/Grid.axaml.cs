@@ -14,6 +14,8 @@ using HierarchyGrid.Skia;
 using LanguageExt;
 using ReactiveUI;
 using SkiaSharp;
+using Key = Avalonia.Input.Key;
+using KeyEventArgs = Avalonia.Input.KeyEventArgs;
 
 namespace HierarchyGrid.Avalonia;
 

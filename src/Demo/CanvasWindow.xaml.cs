@@ -107,7 +107,7 @@ namespace Demo
                     {
                         Content = $"Parent {a}",
                         IsExpanded = a != 3,
-                        Consumer = o => o is int idx ? (object)(idx * a) : "Oops",
+                        Consumer = o => o is int idx ? idx * a : "Oops",
                         Formatter = o => $"Parent: {o}"
                     };
 
@@ -118,7 +118,7 @@ namespace Demo
                                 .Select(x => new ConsumerDefinition
                                 {
                                     Content = x.ToString(),
-                                    Consumer = o => o is int idx ? (object)(idx + (2 * x)) : "Oops",
+                                    Consumer = o => o is int idx ? idx + (2 * x) : "Oops",
                                     Formatter = o => $"Res: {o}",
                                     Qualify = o =>
                                         int.TryParse(o.ToString(), out var i)
@@ -210,8 +210,9 @@ namespace Demo
                 _calendarBuilder.GetConsumers()
             );
 
-            //var cb = new CalendarBuilder();
-            //var definitions = new HierarchyDefinitions( cb.GetProducers() , cb.GetConsumers() );
+            if (FoldedSampleHierarchyGrid.ViewModel is null)
+                return;
+
             FoldedSampleHierarchyGrid.ViewModel.Set(definitions, true);
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths(50);
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
@@ -223,6 +224,10 @@ namespace Demo
         {
             var cb = new CalendarBuilder("#1", "#2", "#3");
             var definitions = new HierarchyDefinitions(cb.GetProducers(), cb.GetConsumers());
+
+            if (FoldedSampleHierarchyGrid.ViewModel is null)
+                return;
+
             FoldedSampleHierarchyGrid.ViewModel.Set(definitions, true);
             FoldedSampleHierarchyGrid.ViewModel.SetColumnsWidths(50);
             FoldedSampleHierarchyGrid.ViewModel.EnableCrosshair = true;
@@ -232,36 +237,36 @@ namespace Demo
 
         private void SaveStateClick(object sender, RoutedEventArgs e)
         {
-            _gridState = FoldedSampleHierarchyGrid.ViewModel.GridState;
+            _gridState = FoldedSampleHierarchyGrid.ViewModel!.GridState;
         }
 
         private void RestoreStateClick(object sender, RoutedEventArgs e)
         {
-            FoldedSampleHierarchyGrid.ViewModel.GridState = _gridState;
+            FoldedSampleHierarchyGrid.ViewModel!.GridState = _gridState;
         }
 
         private void RestoreStateCompareClick(object sender, RoutedEventArgs e)
         {
-            FoldedSampleHierarchyGrid.ViewModel.SetGridState(_gridState, true);
+            FoldedSampleHierarchyGrid.ViewModel!.SetGridState(_gridState, true);
         }
 
         private void TestSimplifiedClick(object sender, RoutedEventArgs e)
         {
             var simples = _gridState.Selections.Map(cp => new SimplifiedCellPosition(cp));
 
-            var found = FoldedSampleHierarchyGrid.ViewModel.FindPositionedCells(simples);
-            System.Console.WriteLine(found.Length);
+            var found = FoldedSampleHierarchyGrid.ViewModel!.FindPositionedCells(simples);
+            Console.WriteLine(found.Length);
             //FoldedSampleHierarchyGrid.ViewModel.SetGridState( _gridState , true );
         }
 
         private void DefaultThemeClick(object sender, RoutedEventArgs e)
         {
-            TestGrid.ViewModel.Theme = HierarchyGridTheme.Default;
+            TestGrid.ViewModel!.Theme = HierarchyGridTheme.Default;
         }
 
         private void OtherThemeClick(object sender, RoutedEventArgs e)
         {
-            TestGrid.ViewModel.Theme = new OtherTheme();
+            TestGrid.ViewModel!.Theme = new OtherTheme();
         }
     }
 }
