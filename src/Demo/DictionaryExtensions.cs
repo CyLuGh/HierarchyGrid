@@ -14,7 +14,7 @@ namespace Demo
         )
             where TValue : new()
         {
-            if (!dictionary.TryGetValue(key, out TValue value))
+            if (!dictionary.TryGetValue(key, out TValue? value))
             {
                 value = builder != null ? builder() : new TValue();
                 dictionary.Add(key, value);

@@ -145,7 +145,7 @@ namespace Demo.AvaloniaApplication
                 o switch
                 {
                     int i => i.ToString("N0"),
-                    _ => o.ToString()
+                    _ => o.ToString() ?? string.Empty
                 };
 
             csr.ContextItems = o =>

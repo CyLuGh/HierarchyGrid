@@ -85,16 +85,15 @@ namespace HierarchyGrid
                     SKCanvas canvas = surface.Canvas;
 
                     // Find screen scale
-                    PresentationSource source = PresentationSource.FromVisual(view);
-                    view.ScreenScale = source?.CompositionTarget.TransformToDevice.M11 ?? 1;
+                    PresentationSource? source = PresentationSource.FromVisual(view);
+                    view.ScreenScale = source?.CompositionTarget?.TransformToDevice.M11 ?? 1;
 
                     await HierarchyGridDrawer.Draw(
                         viewModel,
                         canvas,
                         info.Width,
                         info.Height,
-                        view.ScreenScale,
-                        false
+                        view.ScreenScale
                     );
                 })
                 .DisposeWith(disposables);
@@ -291,7 +290,10 @@ namespace HierarchyGrid
                 .DisposeWith(disposables);
         }
 
-        private static IEnumerable<MenuItem> BuildCustomItems((string, ReactiveCommand<ResultSet,System.Reactive.Unit>)[] commands, ResultSet resultSet)
+        private static IEnumerable<MenuItem> BuildCustomItems(
+            (string, ReactiveCommand<ResultSet, Unit>)[] commands,
+            ResultSet resultSet
+        )
         {
             var items = new Dictionary<(int, string), MenuItem>();
 
@@ -302,7 +304,7 @@ namespace HierarchyGrid
 
                 if (splits.Length == 1)
                 {
-                    yield return new MenuItem { Header = header, Command = command};
+                    yield return new MenuItem { Header = header, Command = command };
                 }
                 else
                 {
@@ -312,7 +314,12 @@ namespace HierarchyGrid
                         if (i == splits.Length - 1 && parent != null)
                         {
                             parent.Items.Add(
-                                new MenuItem { Header = splits[i], Command = command, CommandParameter = resultSet }
+                                new MenuItem
+                                {
+                                    Header = splits[i],
+                                    Command = command,
+                                    CommandParameter = resultSet
+                                }
                             );
                         }
                         else
@@ -354,7 +361,7 @@ namespace HierarchyGrid
                     r.Match(
                         c =>
                             c.ResultSet.ContextCommands.Match(
-                                cmds => BuildCustomItems(cmds,c.ResultSet).ToArray(),
+                                cmds => BuildCustomItems(cmds, c.ResultSet).ToArray(),
                                 () => Array.Empty<MenuItem>()
                             ),
                         () => Array.Empty<MenuItem>()
@@ -513,7 +520,7 @@ namespace HierarchyGrid
                                             var content = viewModel.EditionContent;
                                             viewModel.EditedCell = Option<PositionedCell>.None;
                                             Observable
-                                                .Return(editor(content ?? string.Empty))
+                                                .Return(editor(content))
                                                 .InvokeCommand(viewModel.DrawGridCommand);
                                             break;
                                     }
@@ -673,7 +680,7 @@ namespace HierarchyGrid
                         .Sum()
                 ) ?? 0d;
             var height = viewModel.ColumnsHeadersHeight?.LastOrDefault(0d) ?? 0d;
-            for (int i = 0; i < viewModel.RowsHeadersWidth?.Length; i++)
+            for (int i = 0; i < viewModel.RowsHeadersWidth.Length; i++)
             {
                 var currentIndex = i;
                 var width = viewModel.RowsHeadersWidth[currentIndex];
