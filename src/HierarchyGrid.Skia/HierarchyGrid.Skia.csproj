@@ -16,11 +16,11 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="3.0.0-preview.3.1" />
-    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.0.0-preview.3.1" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.0.0-preview.3.1" />
-    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.0.0-preview.3.1" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.0.0-preview.3.1" />
+    <PackageReference Include="SkiaSharp" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.0.0-preview.4.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.0.0-preview.4.1" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.167" />
   </ItemGroup>
 
