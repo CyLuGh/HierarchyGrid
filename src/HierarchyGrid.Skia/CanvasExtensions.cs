@@ -567,11 +567,11 @@ namespace HierarchyGrid.Skia
                 }
             );
             TextDrawer.MaxHeight = (float)((height - 10) * screenScale);
-            TextDrawer.MaxWidth = (float)((width - 22) * screenScale);
+            TextDrawer.MaxWidth = (float)((width - 24) * screenScale);
 
             TextDrawer.Paint(
                 canvas,
-                new SKPoint((float)((left + 20) * screenScale), (float)((top + 6) * screenScale)),
+                new SKPoint((float)((left + 22) * screenScale), (float)((top + 6) * screenScale)),
                 TextPaintOptions
             );
             var coordinates = new ElementCoordinates(left, top, left + width, top + height);
@@ -809,9 +809,10 @@ namespace HierarchyGrid.Skia
             viewModel.CellsCoordinates.Add((new(cell), cell));
         }
 
-        private static TextBlock TextDrawer { get; } = new TextBlock();
+        private static TextBlock TextDrawer { get; } = new();
         private static TextPaintOptions TextPaintOptions { get; } =
             new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
-        private const float TextSize = 14f;
+
+        private const float TextSize = 15f;
     }
 }
