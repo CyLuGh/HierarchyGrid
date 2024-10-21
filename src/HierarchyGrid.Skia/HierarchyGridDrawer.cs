@@ -67,14 +67,25 @@ namespace HierarchyGrid.Skia
                 paint.IsAntialias = true;
                 paint.Color = theme.ForegroundColor;
 
+                // Skia 2
+                paint.TextSize = 64f;
+                paint.TextAlign = SKTextAlign.Center;
                 canvas.DrawText(
                     viewModel.StatusMessage ?? "NO MESSAGE",
                     width / 2,
                     height / 2,
-                    SKTextAlign.Center,
-                    font,
                     paint
                 );
+
+                // TODO Skia 3
+                //canvas.DrawText(
+                //    viewModel.StatusMessage ?? "NO MESSAGE",
+                //    width / 2,
+                //    height / 2,
+                //    SKTextAlign.Center,
+                //    font,
+                //    paint
+                //);
             }
 
             canvas.Flush();
