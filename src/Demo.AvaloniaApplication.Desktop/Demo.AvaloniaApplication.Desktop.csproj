@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="11.1.4" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
