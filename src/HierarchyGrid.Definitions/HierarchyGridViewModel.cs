@@ -895,7 +895,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         }
         else if (isShiftPressed && SelectedCells.Count > 0)
         {
-            var lastSelection = SelectedCells.Last();
+            var lastSelection = SelectedCells[^1];
             var rows = Enumerable
                 .Range(
                     Math.Min(lastSelection.VerticalPosition, cell.VerticalPosition),
