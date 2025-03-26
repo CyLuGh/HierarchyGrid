@@ -14,8 +14,35 @@ namespace HierarchyGrid.Definitions
 
     public partial class HierarchyGridViewModel
     {
+        /// <summary>
+        /// Override the clipboard content builder for structured output, use tab separated format if not defined.
+        /// Func parameters are rows then columns.
+        /// </summary>
+        public Option<
+            Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string>
+        > CreateClipboardStructuredContentOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard content builder for flat output, use tab separated format if not defined.
+        /// Func parameters are rows then columns.
+        /// </summary>
+        public Option<
+            Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string>
+        > CreateClipboardFlatContentOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for cells output, uses ResultSet.Result if not defined.
+        /// </summary>
         public Option<Func<ResultSet, string>> ClipboardFillerOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for column headers, uses HierarchyDefinition.Content if not defined.
+        /// </summary>
         public Option<Func<HierarchyDefinition, string>> ClipboardColumnHeaderOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for row headers, uses HierarchyDefinition.Content if not defined.
+        /// </summary>
         public Option<Func<HierarchyDefinition, string>> ClipboardRowHeaderOverride { get; set; }
 
         private string FillClipboardContent(Option<ResultSet> option) =>
@@ -43,8 +70,14 @@ namespace HierarchyGrid.Definitions
 
             Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string> builder =
                 mode == CopyMode.Structure
-                    ? CreateClipboardStructuredContent
-                    : CreateClipboardFlatContent;
+                    ? CreateClipboardStructuredContentOverride.Match(
+                        f => f,
+                        () => CreateClipboardStructuredContent
+                    )
+                    : CreateClipboardFlatContentOverride.Match(
+                        f => f,
+                        () => CreateClipboardFlatContent
+                    );
 
             return builder(rows, columns);
         }
