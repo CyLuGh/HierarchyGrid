@@ -164,15 +164,17 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public Guid HoveredElementId { get; private set; }
 
-    public Seq<HierarchyDefinition> ColumnsDefinitions =>
-        IsTransposed
-            ? Producers.Cast<HierarchyDefinition>()
-            : Consumers.Cast<HierarchyDefinition>();
+    public Seq<HierarchyDefinition> ColumnsDefinitions
+    {
+        [ObservableAsProperty]
+        get;
+    }
 
-    public Seq<HierarchyDefinition> RowsDefinitions =>
-        IsTransposed
-            ? Consumers.Cast<HierarchyDefinition>()
-            : Producers.Cast<HierarchyDefinition>();
+    public Seq<HierarchyDefinition> RowsDefinitions
+    {
+        [ObservableAsProperty]
+        get;
+    }
 
     public HierarchyGridState GetGridState() => new(this);
 
@@ -321,6 +323,26 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             TriggerGridDrawing(disposables);
             ManageSelectionChange(disposables);
         });
+
+        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
+            .Select(t =>
+            {
+                var (consumers, producers, isTransposed) = t;
+                return isTransposed
+                    ? producers.Cast<HierarchyDefinition>()
+                    : consumers.Cast<HierarchyDefinition>();
+            })
+            .ToPropertyEx(this, x => x.ColumnsDefinitions);
+
+        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
+            .Select(t =>
+            {
+                var (consumers, producers, isTransposed) = t;
+                return isTransposed
+                    ? consumers.Cast<HierarchyDefinition>()
+                    : producers.Cast<HierarchyDefinition>();
+            })
+            .ToPropertyEx(this, x => x.RowsDefinitions);
     }
 
     private void ManageEditionProcess(CompositeDisposable disposables)
