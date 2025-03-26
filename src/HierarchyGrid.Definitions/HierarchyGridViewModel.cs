@@ -22,10 +22,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public bool IsValid => RowsHeadersWidth.Length > 0 && ColumnsHeadersHeight.Length > 0;
 
     [Reactive]
-    internal Seq<ProducerDefinition> Producers { get; private set; }
+    public Seq<ProducerDefinition> Producers { get; private set; }
 
     [Reactive]
-    internal Seq<ConsumerDefinition> Consumers { get; private set; }
+    public Seq<ConsumerDefinition> Consumers { get; private set; }
 
     public bool HasData
     {
