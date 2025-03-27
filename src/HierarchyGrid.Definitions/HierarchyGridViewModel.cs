@@ -586,7 +586,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         var command = ReactiveCommand.CreateFromTask(
             async (CopyMode mode) =>
             {
-                var content = CreateClipboardContent(mode);
+                var content = await CreateClipboardContent(mode).ConfigureAwait(false);
                 await FillClipboardInteraction.Handle(content);
             }
         );

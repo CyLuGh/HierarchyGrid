@@ -116,4 +116,21 @@ public static class HierarchyDefinitionExtensions
         foreach (var definition in definitions)
             definition.FoldAll();
     }
+
+    /// <summary>
+    /// Get definitions position/index on its level
+    /// </summary>
+    public static int GetRelativePosition<T>(this IEnumerable<T> definitions, T definition)
+        where T : HierarchyDefinition
+    {
+        if (definition.Parent is null)
+            return definitions
+                .Roots()
+                .Where(d => d.Position < definition.Position)
+                .Sum(d => d.Count());
+
+        return definition
+                .Parent.Children.Where(d => d.Position < definition.Position)
+                .Sum(d => d.Count()) + definitions.GetRelativePosition(definition.Parent);
+    }
 }

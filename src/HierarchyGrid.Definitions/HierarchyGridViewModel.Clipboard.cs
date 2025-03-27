@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
 using LanguageExt;
 
 namespace HierarchyGrid.Definitions
@@ -63,7 +64,7 @@ namespace HierarchyGrid.Definitions
                 () => hdef.Content?.ToString() ?? string.Empty
             );
 
-        private string CreateClipboardContent(CopyMode mode)
+        private Task<string> CreateClipboardContent(CopyMode mode)
         {
             var rows = GetRows(mode);
             var columns = GetColumns(mode);
@@ -79,7 +80,7 @@ namespace HierarchyGrid.Definitions
                         () => CreateClipboardFlatContent
                     );
 
-            return builder(rows, columns);
+            return Task.Run(() => builder(rows, columns));
         }
 
         private Seq<HierarchyDefinition> GetRows(CopyMode mode)
@@ -203,10 +204,22 @@ namespace HierarchyGrid.Definitions
                     sb.Append(separator);
 
                 var currentLevelColumns = columns.Where(c => c.Level == currentLevel);
+                int currentPosition = 0;
                 foreach (var column in currentLevelColumns)
                 {
+                    var columnPosition = columns.GetRelativePosition(column);
+
+                    while (currentPosition < columnPosition)
+                    {
+                        sb.Append(separator);
+                        currentPosition++;
+                    }
+
                     for (int _ = 0; _ < column.Span; _++)
+                    {
                         sb.Append(FillClipboardColumnHeaderContent(column)).Append(separator);
+                        currentPosition++;
+                    }
                 }
 
                 sb.Length--;

@@ -201,30 +201,6 @@ namespace Demo
                     }
                 )
             );
-
-            HierarchyGrid.ViewModel.ClipboardFillerOverride = Option<Func<ResultSet, string>>.Some(
-                (ResultSet rs) =>
-                {
-                    return "blue";
-                }
-            );
-
-            HierarchyGrid.ViewModel.ClipboardColumnHeaderOverride = Option<
-                Func<HierarchyDefinition, string>
-            >.Some(_ => "col");
-
-            HierarchyGrid.ViewModel.ClipboardRowHeaderOverride = Option<
-                Func<HierarchyDefinition, string>
-            >.Some(_ => "row");
-
-            HierarchyGrid.ViewModel.CreateClipboardFlatContentOverride = Option<
-                Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string>
-            >.Some(
-                (rows, columns) =>
-                {
-                    return "haha!";
-                }
-            );
         }
 
         private void FillFoldedGrid_Click(object sender, RoutedEventArgs e)

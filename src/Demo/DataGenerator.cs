@@ -30,7 +30,9 @@ namespace Demo
             _vehicles = new Dictionary<string, string[]>
             {
                 { "Without motors", new[] { "Bicycles", "Scooters" } },
-                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } }
+                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } },
+                { "Bicycles", new[] { "Regular", "E-bikes" } },
+                { "Cars", new[] { "Petrol", "Hybrid", "Electric" } }
             };
         }
 
