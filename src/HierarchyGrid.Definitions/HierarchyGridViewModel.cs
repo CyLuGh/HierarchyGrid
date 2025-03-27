@@ -283,6 +283,12 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public Interaction<string, RxUnit> FillClipboardInteraction { get; } =
         new(RxApp.MainThreadScheduler);
 
+    public bool IsCopyingToClipboard
+    {
+        [ObservableAsProperty]
+        get;
+    }
+
     public ReactiveCommand<bool, RxUnit> ToggleStatesCommand { get; }
 
     public RxCommand ToggleCrosshairCommand { get; }
@@ -322,6 +328,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             HandleTooltipDisplay(disposables);
             TriggerGridDrawing(disposables);
             ManageSelectionChange(disposables);
+
+            CopyToClipboardCommand
+                .IsExecuting.ToPropertyEx(
+                    this,
+                    x => x.IsCopyingToClipboard,
+                    scheduler: RxApp.MainThreadScheduler
+                )
+                .DisposeWith(disposables);
         });
 
         this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
@@ -590,6 +604,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 await FillClipboardInteraction.Handle(content);
             }
         );
+
         command.ThrownExceptions.SubscribeSafe(e => this.Log().Error(e));
         return command;
     }

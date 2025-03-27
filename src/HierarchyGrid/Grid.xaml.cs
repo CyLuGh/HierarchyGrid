@@ -53,6 +53,14 @@ namespace HierarchyGrid
         {
             ApplyDependencyProperties(view, viewModel);
 
+            view.OneWayBind(
+                    viewModel,
+                    vm => vm.IsCopyingToClipboard,
+                    v => v.BorderBusy.Visibility,
+                    b => b ? Visibility.Visible : Visibility.Collapsed
+                )
+                .DisposeWith(disposables);
+
             viewModel
                 .DrawGridInteraction.RegisterHandler(ctx =>
                 {
