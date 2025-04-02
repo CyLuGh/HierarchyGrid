@@ -5,6 +5,7 @@ on:
     tags:
       - 0.*
       - 2.*
+      - 3.*
 env:
   configuration: Release
 
