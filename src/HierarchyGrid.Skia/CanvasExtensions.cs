@@ -22,6 +22,11 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
+            // Don't draw if structure doesn't allow it
+            if ( viewModel.ColumnsHeadersHeight.Length == 1 ||
+                 viewModel.RowsHeadersWidth.Length == 1 )
+                return;
+            
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
             var colDepth = viewModel.ColumnsDefinitions.TotalDepth();
 
