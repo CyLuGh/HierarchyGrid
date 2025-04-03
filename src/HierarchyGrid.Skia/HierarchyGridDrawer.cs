@@ -32,15 +32,18 @@ namespace HierarchyGrid.Skia
                 var previousGlobalCoordinates = viewModel
                     .GlobalHeadersCoordinates.Select(t => (t.Coord, t.Guid))
                     .ToList();
+                
                 viewModel.ClearCoordinates();
 
                 canvas.DrawGlobalHeaders(viewModel, theme, previousGlobalCoordinates, screenScale);
+                
                 canvas.DrawCells(
                     viewModel,
                     theme,
                     viewModel.GetDrawnCells(width, height, invalidate),
                     screenScale
                 );
+                
                 canvas.DrawColumnHeaders(
                     viewModel,
                     theme,
@@ -49,6 +52,7 @@ namespace HierarchyGrid.Skia
                     ref headerCount,
                     screenScale
                 );
+                
                 canvas.DrawRowHeaders(
                     viewModel,
                     theme,

@@ -23,8 +23,8 @@ namespace HierarchyGrid.Skia
         )
         {
             // Don't draw if structure doesn't allow it
-            if ( viewModel.ColumnsHeadersHeight.Length == 1 ||
-                 viewModel.RowsHeadersWidth.Length == 1 )
+            if ( viewModel.ColumnsHeadersHeight.Length <= 1 ||
+                 viewModel.RowsHeadersWidth.Length <= 1 )
                 return;
             
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();

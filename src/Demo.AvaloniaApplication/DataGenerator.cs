@@ -18,7 +18,10 @@ namespace Demo.AvaloniaApplication
 
         static DataGenerator()
         {
-            _regions = new Dictionary<string, string[]>
+            _regions = new Dictionary<string, string[]> {{"Europe", []}, {"Asia",[]}};
+            _vehicles = new Dictionary<string, string[]> {{"With motors", []}};
+            
+            /*_regions = new Dictionary<string, string[]>
             {
                 {
                     "Europe",
@@ -33,7 +36,7 @@ namespace Demo.AvaloniaApplication
             {
                 { "Without motors", new[] { "Bicycles", "Scooters" } },
                 { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } }
-            };
+            };*/
         }
 
         public DataGenerator()
@@ -79,7 +82,7 @@ namespace Demo.AvaloniaApplication
             new[]
             {
                 BuildProducer("Europe"),
-                BuildProducer("North America"),
+                //BuildProducer("North America"),
                 BuildProducer("Asia"),
             };
 
@@ -104,7 +107,8 @@ namespace Demo.AvaloniaApplication
         }
 
         private IEnumerable<ConsumerDefinition> BuildConsumers() =>
-            new[] { BuildConsumer("With motors"), BuildConsumer("Without motors") };
+            new[] { BuildConsumer("With motors")
+                /*, BuildConsumer("Without motors")*/ };
 
         private ConsumerDefinition BuildConsumer(string vehicle)
         {
