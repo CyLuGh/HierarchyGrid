@@ -790,7 +790,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
                     var resultSet = ResultSets.FindOrAdd(
                         (producer?.Guid ?? Guid.Empty, consumer?.Guid ?? Guid.Empty),
-                        () => HierarchyDefinition.Resolve(producer!, consumer!)
+                        () => HierarchyDefinition.Resolve(producer, consumer)
                     );
 
                     var pCell = new PositionedCell

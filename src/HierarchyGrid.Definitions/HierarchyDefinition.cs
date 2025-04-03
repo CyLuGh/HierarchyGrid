@@ -314,10 +314,13 @@ public abstract class HierarchyDefinition
 
     public override string ToString() => string.Join('.', Path.Select(o => o.Content));
 
-    public static ResultSet Resolve(ProducerDefinition producer, ConsumerDefinition consumer)
+    public static ResultSet Resolve(ProducerDefinition? producer, ConsumerDefinition? consumer)
     {
+        if(producer is null || consumer is null)
+            return ResultSet.Default;
+        
         var input = producer.Produce();
-        var rs = input.Some(o => consumer.Process(o)).None(() => ResultSet.Default);
+        var rs = input.Some(consumer.Process).None(() => ResultSet.Default);
 
         return rs;
     }

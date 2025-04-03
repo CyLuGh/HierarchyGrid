@@ -67,11 +67,11 @@ namespace HierarchyGrid.Skia
                 paint.IsAntialias = true;
                 paint.Color = theme.ForegroundColor;
 
-                // TODO Skia 3
+                // TODO: Check under MacOS
                 canvas.DrawText(
                     viewModel.StatusMessage ?? "NO MESSAGE",
-                    width / 2,
-                    height / 2,
+                    width / 4,
+                    height / 4,
                     SKTextAlign.Center,
                     font,
                     paint

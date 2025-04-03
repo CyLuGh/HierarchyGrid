@@ -6,17 +6,8 @@
              xmlns:local="using:HierarchyGrid.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="HierarchyGrid.Avalonia.Grid">
-  <Grid>
-    <Grid.RowDefinitions>
-      <RowDefinition />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition />
-      <ColumnDefinition Width="Auto" />
-    </Grid.ColumnDefinitions>
-
-    <local:SKXamlCanvas x:Name="SkiaElement" />
+  <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
+      <local:SKXamlCanvas x:Name="SkiaElement" />
 
     <Canvas x:Name="Canvas"
             Grid.Row="0"
