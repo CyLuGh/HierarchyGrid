@@ -74,8 +74,8 @@ namespace HierarchyGrid.Skia
                 // TODO: Check under MacOS
                 canvas.DrawText(
                     viewModel.StatusMessage ?? "NO MESSAGE",
-                    width / 4,
-                    height / 4,
+                    (float)screenScale * width / 2,
+                    (float)screenScale * height / 2,
                     SKTextAlign.Center,
                     font,
                     paint

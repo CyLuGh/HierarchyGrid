@@ -212,12 +212,14 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         HierarchyGridViewModel viewModel
     )
     {
-        SKImageInfo info = args.Info;
         SKSurface surface = args.Surface;
         SKCanvas canvas = surface.Canvas;
+        
+        var width = canvas.LocalClipBounds.Width;
+        var height = canvas.LocalClipBounds.Height;
 
         var scale = 1d;
-        await HierarchyGridDrawer.Draw(viewModel, canvas, info.Width, info.Height, scale, false);
+        await HierarchyGridDrawer.Draw(viewModel, canvas, width, height, scale, false);
     }
 
     private static void SkiaElement_PointerMove(
