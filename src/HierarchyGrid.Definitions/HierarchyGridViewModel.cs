@@ -616,17 +616,21 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         Producers = hierarchyDefinitions.Producers;
         Consumers = hierarchyDefinitions.Consumers;
 
+        // TODO: change if transposed is implemented
+        var rowDefinitions = Producers;
+        var columnDefinitions = Consumers;
+
         RowsHeadersWidth = Enumerable
-            .Range(0, RowsDefinitions.TotalDepth())
+            .Range(0, rowDefinitions.TotalDepth())
             .Select(_ => DefaultHeaderWidth)
             .ToArray();
 
         ColumnsHeadersHeight = Enumerable
-            .Range(0, ColumnsDefinitions.TotalDepth())
+            .Range(0, columnDefinitions.TotalDepth())
             .Select(_ => DefaultHeaderHeight)
             .ToArray();
 
-        var columnsCount = ColumnsDefinitions.TotalCount(true);
+        var columnsCount = columnDefinitions.TotalCount(true);
         if (!preserveSizes || columnsCount != ColumnsWidths.Count)
         {
             ColumnsWidths.Clear();
@@ -634,7 +638,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 ColumnsWidths.Add(x, DefaultColumnWidth);
         }
 
-        var rowsCount = RowsDefinitions.TotalCount(true);
+        var rowsCount = rowDefinitions.TotalCount(true);
         if (!preserveSizes || rowsCount != RowsHeights.Count)
         {
             RowsHeights.Clear();
