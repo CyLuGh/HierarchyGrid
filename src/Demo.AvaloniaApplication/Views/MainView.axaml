@@ -49,6 +49,10 @@
                   Content="Switch theme"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonToggleRowHeight"
+                  Content="Toggle row heights"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
         </UniformGrid>
         <hierarchyGrid:Grid x:Name="HierarchyGridTest" 
                             DefaultColumnWidth="50"

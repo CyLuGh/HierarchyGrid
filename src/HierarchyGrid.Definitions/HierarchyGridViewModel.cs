@@ -27,18 +27,27 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public Seq<ConsumerDefinition> Consumers { get; private set; }
 
+    /// <summary>
+    /// Indicates whether the grid has at least one producer and one consumer definition
+    /// </summary>
     public bool HasData
     {
         [ObservableAsProperty]
         get;
     }
 
+    /// <summary>
+    /// Message displayed when the grid has no data
+    /// </summary>
     [Reactive]
     public string? StatusMessage { get; set; }
 
     [Reactive]
     public string EditionContent { get; set; }
 
+    /// <summary>
+    /// Stores the mapping of producer and consumer pairs to their associated <see cref="ResultSet"/> objects.
+    /// </summary>
     private AtomHashMap<(Guid, Guid), ResultSet> ResultSets { get; } =
         Prelude.AtomHashMap<(Guid, Guid), ResultSet>();
 
@@ -144,10 +153,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public bool EnableCrosshair { get; set; }
 
     [Reactive]
-    public int HoveredColumn { get; set; } = -1;
+    public int HoveredColumn { get; private set; } = -1;
 
     [Reactive]
-    public int HoveredRow { get; set; } = -1;
+    public int HoveredRow { get; private set; } = -1;
 
     [Reactive]
     public SelectionMode SelectionMode { get; set; }
@@ -409,7 +418,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         this.WhenAnyValue(x => x.Producers)
             .Select(seq => seq.Length > 0)
             .CombineLatest(this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0))
-            .Select(t => t.First || t.Second)
+            .Select(t => t is { First: true, Second: true })
             .ObserveOn(RxApp.MainThreadScheduler)
             .Do(b =>
             {
@@ -520,6 +529,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .DisposeWith(disposables);
     }
 
+    /// <summary>
+    /// Registers default interaction handlers for the specified <see cref="HierarchyGridViewModel"/> instance.
+    /// Those interactions do nothing but prevent exceptions if called without real implementation.
+    /// </summary>
     private static void RegisterDefaultInteractions(HierarchyGridViewModel @this)
     {
         @this.DrawGridInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
@@ -696,8 +709,19 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         }
     }
 
+    /// <summary>
+    /// Represents the set of cells currently rendered on the grid, determined by the viewport's dimensions
+    /// and the scale or offsets applied.
+    /// </summary>
     public Seq<PositionedCell> DrawnCells { get; private set; }
 
+    /// <summary>
+    /// Retrieves the collection of cells that are currently drawn within the specified dimensions and updates their state based on the provided parameters.
+    /// </summary>
+    /// <param name="width">The width of the area for which drawn cells are being retrieved.</param>
+    /// <param name="height">The height of the area for which drawn cells are being retrieved.</param>
+    /// <param name="invalidate">Specifies whether the existing drawn cells should be invalidated and recomputed.</param>
+    /// <returns>A sequence of <see cref="PositionedCell"/> instances representing the cells currently drawn within the specified area.</returns>
     public Seq<PositionedCell> GetDrawnCells(double width, double height, bool invalidate)
     {
         DrawnCells = GetDrawnCells(
@@ -711,6 +735,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         return DrawnCells;
     }
 
+    /// <summary>
+    /// Retrieves a sequence of cells based on the current viewport's width, height, horizontal offset, vertical offset, and scale.
+    /// Optionally invalidates the cached results before calculation.
+    /// </summary>
+    /// <param name="width">The width of the viewport.</param>
+    /// <param name="height">The height of the viewport.</param>
+    /// <param name="invalidate">A boolean indicating whether to invalidate cached cell data before recalculating.</param>
+    /// <returns>A sequence of <see cref="PositionedCell"/> instances representing the currently visible cells.</returns>
     private Seq<PositionedCell> GetDrawnCells(
         int hIndex,
         int vIndex,
@@ -720,38 +752,6 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         bool invalidate
     )
     {
-        static IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>(
-            int startIndex,
-            double offset,
-            double maxSpace,
-            Dictionary<int, double> sizes,
-            Seq<T> definitions
-        )
-            where T : HierarchyDefinition
-        {
-            int index = 0;
-            double space = offset;
-
-            var frozenDefinitions = definitions.Where(x => x.Frozen);
-
-            int cnt = 0;
-            foreach (var frozen in frozenDefinitions)
-            {
-                var size = sizes[frozen.Position];
-                yield return (space, size, cnt++, frozen);
-                index++;
-                space += size;
-            }
-
-            while (space < maxSpace && startIndex + index < definitions.Length)
-            {
-                var size = sizes[startIndex + index];
-                yield return (space, size, startIndex + index, definitions[startIndex + index]);
-                space += size;
-                index++;
-            }
-        }
-
         if (invalidate)
             ResultSets.Clear();
 
@@ -807,7 +807,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                         VerticalPosition = r.index,
                         ConsumerDefinition = consumer!,
                         ProducerDefinition = producer!,
-                        ResultSet = resultSet
+                        ResultSet = resultSet,
                     };
 
                     return pCell;
@@ -816,6 +816,57 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .ToSeq();
 
         return pCells.Strict();
+    }
+
+    /// <summary>
+    /// Finds and retrieves a sequence of cells with their corresponding coordinates, sizes, indices,
+    /// and definitions based on the specified start index, offset, maximum space, sizes,
+    /// and hierarchy definitions.
+    /// </summary>
+    /// <typeparam name="T">The type of hierarchy definition, which must derive from <see cref="HierarchyDefinition"/>.</typeparam>
+    /// <param name="startIndex">The starting index for searching cells.</param>
+    /// <param name="offset">The initial coordinate offset for positioning cells.</param>
+    /// <param name="maxSpace">The maximum available space for cells.</param>
+    /// <param name="sizes">A dictionary mapping indices to cell sizes.</param>
+    /// <param name="definitions">A sequence of hierarchy definitions to be processed.</param>
+    /// <returns>An enumerable collection of tuples containing cell coordinates, sizes, indices, and definitions.</returns>
+    private static IEnumerable<(double coord, double size, int index, T definition)> FindCells<T>(
+        int startIndex,
+        double offset,
+        double maxSpace,
+        Dictionary<int, double> sizes,
+        Seq<T> definitions
+    )
+        where T : HierarchyDefinition
+    {
+        int index = 0;
+        double space = offset;
+
+        int cnt = 0;
+
+        var frozenDefinitions = definitions.Where(x => x.Frozen);
+
+        /* List frozen definitions first */
+        foreach (var frozen in frozenDefinitions)
+        {
+            var size = sizes[frozen.Position];
+            yield return (space, size, cnt++, frozen);
+            index++;
+            space += size;
+
+            /* This would mean the grid has more frozen elements than available space */
+            if (space >= maxSpace)
+                break;
+        }
+
+        /* List definitions until we run out of space, or we've reached the end of available definitions */
+        while (space < maxSpace && startIndex + index < definitions.Length)
+        {
+            var size = sizes[startIndex + index];
+            yield return (space, size, startIndex + index, definitions[startIndex + index]);
+            space += size;
+            index++;
+        }
     }
 
     public Option<PositionedCell> FindHoveredCell()
