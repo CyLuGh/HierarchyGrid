@@ -174,11 +174,11 @@ public class MainViewModel : ViewModelBase
                                             ),
                                         }
                                         : (new ThemeColor(0, 0, 0, 0), new ThemeColor(0, 0, 0, 0)),
-                                Editor = (p, c, s) =>
+                                /*Editor = (p, c, s) =>
                                 {
                                     this.Log().Debug($"{p} _ {c} _ {s}");
                                     return !string.IsNullOrWhiteSpace(s);
-                                },
+                                },*/
                             })
                     )
                     {

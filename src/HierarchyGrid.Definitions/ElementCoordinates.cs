@@ -2,6 +2,10 @@
 
 namespace HierarchyGrid.Definitions;
 
+/// <summary>
+/// Represents the coordinates of an element with boundaries defined by its left, top, right, and bottom edges.
+/// This struct provides methods to calculate dimensions and determine spatial relationships.
+/// </summary>
 public readonly record struct ElementCoordinates
 {
     public double Left { get; init; }
@@ -20,8 +24,7 @@ public readonly record struct ElementCoordinates
             cell.Top + cell.Height
         );
 
-    public bool Contains(double x, double y) =>
-        Left <= x && x <= Right && Top <= y && y <= Bottom;
+    public bool Contains(double x, double y) => Left <= x && x <= Right && Top <= y && y <= Bottom;
 
     public double Height => Math.Abs(Top - Bottom);
     public double Width => Math.Abs(Right - Left);
