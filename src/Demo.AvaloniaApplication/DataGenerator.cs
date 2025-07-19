@@ -21,7 +21,7 @@ namespace Demo.AvaloniaApplication
             _regions = new Dictionary<string, string[]> { { "Europe", [] }, { "Asia", [] } };
             _vehicles = new Dictionary<string, string[]> { { "With motors", [] } };
 
-            /*_regions = new Dictionary<string, string[]>
+            _regions = new Dictionary<string, string[]>
             {
                 {
                     "Europe",
@@ -29,14 +29,14 @@ namespace Demo.AvaloniaApplication
                 },
                 { "Benelux", new[] { "Belgium", "Netherlands", "Luxemburg" } },
                 { "North America", new[] { "USA", "Canada", "Mexico" } },
-                { "Asia", new[] { "Japan", "China", "Thailand", "Korea" } }
+                { "Asia", new[] { "Japan", "China", "Thailand", "Korea" } },
             };
 
             _vehicles = new Dictionary<string, string[]>
             {
                 { "Without motors", new[] { "Bicycles", "Scooters" } },
-                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } }
-            };*/
+                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } },
+            };
         }
 
         public DataGenerator()
@@ -82,7 +82,7 @@ namespace Demo.AvaloniaApplication
             new[]
             {
                 BuildProducer("Europe"),
-                //BuildProducer("North America"),
+                BuildProducer("North America"),
                 BuildProducer("Asia"),
             };
 
