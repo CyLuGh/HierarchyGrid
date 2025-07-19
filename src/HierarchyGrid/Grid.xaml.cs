@@ -326,7 +326,7 @@ namespace HierarchyGrid
                                 {
                                     Header = splits[i],
                                     Command = command,
-                                    CommandParameter = resultSet
+                                    CommandParameter = resultSet,
                                 }
                             );
                         }
@@ -391,14 +391,14 @@ namespace HierarchyGrid
                     Header = "Enable crosshair",
                     IsChecked = viewModel.EnableCrosshair,
                     IsCheckable = true,
-                    Command = viewModel.ToggleCrosshairCommand
+                    Command = viewModel.ToggleCrosshairCommand,
                 }
             );
             highlightsMenuItem.Items.Add(
                 new MenuItem
                 {
                     Header = "Clear highlights",
-                    Command = viewModel.ClearHighlightsCommand
+                    Command = viewModel.ClearHighlightsCommand,
                 }
             );
 
@@ -408,7 +408,7 @@ namespace HierarchyGrid
                 new MenuItem
                 {
                     Header = "Clear selection",
-                    Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear())
+                    Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear()),
                 }
             );
 
@@ -417,7 +417,7 @@ namespace HierarchyGrid
                 {
                     Header = "Expand all",
                     Command = viewModel.ToggleStatesCommand,
-                    CommandParameter = true
+                    CommandParameter = true,
                 }
             );
             contextMenu.Items.Add(
@@ -425,7 +425,7 @@ namespace HierarchyGrid
                 {
                     Header = "Collapse all",
                     Command = viewModel.ToggleStatesCommand,
-                    CommandParameter = false
+                    CommandParameter = false,
                 }
             );
             //contextMenu.Items.Add( new MenuItem
@@ -444,7 +444,7 @@ namespace HierarchyGrid
                 {
                     Header = "with tree structure",
                     Command = viewModel.CopyToClipboardCommand,
-                    CommandParameter = CopyMode.Structure
+                    CommandParameter = CopyMode.Structure,
                 }
             );
             copyMenuItem.Items.Add(
@@ -452,7 +452,7 @@ namespace HierarchyGrid
                 {
                     Header = "without tree structure",
                     Command = viewModel.CopyToClipboardCommand,
-                    CommandParameter = CopyMode.Flat
+                    CommandParameter = CopyMode.Flat,
                 }
             );
             copyMenuItem.Items.Add(
@@ -460,7 +460,7 @@ namespace HierarchyGrid
                 {
                     Header = "highlighted elements",
                     Command = viewModel.CopyToClipboardCommand,
-                    CommandParameter = CopyMode.Highlights
+                    CommandParameter = CopyMode.Highlights,
                 }
             );
             copyMenuItem.Items.Add(
@@ -468,7 +468,7 @@ namespace HierarchyGrid
                 {
                     Header = "selection",
                     Command = viewModel.CopyToClipboardCommand,
-                    CommandParameter = CopyMode.Selection
+                    CommandParameter = CopyMode.Selection,
                 }
             );
             contextMenu.Items.Add(copyMenuItem);
@@ -512,7 +512,7 @@ namespace HierarchyGrid
                             {
                                 Source = viewModel,
                                 Mode = BindingMode.TwoWay,
-                                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
                             };
 
                             tb.Events()
@@ -622,7 +622,7 @@ namespace HierarchyGrid
                         {
                             Fill = Brushes.DarkSlateGray,
                             Height = coord.Height,
-                            Width = 2d
+                            Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 
@@ -666,7 +666,7 @@ namespace HierarchyGrid
                         {
                             Fill = Brushes.DarkSlateGray,
                             Height = 2d,
-                            Width = coord.Width
+                            Width = coord.Width,
                         };
                         view.Canvas.Children.Add(rect);
 
@@ -722,7 +722,7 @@ namespace HierarchyGrid
                         {
                             Fill = Brushes.DarkSlateGray,
                             Height = height,
-                            Width = 2d
+                            Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 

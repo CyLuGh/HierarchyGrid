@@ -48,8 +48,8 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// <summary>
     /// Stores the mapping of producer and consumer pairs to their associated <see cref="ResultSet"/> objects.
     /// </summary>
-    private AtomHashMap<(Guid, Guid), ResultSet> ResultSets { get; } =
-        Prelude.AtomHashMap<(Guid, Guid), ResultSet>();
+    private AtomHashMap<CellId, ResultSet> ResultSets { get; } =
+        Prelude.AtomHashMap<CellId, ResultSet>();
 
     internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
 
@@ -793,7 +793,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                         (IsTransposed ? c.definition : r.definition) as ProducerDefinition;
 
                     var resultSet = ResultSets.FindOrAdd(
-                        (producer?.Guid ?? Guid.Empty, consumer?.Guid ?? Guid.Empty),
+                        new(
+                            producer?.ProducerDefinitionId ?? ProducerDefinitionId.Default,
+                            consumer?.ConsumerDefinitionId ?? ConsumerDefinitionId.Default
+                        ),
                         () => HierarchyDefinition.Resolve(producer, consumer)
                     );
 
@@ -1088,7 +1091,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         definition.Match(
             s =>
             {
-                HoveredElementId = s.Definition.Guid;
+                HoveredElementId = s.Definition.DefinitionId;
                 if (s.Definition is ConsumerDefinition consumer && consumer.Count() == 1)
                 {
                     HoveredColumn = ColumnsDefinitions.GetPosition(consumer);

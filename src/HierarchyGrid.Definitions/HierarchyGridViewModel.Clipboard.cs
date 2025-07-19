@@ -10,7 +10,7 @@ namespace HierarchyGrid.Definitions
         Flat,
         Structure,
         Selection,
-        Highlights
+        Highlights,
     }
 
     public partial class HierarchyGridViewModel
@@ -262,11 +262,12 @@ namespace HierarchyGrid.Definitions
         {
             return rowDef switch
             {
-                ProducerDefinition p when colDef is ConsumerDefinition c
-                    => Option<ResultSet>.Some(HierarchyDefinition.Resolve(p, c)),
-                ConsumerDefinition cr when colDef is ProducerDefinition pr
-                    => Option<ResultSet>.Some(HierarchyDefinition.Resolve(pr, cr)),
-                _ => Option<ResultSet>.None
+                ProducerDefinition p when colDef is ConsumerDefinition c => Option<ResultSet>.Some(
+                    HierarchyDefinition.Resolve(p, c)
+                ),
+                ConsumerDefinition cr when colDef is ProducerDefinition pr =>
+                    Option<ResultSet>.Some(HierarchyDefinition.Resolve(pr, cr)),
+                _ => Option<ResultSet>.None,
             };
         }
     }
