@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -83,15 +84,25 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public IObservable<Seq<PositionedCell>> SelectionChanged =>
         SelectionChangedSubject.AsObservable().Publish().RefCount();
 
+    /// <summary>
+    /// Represents the cell currently being edited within the hierarchy grid.
+    /// </summary>
     [Reactive]
     public Option<PositionedCell> EditedCell { get; internal set; }
 
     [Reactive]
     public Option<PositionedDefinition> HoveredDefinitionHeader { get; internal set; }
 
+    /// <summary>
+    /// An observable stream that signals whenever the currently edited cell changes.
+    /// </summary>
     public IObservable<Option<PositionedCell>> EditedCellChanged =>
         this.WhenAnyValue(x => x.EditedCell).Publish().RefCount();
 
+    /// <summary>
+    /// Indicates whether the grid is currently in editing mode. True when <see cref="EditedCell"/> is some
+    /// and its associated <see cref="ResultSet"/> has a defined editor.
+    /// </summary>
     public bool IsEditing
     {
         [ObservableAsProperty]
@@ -107,11 +118,18 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public HashMap<PositionedCell, FocusCellInfo> FocusCells { get; set; }
 
+    /// <summary>
+    /// Represents a collection of coordinates and corresponding positioned definitions
+    /// for the headers within the hierarchy grid.
+    /// </summary>
     public ConcurrentBag<(
         ElementCoordinates Coord,
         PositionedDefinition Definition
     )> HeadersCoordinates { get; } = new();
 
+    /// <summary>
+    /// Represents a collection of tuples that associate the coordinates of grid elements with their corresponding positioned cells.
+    /// </summary>
     public ConcurrentBag<(
         ElementCoordinates Coord,
         PositionedCell Cell
@@ -371,11 +389,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     private void ManageEditionProcess(CompositeDisposable disposables)
     {
         EditedCellChanged
-            .Do(cell =>
+            .Select(cell =>
             {
-                EditionContent = cell.Some(c => c.ResultSet.Result).None(() => string.Empty);
+                var editor = from c in cell from e in c.ResultSet.Editor select e;
+                editor.IfSome(_ =>
+                    EditionContent = cell.Some(c => c.ResultSet.Result).None(() => string.Empty)
+                );
+                return editor.IsSome;
             })
-            .Select(o => o.IsSome)
             .ToPropertyEx(
                 this,
                 x => x.IsEditing,
@@ -1147,6 +1168,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         double screenScale
     )
     {
+        /* Search in headers coordinates if we click inside their bounds */
         if (
             x <= RowsHeadersWidth.Sum() * screenScale
             || y <= ColumnsHeadersHeight.Sum() * screenScale
@@ -1157,12 +1179,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 .Find(t => t.Coord.Contains(x, y))
                 .Match(s => s.Definition, () => Option<PositionedDefinition>.None);
         }
-        else
-        {
-            return CellsCoordinates
-                .AsParallel()
-                .Find(t => t.Coord.Contains(x, y))
-                .Match(s => s.Cell, () => Option<PositionedCell>.None);
-        }
+
+        /* Outside of headers bounds => look in cell coordinates */
+        return CellsCoordinates
+            .AsParallel()
+            .Find(t => t.Coord.Contains(x, y))
+            .Match(s => s.Cell, () => Option<PositionedCell>.None);
     }
 }

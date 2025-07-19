@@ -2,6 +2,14 @@
 
 namespace HierarchyGrid.Definitions;
 
+/// <summary>
+/// Represents a positioned cell within a hierarchy grid, defined by its
+/// producer and consumer definitions, spatial properties, and associated result set.
+/// </summary>
+/// <remarks>
+/// This class is immutable and serves as a fundamental unit in a hierarchical grid system,
+/// allowing comparison and equality checks based on its properties.
+/// </remarks>
 public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<PositionedCell>
 {
     public required ProducerDefinition ProducerDefinition { get; init; }
@@ -31,8 +39,12 @@ public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<Pos
         if (other == null)
             return false;
 
-        return ProducerDefinition?.DefinitionId == other.ProducerDefinition?.DefinitionId
-            && ConsumerDefinition?.DefinitionId == other.ConsumerDefinition?.DefinitionId;
+        return ProducerDefinition.ProducerDefinitionId.Equals(
+                other.ProducerDefinition.ProducerDefinitionId
+            )
+            && ConsumerDefinition.ConsumerDefinitionId.Equals(
+                other.ConsumerDefinition.ConsumerDefinitionId
+            );
     }
 
     public override bool Equals(object? obj) => Equals(obj as PositionedCell);
