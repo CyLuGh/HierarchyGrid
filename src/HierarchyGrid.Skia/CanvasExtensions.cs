@@ -11,7 +11,7 @@ namespace HierarchyGrid.Skia
         {
             CollapseAll,
             ExpandAll,
-            Local
+            Local,
         }
 
         internal static void DrawGlobalHeaders(
@@ -23,10 +23,12 @@ namespace HierarchyGrid.Skia
         )
         {
             // Don't draw if structure doesn't allow it
-            if ( viewModel.ColumnsHeadersHeight.Length <= 1 ||
-                 viewModel.RowsHeadersWidth.Length <= 1 )
+            if (
+                viewModel.ColumnsHeadersHeight.Length <= 1
+                || viewModel.RowsHeadersWidth.Length <= 1
+            )
                 return;
-            
+
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
             var colDepth = viewModel.ColumnsDefinitions.TotalDepth();
 
@@ -568,7 +570,7 @@ namespace HierarchyGrid.Skia
                 {
                     FontSize = TextSize,
                     TextColor = renderInfo.ForegroundColor,
-                    FontWeight = 600
+                    FontWeight = 600,
                 }
             );
             TextDrawer.MaxHeight = (float)((height - 10) * screenScale);
@@ -607,7 +609,7 @@ namespace HierarchyGrid.Skia
             {
                 GlobalHeader.ExpandAll => BuildExpandAllPath(left, top),
                 GlobalHeader.CollapseAll => BuildFoldAllPath(left, top),
-                _ => isExpanded ? BuildExpandedPath(left, top) : BuildFoldedPath(left, top)
+                _ => isExpanded ? BuildExpandedPath(left, top) : BuildFoldedPath(left, top),
             };
 
         private static SKPath BuildFoldAllPath(double left, double top)
@@ -818,6 +820,7 @@ namespace HierarchyGrid.Skia
         private static TextPaintOptions TextPaintOptions { get; } =
             new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
 
+        // TODO: allow font size change
         private const float TextSize = 15f;
     }
 }

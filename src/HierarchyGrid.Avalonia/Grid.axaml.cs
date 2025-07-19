@@ -31,7 +31,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         _tooltip = new()
         {
             ShowMode = FlyoutShowMode.Transient,
-            OverlayInputPassThroughElement = this
+            OverlayInputPassThroughElement = this,
         };
 
         _tooltipRectangle = new()
@@ -39,7 +39,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             Width = 40,
             Height = 25,
             Fill = Brushes.Transparent,
-            IsHitTestVisible = false
+            IsHitTestVisible = false,
         };
         Canvas.Children.Add(_tooltipRectangle);
 
@@ -66,7 +66,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel
             .DrawGridInteraction.RegisterHandler(ctx =>
             {
-                System.Diagnostics.Debug.WriteLine("DrawGridInteraction");
                 view.SkiaElement.Invalidate();
                 DrawSplitters(view, viewModel);
                 ctx.SetOutput(System.Reactive.Unit.Default);
@@ -214,7 +213,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     {
         SKSurface surface = args.Surface;
         SKCanvas canvas = surface.Canvas;
-        
+
         var width = canvas.LocalClipBounds.Width;
         var height = canvas.LocalClipBounds.Height;
 
@@ -317,17 +316,17 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             ViewModel.FocusCells.Find(pCell).Match(fci => fci.TooltipInfo, () => string.Empty)
         );
 
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            _tooltipRectangle.Width = pCell.Width - 6;
-            _tooltipRectangle.Height = pCell.Height - 6;
-            Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
-            Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
+        if (string.IsNullOrWhiteSpace(text))
+            return;
 
-            _tooltip.Content = text.Trim();
-            _tooltip.Placement = PlacementMode.Bottom;
-            _tooltip.ShowAt(_tooltipRectangle);
-        }
+        _tooltipRectangle.Width = pCell.Width - 6;
+        _tooltipRectangle.Height = pCell.Height - 6;
+        Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
+        Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
+
+        _tooltip.Content = text.Trim();
+        _tooltip.Placement = PlacementMode.Bottom;
+        _tooltip.ShowAt(_tooltipRectangle);
     }
 
     private void ShowHeaderTooltip(PositionedDefinition pDefinition)
@@ -339,20 +338,20 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         var text = pDefinition.Definition.Tooltip;
 
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            _tooltipRectangle.Width = pDefinition.Coordinates.Width - 6;
-            _tooltipRectangle.Height = pDefinition.Coordinates.Height - 6;
-            Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left + 3);
-            Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top + 3);
+        if (string.IsNullOrWhiteSpace(text))
+            return;
 
-            _tooltip.Content = text.Trim();
-            _tooltip.Placement =
-                pDefinition.Definition is ConsumerDefinition
-                    ? PlacementMode.Bottom
-                    : PlacementMode.Right;
-            _tooltip.ShowAt(_tooltipRectangle);
-        }
+        _tooltipRectangle.Width = pDefinition.Coordinates.Width - 6;
+        _tooltipRectangle.Height = pDefinition.Coordinates.Height - 6;
+        Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left + 3);
+        Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top + 3);
+
+        _tooltip.Content = text.Trim();
+        _tooltip.Placement =
+            pDefinition.Definition is ConsumerDefinition
+                ? PlacementMode.Bottom
+                : PlacementMode.Right;
+        _tooltip.ShowAt(_tooltipRectangle);
     }
 
     private static IEnumerable<MenuItem> BuildCustomItems(
@@ -373,7 +372,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     Header = header,
                     Command = command,
-                    CommandParameter = resultSet
+                    CommandParameter = resultSet,
                 };
             }
             else
@@ -388,7 +387,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                             {
                                 Header = splits[i],
                                 Command = command,
-                                CommandParameter = resultSet
+                                CommandParameter = resultSet,
                             }
                         );
                     }
@@ -453,7 +452,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 Header = "Enable crosshair",
                 //IsChecked = viewModel.EnableCrosshair ,
                 //IsCheckable = true ,
-                Command = viewModel.ToggleCrosshairCommand
+                Command = viewModel.ToggleCrosshairCommand,
             }
         );
         highlightsMenuItem.Items.Add(
@@ -466,7 +465,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             new MenuItem
             {
                 Header = "Clear selection",
-                Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear())
+                Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear()),
             }
         );
 
@@ -475,7 +474,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "Expand all",
                 Command = viewModel.ToggleStatesCommand,
-                CommandParameter = true
+                CommandParameter = true,
             }
         );
         contextMenu.Items.Add(
@@ -483,7 +482,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "Collapse all",
                 Command = viewModel.ToggleStatesCommand,
-                CommandParameter = false
+                CommandParameter = false,
             }
         );
 
@@ -495,7 +494,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "with tree structure",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Structure
+                CommandParameter = CopyMode.Structure,
             }
         );
         copyMenuItem.Items.Add(
@@ -503,7 +502,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "without tree structure",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Flat
+                CommandParameter = CopyMode.Flat,
             }
         );
         copyMenuItem.Items.Add(
@@ -511,7 +510,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "highlighted elements",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Highlights
+                CommandParameter = CopyMode.Highlights,
             }
         );
         copyMenuItem.Items.Add(
@@ -519,7 +518,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "selection",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Selection
+                CommandParameter = CopyMode.Selection,
             }
         );
         contextMenu.Items.Add(copyMenuItem);
@@ -548,7 +547,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     BorderThickness = new Thickness(2d),
                     BorderBrush = Brushes.Transparent,
-                    Opacity = 0
+                    Opacity = 0,
                 };
                 view.Canvas.Children.Add(splitter);
                 return splitter;
@@ -670,6 +669,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                     .Return(editor(content ?? string.Empty))
                     .InvokeCommand(viewModel.DrawGridCommand);
                 break;
+
+            default:
+                // Do nothing
+                break;
         }
     }
 
@@ -709,7 +712,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                         {
                             Source = viewModel,
                             Mode = BindingMode.TwoWay,
-                            Path = nameof(HierarchyGridViewModel.EditionContent)
+                            Path = nameof(HierarchyGridViewModel.EditionContent),
                         };
 
                         Observable
