@@ -391,6 +391,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         EditedCellChanged
             .Select(cell =>
             {
+                /* Editor is none if no editing has been defined or if the cell is locked */
                 var editor = from c in cell from e in c.ResultSet.Editor select e;
                 editor.IfSome(_ =>
                     EditionContent = cell.Some(c => c.ResultSet.Result).None(() => string.Empty)

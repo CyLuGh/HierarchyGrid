@@ -11,11 +11,11 @@ public readonly record struct ResultSet
         Result = string.Empty;
         Qualifier = Qualification.Unset;
         TooltipText = default;
-        ProducerId = default;
-        ConsumerId = default;
+        ProducerId = ProducerDefinitionId.Default;
+        ConsumerId = ConsumerDefinitionId.Default;
     }
 
-    public static ResultSet Default { get; } = new ResultSet { Qualifier = Qualification.Empty };
+    public static ResultSet Default { get; } = new() { Qualifier = Qualification.Empty };
 
     public string Result { get; init; }
     public Qualification Qualifier { get; init; }
@@ -30,6 +30,6 @@ public readonly record struct ResultSet
     )[]> ContextCommands { get; init; } =
         Option<(string, ReactiveCommand<ResultSet, System.Reactive.Unit>)[]>.None;
 
-    public Guid ProducerId { get; init; }
-    public Guid ConsumerId { get; init; }
+    public ProducerDefinitionId ProducerId { get; init; }
+    public ConsumerDefinitionId ConsumerId { get; init; }
 }
