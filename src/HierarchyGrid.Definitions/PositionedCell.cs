@@ -31,12 +31,12 @@ public sealed class PositionedCell : IEquatable<PositionedCell>, IComparable<Pos
         if (other == null)
             return false;
 
-        return ProducerDefinition?.Guid == other.ProducerDefinition?.Guid
-            && ConsumerDefinition?.Guid == other.ConsumerDefinition?.Guid;
+        return ProducerDefinition?.DefinitionId == other.ProducerDefinition?.DefinitionId
+            && ConsumerDefinition?.DefinitionId == other.ConsumerDefinition?.DefinitionId;
     }
 
     public override bool Equals(object? obj) => Equals(obj as PositionedCell);
 
     public override int GetHashCode() =>
-        HashCode.Combine(ProducerDefinition?.Guid, ConsumerDefinition?.Guid);
+        HashCode.Combine(ProducerDefinition?.DefinitionId, ConsumerDefinition?.DefinitionId);
 }

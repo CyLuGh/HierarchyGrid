@@ -5,6 +5,14 @@ namespace HierarchyGrid.Definitions;
 
 public class ProducerDefinition : HierarchyDefinition
 {
+    public ProducerDefinitionId ProducerDefinitionId { get; private set; }
+    public override Guid DefinitionId => ProducerDefinitionId;
+
+    public override void SetId(Guid id)
+    {
+        ProducerDefinitionId = new ProducerDefinitionId(id);
+    }
+
     public ProducerDefinition(Guid? id = null)
         : base(id) { }
 
@@ -12,7 +20,7 @@ public class ProducerDefinition : HierarchyDefinition
     public Func<Qualification>? Qualify { get; set; } = () => Qualification.Unset;
 
     /// <summary>
-    /// Indicates that entire row shouldn't be editable.
+    /// Indicates that the entire row shouldn't be editable.
     /// </summary>
     public bool IsLocked { get; set; }
 
@@ -22,9 +30,9 @@ public class ProducerDefinition : HierarchyDefinition
                 new InputSet
                 {
                     Input = Producer(),
-                    ProducerId = Guid,
+                    ProducerId = DefinitionId,
                     Qualifier = Qualify?.Invoke() ?? Qualification.Unset,
-                    IsLocked = IsLocked
+                    IsLocked = IsLocked,
                 }
             )
             : Option<InputSet>.None;

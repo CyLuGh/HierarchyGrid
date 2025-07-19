@@ -18,9 +18,9 @@ namespace Demo.AvaloniaApplication
 
         static DataGenerator()
         {
-            _regions = new Dictionary<string, string[]> {{"Europe", []}, {"Asia",[]}};
-            _vehicles = new Dictionary<string, string[]> {{"With motors", []}};
-            
+            _regions = new Dictionary<string, string[]> { { "Europe", [] }, { "Asia", [] } };
+            _vehicles = new Dictionary<string, string[]> { { "With motors", [] } };
+
             /*_regions = new Dictionary<string, string[]>
             {
                 {
@@ -107,8 +107,11 @@ namespace Demo.AvaloniaApplication
         }
 
         private IEnumerable<ConsumerDefinition> BuildConsumers() =>
-            new[] { BuildConsumer("With motors")
-                /*, BuildConsumer("Without motors")*/ };
+            new[]
+            {
+                BuildConsumer("With motors"),
+                /*, BuildConsumer("Without motors")*/
+            };
 
         private ConsumerDefinition BuildConsumer(string vehicle)
         {
@@ -149,50 +152,48 @@ namespace Demo.AvaloniaApplication
                 o switch
                 {
                     int i => i.ToString("N0"),
-                    _ => o.ToString() ?? string.Empty
+                    _ => o.ToString() ?? string.Empty,
                 };
 
             csr.ContextItems = o =>
                 o switch
                 {
-                    string region
-                        =>
-                        [
-                            ($"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
-                            (
-                                $"First|Second|Hide {region}",
-                                (ResultSet rs) => Console.WriteLine(rs.Result)
-                            ),
-                            ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
-                        ],
-                    _ => Array.Empty<(string description, Action<ResultSet> action)>()
+                    string region =>
+                    [
+                        ($"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                        (
+                            $"First|Second|Hide {region}",
+                            (ResultSet rs) => Console.WriteLine(rs.Result)
+                        ),
+                        ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                    ],
+                    _ => Array.Empty<(string description, Action<ResultSet> action)>(),
                 };
 
             csr.Qualify = o =>
                 o switch
                 {
                     int i => i < 1_000_000 ? Qualification.Custom : Qualification.Normal,
-                    _ => Qualification.Normal
+                    _ => Qualification.Normal,
                 };
 
             csr.Colorize = o =>
                 o switch
                 {
-                    _
-                        => (
-                            new ThemeColor(
-                                Brushes.LightGray.Color.A,
-                                Brushes.LightGray.Color.R,
-                                Brushes.LightGray.Color.G,
-                                Brushes.LightGray.Color.B
-                            ),
-                            new ThemeColor(
-                                Brushes.IndianRed.Color.A,
-                                Brushes.IndianRed.Color.R,
-                                Brushes.IndianRed.Color.G,
-                                Brushes.IndianRed.Color.B
-                            )
+                    _ => (
+                        new ThemeColor(
+                            Brushes.LightGray.Color.A,
+                            Brushes.LightGray.Color.R,
+                            Brushes.LightGray.Color.G,
+                            Brushes.LightGray.Color.B
+                        ),
+                        new ThemeColor(
+                            Brushes.IndianRed.Color.A,
+                            Brushes.IndianRed.Color.R,
+                            Brushes.IndianRed.Color.G,
+                            Brushes.IndianRed.Color.B
                         )
+                    ),
                 };
 
             csr.TooltipCreator = (p, c) => $"{p} x {c}";

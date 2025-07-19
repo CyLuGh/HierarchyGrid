@@ -7,6 +7,14 @@ namespace HierarchyGrid.Definitions;
 
 public class ConsumerDefinition : HierarchyDefinition
 {
+    public ConsumerDefinitionId ConsumerDefinitionId { get; private set; }
+    public override Guid DefinitionId => ConsumerDefinitionId;
+
+    public override void SetId(Guid id)
+    {
+        ConsumerDefinitionId = new ConsumerDefinitionId(id);
+    }
+
     public ConsumerDefinition(Guid? id = null)
         : base(id) { }
 
@@ -73,14 +81,14 @@ public class ConsumerDefinition : HierarchyDefinition
         var resultSet = new ResultSet
         {
             ProducerId = inputSet.ProducerId,
-            ConsumerId = Guid,
+            ConsumerId = DefinitionId,
             Qualifier = GetQualification(inputSet, data),
             Result = (Formatter is not null ? Formatter(data) : data.ToString()) ?? string.Empty,
             BackgroundColor = background,
             ForegroundColor = foreground,
             Editor = editor,
             TooltipText = tooltipText,
-            ContextCommands = contextCommands
+            ContextCommands = contextCommands,
         };
 
         return resultSet;
