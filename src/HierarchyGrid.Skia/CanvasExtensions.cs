@@ -1,12 +1,34 @@
 ﻿using HierarchyGrid.Definitions;
 using LanguageExt;
 using SkiaSharp;
+using Svg.Skia;
 using Topten.RichTextKit;
 
 namespace HierarchyGrid.Skia
 {
     internal static class CanvasExtensions
     {
+        private static Dictionary<string, Option<SKSvg>> _svgCache = new();
+
+        private static Option<SKSvg> GetSvg(string path)
+        {
+            if (_svgCache.TryGetValue(path, out var osvg))
+                return osvg;
+
+            try
+            {
+                var svg = new SKSvg();
+                svg.Load(path);
+                _svgCache.Add(path, svg);
+                return svg;
+            }
+            catch (Exception)
+            {
+                _svgCache.Add(path, Option<SKSvg>.None);
+                return Option<SKSvg>.None;
+            }
+        }
+
         private enum GlobalHeader
         {
             CollapseAll,
@@ -807,8 +829,69 @@ namespace HierarchyGrid.Skia
             DrawSelectionBorder(canvas, viewModel, theme, cell, screenScale, paint, ref rect);
 
             RenderCellText(canvas, viewModel, theme, cell, screenScale, renderInfo);
+            RenderLeftSideDecor(canvas, cell, renderInfo, screenScale);
+            RenderRightSideDecor(canvas, cell, renderInfo, screenScale);
 
             viewModel.CellsCoordinates.Add((new(cell), cell));
+        }
+
+        private static void RenderRightSideDecor(
+            SKCanvas canvas,
+            PositionedCell cell,
+            RenderInfo renderInfo,
+            double screenScale = 1d
+        )
+        {
+            var path = cell.ResultSet.RightDecor.Match(p => p, () => string.Empty);
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            GetSvg(path)
+                .IfSome(svg =>
+                {
+                    var x = (float)(
+                        (cell.Left + cell.Width - svg.Picture.CullRect.Width) * screenScale
+                    );
+                    var y = (float)(cell.Top * screenScale);
+
+                    canvas.DrawPicture(
+                        svg.Picture,
+                        new SKPoint(x, y),
+                        new SKPaint()
+                        {
+                            Color = renderInfo.ForegroundColor,
+                            Style = SKPaintStyle.StrokeAndFill,
+                        }
+                    );
+                });
+        }
+
+        private static void RenderLeftSideDecor(
+            SKCanvas canvas,
+            PositionedCell cell,
+            RenderInfo renderInfo,
+            double screenScale = 1d
+        )
+        {
+            var path = cell.ResultSet.LeftDecor.Match(p => p, () => string.Empty);
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            GetSvg(path)
+                .IfSome(svg =>
+                {
+                    var x = (float)(cell.Left * screenScale);
+                    var y = (float)(cell.Top * screenScale);
+                    canvas.DrawPicture(
+                        svg.Picture,
+                        new SKPoint(x, y),
+                        new SKPaint()
+                        {
+                            Color = renderInfo.ForegroundColor,
+                            Style = SKPaintStyle.StrokeAndFill,
+                        }
+                    );
+                });
         }
 
         private static void RenderCellText(
@@ -825,6 +908,18 @@ namespace HierarchyGrid.Skia
             float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
             var textVPadding = (float)(cell.Height - (fontSize * screenScale));
 
+            var rightDecorPadding = (
+                from rd in cell.ResultSet.RightDecor
+                from svg in GetSvg(rd)
+                select svg.Picture.CullRect.Width * screenScale
+            ).Match(d => (float)d, () => 0f);
+
+            var leftDecorPadding = (
+                from rd in cell.ResultSet.LeftDecor
+                from svg in GetSvg(rd)
+                select svg.Picture.CullRect.Width * screenScale
+            ).Match(d => (float)d, () => 0f);
+
             TextDrawer.Clear();
             TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText(
@@ -832,12 +927,16 @@ namespace HierarchyGrid.Skia
                 new Style { FontSize = fontSize, TextColor = renderInfo.ForegroundColor }
             );
             TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
-            TextDrawer.MaxWidth = (float)(cell.Width * screenScale) - textHPadding;
+            TextDrawer.MaxWidth =
+                (float)(cell.Width * screenScale)
+                - textHPadding
+                - rightDecorPadding
+                - leftDecorPadding;
 
             TextDrawer.Paint(
                 canvas,
                 new SKPoint(
-                    (float)(cell.Left * screenScale) + (textHPadding / 2),
+                    (float)(cell.Left * screenScale) + (textHPadding / 2) + leftDecorPadding,
                     (float)(cell.Top * screenScale) + (textVPadding / 2)
                 ),
                 TextPaintOptions
@@ -872,8 +971,5 @@ namespace HierarchyGrid.Skia
         private static TextBlock TextDrawer { get; } = new();
         private static TextPaintOptions TextPaintOptions { get; } =
             new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
-
-        // TODO: allow font size change
-        //private const float TextSize = 15f;
     }
 }

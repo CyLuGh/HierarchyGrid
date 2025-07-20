@@ -153,47 +153,76 @@ public class MainViewModel : ViewModelBase
                     foreach (
                         var child in Enumerable
                             .Range(0, a)
-                            .Select(x => new ConsumerDefinition
+                            .Select(x =>
                             {
-                                Content = x.ToString(),
-                                Consumer = o => o is int idx ? (object)(idx + (2 * x)) : "Oops",
-                                Formatter = o => $"Res: {o}",
-                                Qualify = o =>
-                                    int.TryParse(o.ToString(), out var i)
-                                        ? i switch
-                                        {
-                                            4 => Qualification.Remark,
-                                            6 => Qualification.Warning,
-                                            9 => Qualification.Error,
-                                            10 => Qualification.ReadOnly,
-                                            17 => Qualification.Custom,
-                                            18 => Qualification.Custom,
-                                            _ => Qualification.Normal,
-                                        }
-                                        : Qualification.Normal,
-                                Colorize = o =>
-                                    int.TryParse(o.ToString(), out var i)
-                                        ? i switch
-                                        {
-                                            17 => (
-                                                new ThemeColor(150, 100, 120, 0),
-                                                new ThemeColor(255, 0, 0, 0)
-                                            ),
-                                            18 => (
-                                                new ThemeColor(150, 0, 100, 120),
-                                                new ThemeColor(255, 255, 0, 0)
-                                            ),
-                                            _ => (
-                                                new ThemeColor(0, 0, 0, 0),
-                                                new ThemeColor(0, 255, 0, 0)
-                                            ),
-                                        }
-                                        : (new ThemeColor(0, 0, 0, 0), new ThemeColor(0, 0, 0, 0)),
-                                /*Editor = (p, c, s) =>
+                                var cdef = new ConsumerDefinition
                                 {
-                                    this.Log().Debug($"{p} _ {c} _ {s}");
-                                    return !string.IsNullOrWhiteSpace(s);
-                                },*/
+                                    Content = x.ToString(),
+                                    Consumer = o => o is int idx ? (object)(idx + (2 * x)) : "Oops",
+                                    Formatter = o => $"Res: {o}",
+                                    Qualify = o =>
+                                        int.TryParse(o.ToString(), out var i)
+                                            ? i switch
+                                            {
+                                                4 => Qualification.Remark,
+                                                6 => Qualification.Warning,
+                                                9 => Qualification.Error,
+                                                10 => Qualification.ReadOnly,
+                                                17 => Qualification.Custom,
+                                                18 => Qualification.Custom,
+                                                _ => Qualification.Normal,
+                                            }
+                                            : Qualification.Normal,
+                                    Colorize = o =>
+                                        int.TryParse(o.ToString(), out var i)
+                                            ? i switch
+                                            {
+                                                17 => (
+                                                    new ThemeColor(150, 100, 120, 0),
+                                                    new ThemeColor(255, 0, 0, 0)
+                                                ),
+                                                18 => (
+                                                    new ThemeColor(150, 0, 100, 120),
+                                                    new ThemeColor(255, 255, 0, 0)
+                                                ),
+                                                _ => (
+                                                    new ThemeColor(0, 0, 0, 0),
+                                                    new ThemeColor(0, 255, 0, 0)
+                                                ),
+                                            }
+                                            : (
+                                                new ThemeColor(0, 0, 0, 0),
+                                                new ThemeColor(0, 0, 0, 0)
+                                            ),
+                                };
+
+                                switch (x)
+                                {
+                                    case 3:
+                                        cdef.RightDecor = o =>
+                                            o switch
+                                            {
+                                                int i => i % 2 == 0
+                                                    ? "Resources/comment.svg"
+                                                    : string.Empty,
+                                                _ => string.Empty,
+                                            };
+                                        cdef.Editor = (p, c, s) =>
+                                        {
+                                            this.Log().Debug($"{p} _ {c} _ {s}");
+                                            return !string.IsNullOrWhiteSpace(s);
+                                        };
+                                        break;
+                                    case 5:
+                                        cdef.LeftDecor = _ => "Resources/comment.svg";
+                                        break;
+                                    case 6:
+                                        cdef.RightDecor = _ => "Resources/comment.svg";
+                                        cdef.LeftDecor = _ => "Resources/edit.svg";
+                                        break;
+                                }
+
+                                return cdef;
                             })
                     )
                     {

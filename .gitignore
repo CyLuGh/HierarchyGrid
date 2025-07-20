@@ -214,3 +214,4 @@ ModelManifest.xml
 src/dupfinder.xml
 
 src/inspectcode.xml
+.DS_Store
