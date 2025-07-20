@@ -47,5 +47,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
 
         view.BindCommand(viewModel, vm => vm.CycleRowHeights, v => v.ButtonToggleRowHeight)
             .DisposeWith(disposables);
+
+        view.BindCommand(viewModel, vm => vm.CycleFontSizes, v => v.ButtonCycleFontSize)
+            .DisposeWith(disposables);
     }
 }

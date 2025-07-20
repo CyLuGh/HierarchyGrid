@@ -562,13 +562,43 @@ namespace HierarchyGrid.Skia
                     canvas.DrawPath(decorator, localPaint);
                 });
 
+            RenderHeaderText(
+                canvas,
+                hdef,
+                left,
+                top,
+                width,
+                height,
+                screenScale,
+                renderInfo,
+                viewModel.HeaderFontSize
+            );
+
+            var coordinates = new ElementCoordinates(left, top, left + width, top + height);
+            viewModel.HeadersCoordinates.Add(new(coordinates, new(coordinates, hdef)));
+
+            headerCount++;
+        }
+
+        private static void RenderHeaderText(
+            SKCanvas canvas,
+            HierarchyDefinition hdef,
+            double left,
+            double top,
+            double width,
+            double height,
+            double screenScale,
+            RenderInfo renderInfo,
+            float headerTextSize = 16f
+        )
+        {
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
             TextDrawer.AddText(
                 hdef.Content?.ToString() ?? string.Empty,
                 new Style
                 {
-                    FontSize = TextSize,
+                    FontSize = headerTextSize,
                     TextColor = renderInfo.ForegroundColor,
                     FontWeight = 600,
                 }
@@ -581,10 +611,6 @@ namespace HierarchyGrid.Skia
                 new SKPoint((float)((left + 22) * screenScale), (float)((top + 6) * screenScale)),
                 TextPaintOptions
             );
-            var coordinates = new ElementCoordinates(left, top, left + width, top + height);
-            viewModel.HeadersCoordinates.Add(new(coordinates, new(coordinates, hdef)));
-
-            headerCount++;
         }
 
         private static Option<SKPath> GetHeaderDecorator(
@@ -778,28 +804,32 @@ namespace HierarchyGrid.Skia
                     canvas.DrawRect(rect, localPaint);
                 });
 
-            if (viewModel.Selections.Contains(cell))
-            {
-                paint.Color = theme.SelectionBorderColor;
-                paint.StrokeWidth = theme.SelectionBorderThickness;
+            DrawSelectionBorder(canvas, viewModel, theme, cell, screenScale, paint, ref rect);
 
-                rect = SKRect.Create(
-                    (float)(cell.Left * screenScale) + theme.SelectionBorderThickness,
-                    (float)(cell.Top * screenScale) + theme.SelectionBorderThickness,
-                    (float)(cell.Width * screenScale) - (theme.SelectionBorderThickness + 1f),
-                    (float)(cell.Height * screenScale) - (theme.SelectionBorderThickness + 1f)
-                );
-                canvas.DrawRect(rect, paint);
-            }
+            RenderCellText(canvas, viewModel, theme, cell, screenScale, renderInfo);
+
+            viewModel.CellsCoordinates.Add((new(cell), cell));
+        }
+
+        private static void RenderCellText(
+            SKCanvas canvas,
+            HierarchyGridViewModel viewModel,
+            SkiaTheme theme,
+            PositionedCell cell,
+            double screenScale,
+            RenderInfo renderInfo
+        )
+        {
+            var fontSize = viewModel.FontSize;
 
             float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
-            var textVPadding = (float)(cell.Height - (TextSize * screenScale));
+            var textVPadding = (float)(cell.Height - (fontSize * screenScale));
 
             TextDrawer.Clear();
             TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText(
                 cell.ResultSet.Result,
-                new Style { FontSize = TextSize, TextColor = renderInfo.ForegroundColor }
+                new Style { FontSize = fontSize, TextColor = renderInfo.ForegroundColor }
             );
             TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
             TextDrawer.MaxWidth = (float)(cell.Width * screenScale) - textHPadding;
@@ -812,8 +842,31 @@ namespace HierarchyGrid.Skia
                 ),
                 TextPaintOptions
             );
+        }
 
-            viewModel.CellsCoordinates.Add((new(cell), cell));
+        private static void DrawSelectionBorder(
+            SKCanvas canvas,
+            HierarchyGridViewModel viewModel,
+            SkiaTheme theme,
+            PositionedCell cell,
+            double screenScale,
+            SKPaint paint,
+            ref SKRect rect
+        )
+        {
+            if (!viewModel.Selections.Contains(cell))
+                return;
+
+            paint.Color = theme.SelectionBorderColor;
+            paint.StrokeWidth = theme.SelectionBorderThickness;
+
+            rect = SKRect.Create(
+                (float)(cell.Left * screenScale) + theme.SelectionBorderThickness,
+                (float)(cell.Top * screenScale) + theme.SelectionBorderThickness,
+                (float)(cell.Width * screenScale) - (theme.SelectionBorderThickness + 1f),
+                (float)(cell.Height * screenScale) - (theme.SelectionBorderThickness + 1f)
+            );
+            canvas.DrawRect(rect, paint);
         }
 
         private static TextBlock TextDrawer { get; } = new();
@@ -821,6 +874,6 @@ namespace HierarchyGrid.Skia
             new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
 
         // TODO: allow font size change
-        private const float TextSize = 15f;
+        //private const float TextSize = 15f;
     }
 }

@@ -10,11 +10,16 @@ namespace HierarchyGrid.Definitions
         private static readonly double DEFAULT_COLUMN_WIDTH = 120;
         private static readonly double DEFAULT_ROW_HEIGHT = 30;
         private static readonly double DEFAULT_HEADER_WIDTH = 80;
+        private static readonly float DEFAULT_FONT_SIZE = 15;
 
         public double DefaultHeaderWidth { get; set; } = DEFAULT_HEADER_WIDTH;
         public double DefaultHeaderHeight { get; set; } = DEFAULT_HEADER_HEIGHT;
         public double DefaultColumnWidth { get; set; } = DEFAULT_COLUMN_WIDTH;
         public double DefaultRowHeight { get; set; } = DEFAULT_ROW_HEIGHT;
+        public float DefaultFontSize { get; set; } = DEFAULT_FONT_SIZE;
+
+        public float FontSize { get; set; }
+        public float HeaderFontSize { get; set; }
 
         public double[] RowsHeadersWidth { get; private set; }
         public double[] ColumnsHeadersHeight { get; private set; }
@@ -39,6 +44,20 @@ namespace HierarchyGrid.Definitions
         {
             foreach (var kvp in RowsHeights)
                 RowsHeights[kvp.Key] = height;
+
+            Observable.Return(false).InvokeCommand(DrawGridCommand);
+        }
+
+        public void SetFontSize(float fontSize)
+        {
+            FontSize = fontSize;
+
+            Observable.Return(false).InvokeCommand(DrawGridCommand);
+        }
+
+        public void SetHeaderFontSize(float fontSize)
+        {
+            HeaderFontSize = fontSize;
 
             Observable.Return(false).InvokeCommand(DrawGridCommand);
         }

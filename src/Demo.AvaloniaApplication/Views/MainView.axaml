@@ -50,7 +50,11 @@
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
           <Button x:Name="ButtonToggleRowHeight"
-                  Content="Toggle row heights"
+                  Content="Cycle row heights"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonCycleFontSize"
+                  Content="Cycle font size"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
         </UniformGrid>
