@@ -171,10 +171,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public bool EnableCrosshair { get; set; }
 
     [Reactive]
-    public int HoveredColumn { get; private set; } = -1;
+    public int HoveredColumn { get; private set; }
 
     [Reactive]
-    public int HoveredRow { get; private set; } = -1;
+    public int HoveredRow { get; private set; }
 
     [Reactive]
     public SelectionMode SelectionMode { get; set; }
@@ -328,6 +328,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     {
         RowsHeadersWidth = [];
         ColumnsHeadersHeight = [];
+        HoveredColumn = -1;
+        HoveredRow = -1;
+
+        FontSize = DefaultFontSize;
+        HeaderFontSize = DefaultFontSize;
 
         EditionContent = string.Empty;
 

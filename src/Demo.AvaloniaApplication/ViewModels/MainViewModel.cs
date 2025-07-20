@@ -12,7 +12,12 @@ namespace Demo.AvaloniaApplication.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     public HierarchyGridViewModel DemoViewModel { get; } =
-        new HierarchyGridViewModel { SelectionMode = SelectionMode.MultiExtended };
+        new HierarchyGridViewModel
+        {
+            SelectionMode = SelectionMode.MultiExtended,
+            FontSize = 18f,
+            HeaderFontSize = 22f,
+        };
     public HierarchyGridViewModel TestViewModel { get; } =
         new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
 
@@ -20,6 +25,7 @@ public class MainViewModel : ViewModelBase
     public ReactiveCommand<Unit, HierarchyDefinitions> BuildTestDefinitions { get; }
     public ReactiveCommand<Unit, Unit> SwitchTestTheme { get; }
     public ReactiveCommand<Unit, Unit> CycleRowHeights { get; }
+    public ReactiveCommand<Unit, Unit> CycleFontSizes { get; }
 
     public MainViewModel()
     {
@@ -49,6 +55,15 @@ public class MainViewModel : ViewModelBase
                 TestViewModel.SetRowsHeights(currentHeight + 5);
             else
                 TestViewModel.SetRowsHeights(20);
+        });
+
+        CycleFontSizes = ReactiveCommand.Create(() =>
+        {
+            var currentSize = TestViewModel.FontSize;
+            if (currentSize <= 18)
+                TestViewModel.SetFontSize(currentSize + 1);
+            else
+                TestViewModel.SetFontSize(10);
         });
 
         this.WhenActivated(disposables =>
@@ -128,7 +143,7 @@ public class MainViewModel : ViewModelBase
             {
                 var hdef = new ConsumerDefinition
                 {
-                    Content = string.Format("Parent {0}", a),
+                    Content = $"Parent {a}",
                     IsExpanded = a != 3,
                     Consumer = o => o is int idx ? (object)(idx * a) : "Oops",
                     Formatter = o => $"Parent: {o}",
