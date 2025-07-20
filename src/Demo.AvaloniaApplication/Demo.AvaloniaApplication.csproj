@@ -4,10 +4,13 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-
   
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="Resources\**" CopyToOutputDirectory="Always"/>
   </ItemGroup>
 
   <ItemGroup>

@@ -55,7 +55,13 @@ public readonly record struct ResultSet
     )[]> ContextCommands { get; init; } =
         Option<(string, ReactiveCommand<ResultSet, System.Reactive.Unit>)[]>.None;
 
-    // TODO: replace object by a real decor object, what should be used for svg?
-    public Option<object> LeftDecor { get; init; }
-    public Option<object> RightDecor { get; init; }
+    /// <summary>
+    /// Optional path to SVG that should be displayed as left-side decor.
+    /// </summary>
+    public Option<string> LeftDecor { get; init; }
+
+    /// <summary>
+    /// Optional path to SVG that should be displayed as right-side decor.
+    /// </summary>
+    public Option<string> RightDecor { get; init; }
 }

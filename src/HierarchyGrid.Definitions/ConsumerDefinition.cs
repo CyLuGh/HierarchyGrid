@@ -28,6 +28,8 @@ public class ConsumerDefinition : HierarchyDefinition
     public Func<object, Qualification>? Qualify { get; set; } = _ => Qualification.Normal;
     public Func<object, (ThemeColor, ThemeColor)>? Colorize { get; set; }
     public Func<object, object, string>? TooltipCreator { get; set; }
+    public Func<object, string>? LeftDecor { get; set; }
+    public Func<object, string>? RightDecor { get; set; }
 
     /// <summary>
     /// Func that will be called from editing textbox, input being string from textbox and bool being the success state of the update.
@@ -85,6 +87,9 @@ public class ConsumerDefinition : HierarchyDefinition
                     .ToArray();
         }
 
+        Option<string> leftDecor = LeftDecor is not null ? LeftDecor(data) : Option<string>.None;
+        Option<string> rightDecor = RightDecor is not null ? RightDecor(data) : Option<string>.None;
+
         var resultSet = new ResultSet
         {
             ProducerId = inputSet.ProducerId,
@@ -96,6 +101,8 @@ public class ConsumerDefinition : HierarchyDefinition
             Editor = editor,
             TooltipText = tooltipText,
             ContextCommands = contextCommands,
+            LeftDecor = leftDecor,
+            RightDecor = rightDecor,
         };
 
         return resultSet;
