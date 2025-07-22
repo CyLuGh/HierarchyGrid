@@ -93,5 +93,7 @@ namespace HierarchyGrid
                 typeof(Grid),
                 new FrameworkPropertyMetadata(false)
             );
+
+        // TODO: add dependency properties for font sizes
     }
 }

@@ -849,13 +849,24 @@ namespace HierarchyGrid.Skia
             GetSvg(path)
                 .IfSome(svg =>
                 {
+                    var picture = svg.Picture;
                     var x = (float)(
-                        (cell.Left + cell.Width - svg.Picture.CullRect.Width) * screenScale
+                        (cell.Left + cell.Width - picture.CullRect.Width) * screenScale
                     );
-                    var y = (float)(cell.Top * screenScale);
+
+                    /* Keep decor center aligned */
+                    var y =
+                        picture.CullRect.Height > cell.Height
+                            ? (float)(cell.Top * screenScale)
+                            : (float)(
+                                cell.Top
+                                + ((cell.Height - picture.CullRect.Height) / 2) * screenScale
+                            );
+
+                    // Would there be a way to draw the svg with provided color?
 
                     canvas.DrawPicture(
-                        svg.Picture,
+                        picture,
                         new SKPoint(x, y),
                         new SKPaint()
                         {
@@ -880,10 +891,21 @@ namespace HierarchyGrid.Skia
             GetSvg(path)
                 .IfSome(svg =>
                 {
+                    var picture = svg.Picture;
+
                     var x = (float)(cell.Left * screenScale);
-                    var y = (float)(cell.Top * screenScale);
+
+                    /* Keep decor center aligned */
+                    var y =
+                        picture.CullRect.Height > cell.Height
+                            ? (float)(cell.Top * screenScale)
+                            : (float)(
+                                cell.Top
+                                + ((cell.Height - picture.CullRect.Height) / 2) * screenScale
+                            );
+
                     canvas.DrawPicture(
-                        svg.Picture,
+                        picture,
                         new SKPoint(x, y),
                         new SKPaint()
                         {
