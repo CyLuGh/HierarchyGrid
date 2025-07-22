@@ -32,6 +32,8 @@
                             DefaultRowHeight="60"
                             StatusMessage="I'm a test message!"
                             EnableCrosshair="True"
+                            HeaderFontSize="18"
+                            FontSize="12"
                             DockPanel.Dock="Top"/>
       </DockPanel>
     </TabItem>
