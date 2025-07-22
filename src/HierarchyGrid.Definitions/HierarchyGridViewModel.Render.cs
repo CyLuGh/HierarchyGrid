@@ -18,8 +18,10 @@ namespace HierarchyGrid.Definitions
         public double DefaultRowHeight { get; set; } = DEFAULT_ROW_HEIGHT;
         public float DefaultFontSize { get; set; } = DEFAULT_FONT_SIZE;
 
-        public float FontSize { get; set; }
+        public float CellFontSize { get; set; }
         public float HeaderFontSize { get; set; }
+        public string CellFontFamily { get; set; }
+        public string HeaderFontFamily { get; set; }
 
         public double[] RowsHeadersWidth { get; private set; }
         public double[] ColumnsHeadersHeight { get; private set; }
@@ -50,7 +52,7 @@ namespace HierarchyGrid.Definitions
 
         public void SetFontSize(float fontSize)
         {
-            FontSize = fontSize;
+            CellFontSize = fontSize;
 
             Observable.Return(false).InvokeCommand(DrawGridCommand);
         }

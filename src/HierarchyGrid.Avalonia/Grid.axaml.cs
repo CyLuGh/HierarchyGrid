@@ -204,8 +204,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
         viewModel.StatusMessage = view.StatusMessage ?? "No message";
         viewModel.EnableCrosshair = view.EnableCrosshair;
-        viewModel.FontSize = view.FontSize;
+        viewModel.CellFontSize = view.CellFontSize;
         viewModel.HeaderFontSize = view.HeaderFontSize;
+        viewModel.CellFontFamily = view.CellFontFamily;
+        viewModel.HeaderFontFamily = view.HeaderFontFamily;
     }
 
     private static async Task SkiaElement_PaintSurface(

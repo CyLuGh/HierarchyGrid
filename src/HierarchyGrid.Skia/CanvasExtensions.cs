@@ -593,6 +593,7 @@ namespace HierarchyGrid.Skia
                 height,
                 screenScale,
                 renderInfo,
+                viewModel.HeaderFontFamily,
                 viewModel.HeaderFontSize
             );
 
@@ -611,6 +612,7 @@ namespace HierarchyGrid.Skia
             double height,
             double screenScale,
             RenderInfo renderInfo,
+            string fontFamily = "",
             float headerTextSize = 16f
         )
         {
@@ -623,6 +625,7 @@ namespace HierarchyGrid.Skia
                     FontSize = headerTextSize,
                     TextColor = renderInfo.ForegroundColor,
                     FontWeight = 600,
+                    FontFamily = !string.IsNullOrEmpty(fontFamily) ? fontFamily : "Sans Serif",
                 }
             );
             TextDrawer.MaxHeight = (float)((height - 10) * screenScale);
@@ -925,7 +928,7 @@ namespace HierarchyGrid.Skia
             RenderInfo renderInfo
         )
         {
-            var fontSize = viewModel.FontSize;
+            var fontSize = viewModel.CellFontSize;
 
             float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
             var textVPadding = (float)(cell.Height - (fontSize * screenScale));
@@ -946,7 +949,14 @@ namespace HierarchyGrid.Skia
             TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText(
                 cell.ResultSet.Result,
-                new Style { FontSize = fontSize, TextColor = renderInfo.ForegroundColor }
+                new Style
+                {
+                    FontSize = fontSize,
+                    TextColor = renderInfo.ForegroundColor,
+                    FontFamily = !string.IsNullOrEmpty(viewModel.CellFontFamily)
+                        ? viewModel.CellFontFamily
+                        : "Sans Serif",
+                }
             );
             TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
             TextDrawer.MaxWidth =

@@ -62,15 +62,15 @@ public partial class Grid
         set => SetValue(EnableCrosshairProperty, value);
     }
 
-    public static readonly StyledProperty<float> FontSizeProperty = AvaloniaProperty.Register<
+    public static readonly StyledProperty<float> CellFontSizeProperty = AvaloniaProperty.Register<
         Grid,
         float
-    >(nameof(FontSize), 15);
+    >(nameof(CellFontSize), 15);
 
-    public float FontSize
+    public float CellFontSize
     {
-        get => GetValue(FontSizeProperty);
-        set => SetValue(FontSizeProperty, value);
+        get => GetValue(CellFontSizeProperty);
+        set => SetValue(CellFontSizeProperty, value);
     }
 
     public static readonly StyledProperty<float> HeaderFontSizeProperty = AvaloniaProperty.Register<
@@ -82,5 +82,23 @@ public partial class Grid
     {
         get => GetValue(HeaderFontSizeProperty);
         set => SetValue(HeaderFontSizeProperty, value);
+    }
+
+    public static readonly StyledProperty<string> CellFontFamilyProperty =
+        AvaloniaProperty.Register<Grid, string>(nameof(CellFontFamily));
+
+    public string CellFontFamily
+    {
+        get => GetValue(CellFontFamilyProperty);
+        set => SetValue(CellFontFamilyProperty, value);
+    }
+
+    public static readonly StyledProperty<string> HeaderFontFamilyProperty =
+        AvaloniaProperty.Register<Grid, string>(nameof(HeaderFontFamily));
+
+    public string HeaderFontFamily
+    {
+        get => GetValue(HeaderFontFamilyProperty);
+        set => SetValue(HeaderFontFamilyProperty, value);
     }
 }

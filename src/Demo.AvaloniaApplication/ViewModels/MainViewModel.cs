@@ -15,7 +15,7 @@ public class MainViewModel : ViewModelBase
         new HierarchyGridViewModel
         {
             SelectionMode = SelectionMode.MultiExtended,
-            FontSize = 18f,
+            CellFontSize = 18f,
             HeaderFontSize = 22f,
         };
     public HierarchyGridViewModel TestViewModel { get; } =
@@ -59,7 +59,7 @@ public class MainViewModel : ViewModelBase
 
         CycleFontSizes = ReactiveCommand.Create(() =>
         {
-            var currentSize = TestViewModel.FontSize;
+            var currentSize = TestViewModel.CellFontSize;
             if (currentSize <= 18)
                 TestViewModel.SetFontSize(currentSize + 1);
             else

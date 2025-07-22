@@ -331,7 +331,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         HoveredColumn = -1;
         HoveredRow = -1;
 
-        FontSize = DefaultFontSize;
+        CellFontSize = DefaultFontSize;
         HeaderFontSize = DefaultFontSize;
 
         EditionContent = string.Empty;
