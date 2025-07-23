@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.ReactiveUI;
 using Avalonia.VisualTree;
@@ -22,7 +23,7 @@ namespace HierarchyGrid.Avalonia;
 public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 {
     private readonly Flyout _tooltip;
-    private Rectangle _tooltipRectangle;
+    private readonly Rectangle _tooltipRectangle;
     private ContextMenu? _contextMenu;
 
     public Grid()
@@ -327,6 +328,11 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         _tooltipRectangle.Height = pCell.Height - 6;
         Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
         Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
+
+        // var border = new Border() { HorizontalAlignment = HorizontalAlignment.Stretch };
+        // border.Background = Brushes.Wheat;
+        // border.Child = new TextBlock() { Text = text.Trim() };
+        // _tooltip.Content = border;
 
         _tooltip.Content = text.Trim();
         _tooltip.Placement = PlacementMode.Bottom;

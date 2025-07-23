@@ -280,15 +280,11 @@ namespace HierarchyGrid.Skia
             int column,
             HierarchyDefinition hdef,
             double width,
-            double screenScale
+            double screenScale,
+            bool lastColumn = false
         )
         {
-            var height = hdef is { IsExpanded: true, HasChild: true }
-                ? viewModel.ColumnsHeadersHeight[hdef.Level]
-                : Enumerable
-                    .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
-                    .Select(x => viewModel.ColumnsHeadersHeight[x])
-                    .Sum();
+            double height = ComputeHeaderHeight(viewModel, hdef);
 
             var top = Enumerable
                 .Range(0, hdef.Level)
@@ -318,6 +314,25 @@ namespace HierarchyGrid.Skia
                 screenScale
             );
             currentPosition += width;
+        }
+
+        /// <summary>
+        /// If the definition is expanded and has any child element,
+        /// it should span on only one row, using the height of its level.
+        /// Otherwise, it should span until the end of the headers display.
+        /// </summary>
+        private static double ComputeHeaderHeight(
+            HierarchyGridViewModel viewModel,
+            HierarchyDefinition hdef
+        )
+        {
+            var height = hdef is { IsExpanded: true, HasChild: true }
+                ? viewModel.ColumnsHeadersHeight[hdef.Level]
+                : Enumerable
+                    .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
+                    .Select(x => viewModel.ColumnsHeadersHeight[x])
+                    .Sum();
+            return height;
         }
 
         private static void DrawParentColumnHeader(
@@ -613,7 +628,7 @@ namespace HierarchyGrid.Skia
             double screenScale,
             RenderInfo renderInfo,
             string fontFamily = "",
-            float headerTextSize = 16f
+            float headerFontSize = 16f
         )
         {
             TextDrawer.Clear();
@@ -622,20 +637,30 @@ namespace HierarchyGrid.Skia
                 hdef.Content?.ToString() ?? string.Empty,
                 new Style
                 {
-                    FontSize = headerTextSize,
+                    FontSize = headerFontSize,
                     TextColor = renderInfo.ForegroundColor,
                     FontWeight = 600,
                     FontFamily = !string.IsNullOrEmpty(fontFamily) ? fontFamily : "Sans Serif",
                 }
             );
-            TextDrawer.MaxHeight = (float)((height - 10) * screenScale);
-            TextDrawer.MaxWidth = (float)((width - 24) * screenScale);
 
-            TextDrawer.Paint(
-                canvas,
-                new SKPoint((float)((left + 22) * screenScale), (float)((top + 6) * screenScale)),
-                TextPaintOptions
-            );
+            float textVPadding = (float)(height - (headerFontSize * screenScale));
+            float textHPadding = 22f;
+
+            TextDrawer.MaxHeight = (float)(height * screenScale);
+            TextDrawer.MaxWidth = (float)((width - textHPadding) * screenScale);
+
+            /* We can center elements that have no child elements,
+             otherwise the text might be out of drawn screen */
+            float x = hdef.HasChild
+                ? (float)((left + 22) * screenScale)
+                : (float)((left + ((width - TextDrawer.MeasuredWidth) / 2)) * screenScale);
+
+            float y = hdef.HasChild
+                ? (float)((top + 6) * screenScale)
+                : (float)((top + (textVPadding / 2)) * screenScale);
+
+            TextDrawer.Paint(canvas, new SKPoint(x, y), TextPaintOptions);
         }
 
         private static Option<SKPath> GetHeaderDecorator(
@@ -928,10 +953,10 @@ namespace HierarchyGrid.Skia
             RenderInfo renderInfo
         )
         {
-            var fontSize = viewModel.CellFontSize;
+            float fontSize = viewModel.CellFontSize;
 
             float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
-            var textVPadding = (float)(cell.Height - (fontSize * screenScale));
+            float textVPadding = (float)(cell.Height - (fontSize * screenScale));
 
             var rightDecorPadding = (
                 from rd in cell.ResultSet.RightDecor
@@ -968,8 +993,8 @@ namespace HierarchyGrid.Skia
             TextDrawer.Paint(
                 canvas,
                 new SKPoint(
-                    (float)(cell.Left * screenScale) + (textHPadding / 2) + leftDecorPadding,
-                    (float)(cell.Top * screenScale) + (textVPadding / 2)
+                    (float)((cell.Left + (textHPadding / 2) + leftDecorPadding) * screenScale),
+                    (float)((cell.Top + (textVPadding / 2)) * screenScale)
                 ),
                 TextPaintOptions
             );
