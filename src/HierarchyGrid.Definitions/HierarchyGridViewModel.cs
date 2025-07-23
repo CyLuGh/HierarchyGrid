@@ -749,14 +749,19 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// <param name="height">The height of the area for which drawn cells are being retrieved.</param>
     /// <param name="invalidate">Specifies whether the existing drawn cells should be invalidated and recomputed.</param>
     /// <returns>A sequence of <see cref="PositionedCell"/> instances representing the cells currently drawn within the specified area.</returns>
-    public Seq<PositionedCell> GetDrawnCells(double width, double height, bool invalidate)
+    public Seq<PositionedCell> GetDrawnCells(
+        double width,
+        double height,
+        bool invalidate,
+        double screenScale = 1d
+    )
     {
         DrawnCells = GetDrawnCells(
             HorizontalOffset,
             VerticalOffset,
             width,
             height,
-            Scale,
+            screenScale * Scale,
             invalidate
         );
         return DrawnCells;

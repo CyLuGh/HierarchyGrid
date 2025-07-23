@@ -222,8 +222,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var width = canvas.LocalClipBounds.Width;
         var height = canvas.LocalClipBounds.Height;
 
-        var scale = 1d;
-        await HierarchyGridDrawer.Draw(viewModel, canvas, width, height, scale, false);
+        // Avalonia does not need screen scale adjustment with windows zoomed display
+        await HierarchyGridDrawer.Draw(viewModel, canvas, width, height, 1d, false);
     }
 
     private static void SkiaElement_PointerMove(
@@ -233,7 +233,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     )
     {
         var position = args.GetPosition(element);
-        viewModel.HandleMouseOver(position.X, position.Y, 1);
+        viewModel.HandleMouseOver(position.X, position.Y, viewModel.Scale);
     }
 
     private static void SkiaElement_PointerExit(HierarchyGridViewModel viewModel)

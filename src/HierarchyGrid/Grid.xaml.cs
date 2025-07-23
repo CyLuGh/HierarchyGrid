@@ -117,7 +117,11 @@ namespace HierarchyGrid
                 .MouseMove.Subscribe(args =>
                 {
                     var position = args.GetPosition(view.SkiaElement);
-                    viewModel.HandleMouseOver(position.X, position.Y, view.ScreenScale);
+                    viewModel.HandleMouseOver(
+                        position.X,
+                        position.Y,
+                        viewModel.Scale * view.ScreenScale
+                    );
                 })
                 .DisposeWith(disposables);
 

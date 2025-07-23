@@ -41,7 +41,7 @@ namespace HierarchyGrid.Skia
             HierarchyGridViewModel viewModel,
             SkiaTheme theme,
             IList<(ElementCoordinates, Guid)> previousGlobalCoordinates,
-            double screenScale = 1d
+            double screenScale
         )
         {
             // Don't draw if structure doesn't allow it
@@ -164,17 +164,19 @@ namespace HierarchyGrid.Skia
             GlobalHeader globalHeader = GlobalHeader.Local
         )
         {
+            var actualScale = screenScale * viewModel.Scale;
             var rect = SKRect.Create(
-                (float)(left * screenScale),
-                (float)(top * screenScale),
-                (float)(width * screenScale),
-                (float)(height * screenScale)
+                (float)(left * actualScale),
+                (float)(top * actualScale),
+                (float)(width * actualScale),
+                (float)(height * actualScale)
             );
             var coordinates = new ElementCoordinates(
-                left * screenScale,
-                top * screenScale,
-                (left + width) * screenScale,
-                (top + height) * screenScale
+                left,
+                top,
+                (left + width),
+                (top + height),
+                actualScale
             );
 
             var isHovered = previousGlobalCoordinates
@@ -195,8 +197,8 @@ namespace HierarchyGrid.Skia
 
             var decorator = GetGlobalHeaderDecorator(
                 !expanded,
-                left * screenScale,
-                top * screenScale,
+                left * actualScale,
+                top * actualScale,
                 globalHeader
             );
             paint.Color = isHovered
@@ -221,9 +223,11 @@ namespace HierarchyGrid.Skia
             Func<HierarchyGridViewModel, HierarchyDefinition[]> selector,
             float availableWidth,
             ref int headerCount,
-            double screenScale = 1d
+            double screenScale
         )
         {
+            var actualAvailableWidth = availableWidth / viewModel.Scale;
+
             viewModel.ColumnsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
 
@@ -252,7 +256,7 @@ namespace HierarchyGrid.Skia
                 column++;
             }
 
-            while (column < hdefs.Length && currentPosition < availableWidth)
+            while (column < hdefs.Length && currentPosition < actualAvailableWidth)
             {
                 var hdef = hdefs[column];
                 var width = viewModel.ColumnsWidths[column];
@@ -402,6 +406,8 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
+            var actualAvailableHeight = availableHeight / viewModel.Scale;
+
             viewModel.RowsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
 
@@ -430,7 +436,7 @@ namespace HierarchyGrid.Skia
                 row++;
             }
 
-            while (row < hdefs.Length && currentPosition < availableHeight)
+            while (row < hdefs.Length && currentPosition < actualAvailableHeight)
             {
                 var hdef = hdefs[row];
                 var height = viewModel.RowsHeights[row];
@@ -572,11 +578,12 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
+            var actualScale = screenScale * viewModel.Scale;
             var rect = SKRect.Create(
-                (float)(left * screenScale),
-                (float)(top * screenScale),
-                (float)(width * screenScale),
-                (float)(height * screenScale)
+                (float)(left * actualScale),
+                (float)(top * actualScale),
+                (float)(width * actualScale),
+                (float)(height * actualScale)
             );
 
             var renderInfo = RenderInfo.FindRender(viewModel, theme, hdef);
@@ -590,7 +597,7 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect(rect, paint);
 
-            GetHeaderDecorator(hdef, left * screenScale, top * screenScale)
+            GetHeaderDecorator(hdef, left * actualScale, top * actualScale)
                 .IfSome(decorator =>
                 {
                     using var localPaint = new SKPaint();
@@ -606,13 +613,19 @@ namespace HierarchyGrid.Skia
                 top,
                 width,
                 height,
-                screenScale,
+                actualScale,
                 renderInfo,
                 viewModel.HeaderFontFamily,
                 viewModel.HeaderFontSize
             );
 
-            var coordinates = new ElementCoordinates(left, top, left + width, top + height);
+            var coordinates = new ElementCoordinates(
+                left,
+                top,
+                left + width,
+                top + height,
+                actualScale
+            );
             viewModel.HeadersCoordinates.Add(new(coordinates, new(coordinates, hdef)));
 
             headerCount++;
@@ -776,12 +789,11 @@ namespace HierarchyGrid.Skia
             this SKCanvas canvas,
             HierarchyGridViewModel viewModel,
             SkiaTheme theme,
-            IEnumerable<PositionedCell> cells,
-            double screenScale = 1d
+            IEnumerable<PositionedCell> cells
         )
         {
             foreach (var cell in cells)
-                canvas.DrawCell(viewModel, theme, cell, screenScale);
+                canvas.DrawCell(viewModel, theme, cell);
         }
 
         private static void DrawCell(
@@ -792,11 +804,13 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
+            var actualScale = screenScale * viewModel.Scale;
+
             var rect = SKRect.Create(
-                (float)(cell.Left * screenScale),
-                (float)(cell.Top * screenScale),
-                (float)(cell.Width * screenScale),
-                (float)(cell.Height * screenScale)
+                (float)(cell.Left * actualScale),
+                (float)(cell.Top * actualScale),
+                (float)(cell.Width * actualScale),
+                (float)(cell.Height * actualScale)
             );
 
             var renderInfo = RenderInfo.FindRender(viewModel, theme, cell);
@@ -840,10 +854,10 @@ namespace HierarchyGrid.Skia
                     localPaint.Color = fci.BackgroundColor.ToSKColor();
 
                     rect = SKRect.Create(
-                        (float)(cell.Left * screenScale) + borderThickness,
-                        (float)(cell.Top * screenScale) + borderThickness,
-                        (float)(cell.Width * screenScale) - (borderThickness + 1f),
-                        (float)(cell.Height * screenScale) - (borderThickness + 1f)
+                        (float)(cell.Left * actualScale) + borderThickness,
+                        (float)(cell.Top * actualScale) + borderThickness,
+                        (float)(cell.Width * actualScale) - (borderThickness + 1f),
+                        (float)(cell.Height * actualScale) - (borderThickness + 1f)
                     );
                     canvas.DrawRect(rect, localPaint);
 
@@ -854,13 +868,13 @@ namespace HierarchyGrid.Skia
                     canvas.DrawRect(rect, localPaint);
                 });
 
-            DrawSelectionBorder(canvas, viewModel, theme, cell, screenScale, paint, ref rect);
+            DrawSelectionBorder(canvas, viewModel, theme, cell, actualScale, paint, ref rect);
 
-            RenderCellText(canvas, viewModel, theme, cell, screenScale, renderInfo);
-            RenderLeftSideDecor(canvas, cell, renderInfo, screenScale);
-            RenderRightSideDecor(canvas, cell, renderInfo, screenScale);
+            RenderCellText(canvas, viewModel, theme, cell, actualScale, renderInfo);
+            RenderLeftSideDecor(canvas, cell, renderInfo, actualScale);
+            RenderRightSideDecor(canvas, cell, renderInfo, actualScale);
 
-            viewModel.CellsCoordinates.Add((new(cell), cell));
+            viewModel.CellsCoordinates.Add((new(cell, viewModel.Scale), cell));
         }
 
         private static void RenderRightSideDecor(
