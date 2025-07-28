@@ -199,7 +199,7 @@ public class MainViewModel : ViewModelBase
                                 switch (x)
                                 {
                                     case 3:
-                                        cdef.RightDecor = o =>
+                                        cdef.RightDecor = (_, o) =>
                                             o switch
                                             {
                                                 int i => i % 2 == 0
@@ -214,11 +214,11 @@ public class MainViewModel : ViewModelBase
                                         };
                                         break;
                                     case 5:
-                                        cdef.LeftDecor = _ => "Resources/comment.svg";
+                                        cdef.LeftDecor = (_, o) => "Resources/comment.svg";
                                         break;
                                     case 6:
-                                        cdef.RightDecor = _ => "Resources/comment.svg";
-                                        cdef.LeftDecor = _ => "Resources/edit.svg";
+                                        cdef.RightDecor = (_, o) => "Resources/comment.svg";
+                                        cdef.LeftDecor = (_, o) => "Resources/edit.svg";
                                         break;
                                 }
 
