@@ -33,7 +33,6 @@
                             StatusMessage="I'm a test message!"
                             EnableCrosshair="True"
                             HeaderFontSize="18"
-                            HeaderFontFamily="Palatino"
                             CellFontSize="12"
                             CellFontFamily="Futura"
                             DockPanel.Dock="Top"/>
