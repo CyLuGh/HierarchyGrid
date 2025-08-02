@@ -197,8 +197,10 @@ namespace HierarchyGrid.Skia
 
             var decorator = GetGlobalHeaderDecorator(
                 !expanded,
-                left * actualScale,
-                top * actualScale,
+                rect.Left,
+                rect.Top,
+                rect.Width,
+                rect.Height,
                 globalHeader
             );
             paint.Color = isHovered
@@ -299,10 +301,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                currentPosition,
-                top,
-                width,
-                height,
+                (float)currentPosition,
+                (float)top,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -374,10 +376,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                currentPosition,
-                top,
-                width,
-                height,
+                (float)currentPosition,
+                (float)top,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -485,10 +487,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                left,
-                currentPosition,
-                width,
-                height,
+                (float)left,
+                (float)currentPosition,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -543,10 +545,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                left,
-                currentPosition,
-                width,
-                height,
+                (float)left,
+                (float)currentPosition,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -570,19 +572,19 @@ namespace HierarchyGrid.Skia
             SkiaTheme theme,
             ref int headerCount,
             HierarchyDefinition hdef,
-            double left,
-            double top,
-            double width,
-            double height,
+            float left,
+            float top,
+            float width,
+            float height,
             double screenScale
         )
         {
-            var actualScale = screenScale * viewModel.Scale;
+            float actualScale = (float)(screenScale * viewModel.Scale);
             var rect = SKRect.Create(
-                (float)(left * actualScale),
-                (float)(top * actualScale),
-                (float)(width * actualScale),
-                (float)(height * actualScale)
+                left * actualScale,
+                top * actualScale,
+                width * actualScale,
+                height * actualScale
             );
 
             var renderInfo = RenderInfo.FindRender(viewModel, theme, hdef);
@@ -677,8 +679,8 @@ namespace HierarchyGrid.Skia
 
         private static Option<SKPath> GetHeaderDecorator(
             HierarchyDefinition hdef,
-            double left,
-            double top
+            float left,
+            float top
         )
         {
             if (!hdef.HasChild)
@@ -689,40 +691,54 @@ namespace HierarchyGrid.Skia
 
         private static SKPath GetGlobalHeaderDecorator(
             bool isExpanded,
-            double left,
-            double top,
+            float left,
+            float top,
+            float width,
+            float height,
             GlobalHeader globalHeader
         ) =>
             globalHeader switch
             {
-                GlobalHeader.ExpandAll => BuildExpandAllPath(left, top),
-                GlobalHeader.CollapseAll => BuildFoldAllPath(left, top),
-                _ => isExpanded ? BuildExpandedPath(left, top) : BuildFoldedPath(left, top),
+                GlobalHeader.ExpandAll => BuildExpandAllPath(left, top, width, height),
+                GlobalHeader.CollapseAll => BuildFoldAllPath(left, top, width, height),
+                _ => isExpanded
+                    ? BuildExpandedPath(left, top, width, height)
+                    : BuildFoldedPath(left, top, width, height),
             };
 
-        private static SKPath BuildFoldAllPath(double left, double top)
+        private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
         {
             var path = new SKPath { FillType = SKPathFillType.EvenOdd };
 
-            var startPoint = new SKPoint(11f + (float)left, 5f + (float)top);
+            /*
+                Path width is 20 - 3: 17 Shift is 11 - 3: 8
+                Path height is 21 - 5: 16 Shift is 13 - 5: 8
+             */
+            float startX = left + (width - 17) / 2;
+            const float shiftX = 8;
+            const float gapX = 2;
+            const float shiftY = 8;
+            float startY = top + (height - 16) / 2;
+
+            var startPoint = new SKPoint(startX + shiftX, startY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
             path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(3f + (float)left, 14f + (float)top);
+            startPoint = new SKPoint(startX, startY + shiftY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 8f, startPoint.Y);
             path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(13f + (float)left, 5f + (float)top);
+            startPoint = new SKPoint(startX + shiftX + gapX, startY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
             path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(13f + (float)left, 14f + (float)top);
+            startPoint = new SKPoint(startX + shiftX + gapX, startY + shiftY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 7f, startPoint.Y);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
@@ -731,29 +747,39 @@ namespace HierarchyGrid.Skia
             return path;
         }
 
-        private static SKPath BuildExpandAllPath(double left, double top)
+        private static SKPath BuildExpandAllPath(float left, float top, float width, float height)
         {
             var path = new SKPath { FillType = SKPathFillType.EvenOdd };
 
-            var startPoint = new SKPoint(3f + (float)left, 5f + (float)top);
+            /*
+                Path width is 20 - 3: 17 Shift is 11 - 3: 8
+                Path height is 21 - 5: 16 Shift is 13 - 5: 8
+             */
+            float startX = left + (width - 16) / 2;
+            const float shiftX = 8;
+            const float gapX = 9;
+            const float shiftY = 9;
+            float startY = top + (height - 16) / 2;
+
+            var startPoint = new SKPoint(startX, startY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 7f, startPoint.Y);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(3f + (float)left, 14f + (float)top);
+            startPoint = new SKPoint(startX, startY + shiftY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
             path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(12f + (float)left, 5f + (float)top);
+            startPoint = new SKPoint(startX + gapX, startY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 8f, startPoint.Y);
             path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
             path.LineTo(startPoint);
 
-            startPoint = new SKPoint(20f + (float)left, 14f + (float)top);
+            startPoint = new SKPoint(startX + gapX + shiftX, startY + shiftY);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X, startPoint.Y + 7f);
             path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
@@ -762,10 +788,18 @@ namespace HierarchyGrid.Skia
             return path;
         }
 
-        private static SKPath BuildFoldedPath(double left, double top)
+        private static SKPath BuildFoldedPath(
+            float left,
+            float top,
+            float width = 0f,
+            float height = 0f
+        )
         {
             var path = new SKPath { FillType = SKPathFillType.EvenOdd };
-            var startPoint = new SKPoint(3f + (float)left, 5f + (float)top);
+            var startPoint =
+                width > 0f && height > 0f
+                    ? new SKPoint(left + (width - 16) / 2, top + (height - 16) / 2)
+                    : new SKPoint(3f + left, 5f + top);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);
             path.LineTo(startPoint.X, startPoint.Y + 16f);
@@ -773,10 +807,19 @@ namespace HierarchyGrid.Skia
             return path;
         }
 
-        private static SKPath BuildExpandedPath(double left, double top)
+        private static SKPath BuildExpandedPath(
+            float left,
+            float top,
+            float width = 0f,
+            float height = 0f
+        )
         {
             var path = new SKPath { FillType = SKPathFillType.EvenOdd };
-            var startPoint = new SKPoint(3f + (float)left, 9f + (float)top);
+
+            var startPoint =
+                width > 0f && height > 0f
+                    ? new SKPoint(left + (width - 16f) / 2, top + (height - 8f) / 2)
+                    : new SKPoint(3f + left, 9f + top);
             path.MoveTo(startPoint);
             path.LineTo(startPoint.X + 16f, startPoint.Y);
             path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);

@@ -53,6 +53,12 @@ public class ConsumerDefinition : HierarchyDefinition
     /// </summary>
     public Func<object, object, bool>? IsLocked { get; set; }
 
+    /// <summary>
+    /// A function that defines context-specific items for display or interaction.
+    /// Input is given by the producer.
+    /// Returns an array of tuples, each containing
+    /// a string description and an associated action to be executed with a ResultSet parameter.
+    /// </summary>
     public Func<
         object,
         (string description, Action<ResultSet> action)[]
