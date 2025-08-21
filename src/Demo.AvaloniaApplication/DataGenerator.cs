@@ -165,6 +165,10 @@ namespace Demo.AvaloniaApplication
                             $"First|Second|Hide {region}",
                             (ResultSet rs) => Console.WriteLine(rs.Result)
                         ),
+                        (
+                            $"First|Second|Split {region}",
+                            (ResultSet rs) => Console.WriteLine(rs.Result)
+                        ),
                         ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
                     ],
                     _ => Array.Empty<(string description, Action<ResultSet> action)>(),

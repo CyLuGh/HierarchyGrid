@@ -390,6 +390,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 MenuItem? parent = null;
                 for (int i = 0; i < splits.Length; i++)
                 {
+                    /* Leaf */
                     if (i == splits.Length - 1 && parent != null)
                     {
                         parent.Items.Add(
@@ -403,18 +404,17 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                     }
                     else
                     {
-                        if (items.TryGetValue((0, splits[i]), out var mi))
+                        if (items.TryGetValue((i, splits[i]), out var mi))
                         {
                             parent = mi;
                         }
                         else
                         {
                             var menuItem = new MenuItem { Header = splits[i] };
-                            if (parent != null)
-                                parent.Items.Add(menuItem);
+                            parent?.Items.Add(menuItem);
 
                             parent = menuItem;
-                            items.Add((i, splits[i]), menuItem);
+                            items.TryAdd((i, splits[i]), menuItem);
                         }
                     }
                 }
