@@ -158,19 +158,20 @@ namespace Demo.AvaloniaApplication
             csr.ContextItems = o =>
                 o switch
                 {
-                    string region =>
-                    [
-                        ($"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
-                        (
-                            $"First|Second|Hide {region}",
-                            (ResultSet rs) => Console.WriteLine(rs.Result)
-                        ),
-                        (
-                            $"First|Second|Split {region}",
-                            (ResultSet rs) => Console.WriteLine(rs.Result)
-                        ),
-                        ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
-                    ],
+                    string region
+                        =>
+                        [
+                            ($"Show {region}", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                            (
+                                $"First|Second|Hide {region}",
+                                (ResultSet rs) => Console.WriteLine(rs.Result)
+                            ),
+                            (
+                                $"First|Second|Split {region}",
+                                (ResultSet rs) => Console.WriteLine(rs.Result)
+                            ),
+                            ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
+                        ],
                     _ => Array.Empty<(string description, Action<ResultSet> action)>(),
                 };
 
@@ -184,20 +185,21 @@ namespace Demo.AvaloniaApplication
             csr.Colorize = o =>
                 o switch
                 {
-                    _ => (
-                        new ThemeColor(
-                            Brushes.LightGray.Color.A,
-                            Brushes.LightGray.Color.R,
-                            Brushes.LightGray.Color.G,
-                            Brushes.LightGray.Color.B
+                    _
+                        => (
+                            new ThemeColor(
+                                Brushes.LightGray.Color.A,
+                                Brushes.LightGray.Color.R,
+                                Brushes.LightGray.Color.G,
+                                Brushes.LightGray.Color.B
+                            ),
+                            new ThemeColor(
+                                Brushes.IndianRed.Color.A,
+                                Brushes.IndianRed.Color.R,
+                                Brushes.IndianRed.Color.G,
+                                Brushes.IndianRed.Color.B
+                            )
                         ),
-                        new ThemeColor(
-                            Brushes.IndianRed.Color.A,
-                            Brushes.IndianRed.Color.R,
-                            Brushes.IndianRed.Color.G,
-                            Brushes.IndianRed.Color.B
-                        )
-                    ),
                 };
 
             csr.TooltipCreator = (p, c) => $"{p} x {c}";

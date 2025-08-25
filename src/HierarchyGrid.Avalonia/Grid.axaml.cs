@@ -33,6 +33,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             ShowMode = FlyoutShowMode.Transient,
             OverlayInputPassThroughElement = this,
+            FlyoutPresenterClasses = { "TooltipFlyoutPresenter" }
         };
 
         _tooltipRectangle = new()

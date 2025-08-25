@@ -35,7 +35,20 @@
                             HeaderFontSize="18"
                             CellFontSize="12"
                             CellFontFamily="Futura"
-                            DockPanel.Dock="Top"/>
+                            DockPanel.Dock="Top">
+          <hierarchyGrid:Grid.Styles>
+            <Style Selector="FlyoutPresenter.TooltipFlyoutPresenter">
+              <Setter Property="Background" Value="LightYellow"/>
+              <Setter Property="BorderBrush" Value="Black"/>
+              <Setter Property="BorderThickness" Value="1"/>
+              <Setter Property="Padding" Value="5"/>
+              <Setter Property="MaxWidth" Value="300"/>
+              <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+          </hierarchyGrid:Grid.Styles>
+        </hierarchyGrid:Grid>
       </DockPanel>
     </TabItem>
     <TabItem Header="Test">
