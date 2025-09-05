@@ -651,15 +651,15 @@ namespace HierarchyGrid.Skia
                 hdef.Content?.ToString() ?? string.Empty,
                 new Style
                 {
-                    FontSize = headerFontSize,
+                    FontSize = (float)(headerFontSize * screenScale),
                     TextColor = renderInfo.ForegroundColor,
                     FontWeight = 600,
                     FontFamily = !string.IsNullOrEmpty(fontFamily) ? fontFamily : "Sans Serif",
                 }
             );
 
-            float textVPadding = 6f;
-            float textHPadding = 22f;
+            const float textVPadding = 6f;
+            const float textHPadding = 22f;
 
             TextDrawer.MaxHeight = (float)(height * screenScale);
             TextDrawer.MaxWidth = (float)((width - textHPadding) * screenScale);
@@ -701,9 +701,10 @@ namespace HierarchyGrid.Skia
             {
                 GlobalHeader.ExpandAll => BuildExpandAllPath(left, top, width, height),
                 GlobalHeader.CollapseAll => BuildFoldAllPath(left, top, width, height),
-                _ => isExpanded
-                    ? BuildExpandedPath(left, top, width, height)
-                    : BuildFoldedPath(left, top, width, height),
+                _
+                    => isExpanded
+                        ? BuildExpandedPath(left, top, width, height)
+                        : BuildFoldedPath(left, top, width, height),
             };
 
         private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
@@ -1006,8 +1007,6 @@ namespace HierarchyGrid.Skia
         {
             float fontSize = viewModel.CellFontSize;
 
-            float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
-
             var rightDecorPadding = (
                 from rd in cell.ResultSet.RightDecor
                 from svg in GetSvg(rd)
@@ -1026,30 +1025,26 @@ namespace HierarchyGrid.Skia
                 cell.ResultSet.Result,
                 new Style
                 {
-                    FontSize = fontSize,
+                    FontSize = (float)(fontSize * screenScale),
                     TextColor = renderInfo.ForegroundColor,
                     FontFamily = !string.IsNullOrEmpty(viewModel.CellFontFamily)
                         ? viewModel.CellFontFamily
                         : "Sans Serif",
                 }
             );
-            TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
-            TextDrawer.MaxWidth =
-                (float)(cell.Width * screenScale)
-                - textHPadding
-                - rightDecorPadding
-                - leftDecorPadding;
 
-            TextDrawer.Paint(
-                canvas,
-                new SKPoint(
-                    (float)((cell.Left + (textHPadding / 2) + leftDecorPadding) * screenScale),
-                    (float)(
-                        (cell.Top + ((cell.Height - TextDrawer.MeasuredHeight) / 2) * screenScale)
-                    )
-                ),
-                TextPaintOptions
+            float textHPadding =
+                8f + theme.SelectionBorderThickness + rightDecorPadding + leftDecorPadding;
+
+            TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
+            TextDrawer.MaxWidth = (float)((cell.Width - textHPadding) * screenScale);
+
+            float x = (float)((cell.Left + 4f + leftDecorPadding) * screenScale);
+            float y = (float)(
+                (cell.Top + ((cell.Height - TextDrawer.MeasuredHeight) / 2)) * screenScale
             );
+
+            TextDrawer.Paint(canvas, new SKPoint(x, y), TextPaintOptions);
         }
 
         private static void DrawSelectionBorder(
