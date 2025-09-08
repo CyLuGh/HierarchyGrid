@@ -140,7 +140,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public ConcurrentBag<(
         ElementCoordinates Coord,
         PositionedDefinition Definition
-    )> HeadersCoordinates { get; } = new();
+    )> HeadersCoordinates { get; } = [];
 
     /// <summary>
     /// Represents a collection of tuples that associate the coordinates of grid elements with their corresponding positioned cells.
@@ -148,7 +148,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public ConcurrentBag<(
         ElementCoordinates Coord,
         PositionedCell Cell
-    )> CellsCoordinates { get; } = new();
+    )> CellsCoordinates { get; } = [];
 
     private HashMap<(int Row, int Column), PositionedCell> CellsCoordinatesMap { get; set; }
 
@@ -156,7 +156,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         ElementCoordinates Coord,
         Guid Guid,
         Action Action
-    )> GlobalHeadersCoordinates { get; } = new();
+    )> GlobalHeadersCoordinates { get; } = [];
 
     [Reactive]
     public partial int HorizontalOffset { get; set; }
@@ -239,33 +239,41 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         {
             var rowsFlat = RowsDefinitions.FlatList();
             if (rowsFlat.Length == state.RowToggles.Length)
+            {
                 Parallel.For(
                     0,
                     state.RowToggles.Length,
                     i => rowsFlat[i].IsExpanded = state.RowToggles[i]
                 );
+            }
             else
+            {
                 rowsFlat
                     .AsParallel()
                     .ForAll(x =>
                     {
                         x.IsExpanded = true;
                     });
+            }
 
             var columnsFlat = ColumnsDefinitions.FlatList();
             if (columnsFlat.Length == state.ColumnToggles.Length)
+            {
                 Parallel.For(
                     0,
                     state.ColumnToggles.Length,
                     i => columnsFlat[i].IsExpanded = state.ColumnToggles[i]
                 );
+            }
             else
+            {
                 columnsFlat
                     .AsParallel()
                     .ForAll(x =>
                     {
                         x.IsExpanded = true;
                     });
+            }
 
             VerticalOffset = state.VerticalOffset;
             HorizontalOffset = state.HorizontalOffset;
@@ -618,15 +626,15 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         var rowDefinitions = Producers;
         var columnDefinitions = Consumers;
 
-        RowsHeadersWidth = Enumerable
-            .Range(0, rowDefinitions.TotalDepth())
-            .Select(_ => DefaultHeaderWidth)
-            .ToArray();
+        RowsHeadersWidth =
+        [
+            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth)
+        ];
 
-        ColumnsHeadersHeight = Enumerable
-            .Range(0, columnDefinitions.TotalDepth())
-            .Select(_ => DefaultHeaderHeight)
-            .ToArray();
+        ColumnsHeadersHeight =
+        [
+            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight)
+        ];
 
         var columnsCount = columnDefinitions.TotalCount(true);
         if (!preserveSizes || columnsCount != ColumnsWidths.Count)
@@ -959,6 +967,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance",
+        "CA1868:Unnecessary call to 'Contains(item)'",
+        Justification = "<Pending>"
+    )]
     private void HandleMultiExtendedSelection(
         PositionedCell cell,
         bool isShiftPressed,
