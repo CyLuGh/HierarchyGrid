@@ -8,7 +8,7 @@ namespace HierarchyGrid.Skia
 {
     internal static class CanvasExtensions
     {
-        private static Dictionary<string, Option<SKSvg>> _svgCache = new();
+        private static readonly Dictionary<string, Option<SKSvg>> _svgCache = [];
 
         private static Option<SKSvg> GetSvg(string path)
         {
@@ -292,10 +292,7 @@ namespace HierarchyGrid.Skia
         {
             double height = ComputeHeaderHeight(viewModel, hdef);
 
-            var top = Enumerable
-                .Range(0, hdef.Level)
-                .Select(x => viewModel.ColumnsHeadersHeight[x])
-                .Sum();
+            var top = Enumerable.Range(0, hdef.Level).Sum(x => viewModel.ColumnsHeadersHeight[x]);
 
             canvas.DrawHeader(
                 viewModel,
@@ -336,8 +333,7 @@ namespace HierarchyGrid.Skia
                 ? viewModel.ColumnsHeadersHeight[hdef.Level]
                 : Enumerable
                     .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
-                    .Select(x => viewModel.ColumnsHeadersHeight[x])
-                    .Sum();
+                    .Sum(x => viewModel.ColumnsHeadersHeight[x]);
             return height;
         }
 
@@ -363,13 +359,9 @@ namespace HierarchyGrid.Skia
 
             var width = Enumerable
                 .Range(column, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.ColumnsWidths.GetValueOrDefault(x, 0))
-                .Sum();
+                .Sum(x => viewModel.ColumnsWidths.GetValueOrDefault(x, 0));
 
-            var top = Enumerable
-                .Range(0, hdef.Level)
-                .Select(x => viewModel.ColumnsHeadersHeight[x])
-                .Sum();
+            var top = Enumerable.Range(0, hdef.Level).Sum(x => viewModel.ColumnsHeadersHeight[x]);
             var height = viewModel.ColumnsHeadersHeight[hdef.Level];
 
             canvas.DrawHeader(
@@ -474,14 +466,12 @@ namespace HierarchyGrid.Skia
                 : Enumerable
                     .Range(hdef.Level, viewModel.RowsHeadersWidth.Length - hdef.Level)
                     .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                    .Select(x => viewModel.RowsHeadersWidth[x])
-                    .Sum();
+                    .Sum(x => viewModel.RowsHeadersWidth[x]);
 
             var left = Enumerable
                 .Range(0, hdef.Level)
                 .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                .Select(x => viewModel.RowsHeadersWidth[x])
-                .Sum();
+                .Sum(x => viewModel.RowsHeadersWidth[x]);
 
             canvas.DrawHeader(
                 viewModel,
@@ -531,14 +521,12 @@ namespace HierarchyGrid.Skia
 
             var height = Enumerable
                 .Range(row, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.RowsHeights.GetValueOrDefault(x, 0))
-                .Sum();
+                .Sum(x => viewModel.RowsHeights.GetValueOrDefault(x, 0));
 
             var left = Enumerable
                 .Range(0, hdef.Level)
                 .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                .Select(x => viewModel.RowsHeadersWidth[x])
-                .Sum();
+                .Sum(x => viewModel.RowsHeadersWidth[x]);
             var width = viewModel.RowsHeadersWidth[hdef.Level];
 
             canvas.DrawHeader(
@@ -711,8 +699,8 @@ namespace HierarchyGrid.Skia
 
         private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
         {
-            float startX = left + (width - 24) / 2;
-            float startY = top + (height - 24) / 2;
+            float startX = left + ((width - 24) / 2);
+            float startY = top + ((height - 24) / 2);
 
             const string data = """
                 M19 9h-2.58l3.29-3.29a1 1 0 1 0-1.42-1.42L15 7.57V5a1 1 0 0 0-1-1 1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2z
@@ -720,7 +708,6 @@ namespace HierarchyGrid.Skia
                 """;
 
             var p = SKPath.ParseSvgPathData(data);
-            //p.Transform(SKMatrix.CreateScale(1.5f, 1.5f));
             p.Transform(SKMatrix.CreateTranslation(startX, startY));
 
             return p;
@@ -728,8 +715,8 @@ namespace HierarchyGrid.Skia
 
         private static SKPath BuildExpandAllPath(float left, float top, float width, float height)
         {
-            float startX = left + (width - 24) / 2;
-            float startY = top + (height - 24) / 2;
+            float startX = left + ((width - 24) / 2);
+            float startY = top + ((height - 24) / 2);
 
             const string data = """
                 M20 5a1 1 0 0 0-1-1h-5a1 1 0 0 0 0 2h2.57l-3.28 3.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L18 7.42V10a1 1 0 0 0 1 1 1 1 0 0 0 1-1z
@@ -751,7 +738,7 @@ namespace HierarchyGrid.Skia
         {
             var startPoint =
                 width > 0f && height > 0f
-                    ? new SKPoint(left + (width - 24) / 2, top + (height - 24) / 2)
+                    ? new SKPoint(left + ((width - 24) / 2), top + ((height - 24) / 2))
                     : new SKPoint(3f + left, 5f + top);
 
             const string data = """
@@ -773,7 +760,7 @@ namespace HierarchyGrid.Skia
         {
             var startPoint =
                 width > 0f && height > 0f
-                    ? new SKPoint(left + (width - 24f) / 2, top + (height - 24f) / 2)
+                    ? new SKPoint(left + ((width - 24f) / 2), top + ((height - 24f) / 2))
                     : new SKPoint(3f + left, 5f + top);
 
             const string data = """
@@ -892,7 +879,7 @@ namespace HierarchyGrid.Skia
                 picture.CullRect.Height > cell.Height
                     ? (float)(cell.Top * screenScale)
                     : (float)(
-                        cell.Top + ((cell.Height - picture.CullRect.Height) / 2) * screenScale
+                        cell.Top + (screenScale * ((cell.Height - picture.CullRect.Height) / 2))
                     );
 
             canvas.DrawPicture(
@@ -1032,10 +1019,6 @@ namespace HierarchyGrid.Skia
 
         private static TextBlock TextDrawer { get; } = new();
         private static TextPaintOptions TextPaintOptions { get; } =
-            new TextPaintOptions
-            {
-                Edging = SKFontEdging.SubpixelAntialias,
-                SubpixelPositioning = true
-            };
+            new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
     }
 }

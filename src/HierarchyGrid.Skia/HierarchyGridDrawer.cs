@@ -46,7 +46,7 @@ namespace HierarchyGrid.Skia
                 canvas.DrawColumnHeaders(
                     viewModel,
                     theme,
-                    v => v.ColumnsDefinitions.Leaves().ToArray(),
+                    v => [.. v.ColumnsDefinitions.Leaves()],
                     width,
                     ref headerCount,
                     screenScale
@@ -55,7 +55,7 @@ namespace HierarchyGrid.Skia
                 canvas.DrawRowHeaders(
                     viewModel,
                     theme,
-                    v => v.RowsDefinitions.Leaves().ToArray(),
+                    v => [.. v.RowsDefinitions.Leaves()],
                     height,
                     ref headerCount,
                     screenScale
