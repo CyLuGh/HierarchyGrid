@@ -575,7 +575,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             var (coord, def) = c;
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = coord.Height;
+            splitter.Height = coord.Height * viewModel.Scale;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
 
@@ -589,8 +589,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 .Subscribe();
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, coord.Top);
-            Canvas.SetLeft(splitter, coord.Right - 2);
+            Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
+            Canvas.SetLeft(splitter, (coord.Right - 2) * viewModel.Scale);
         }
 
         var currentX = 0d;
@@ -604,7 +604,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             var currentIndex = i;
             var width = viewModel.RowsHeadersWidth[currentIndex];
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = height;
+            splitter.Height = height * viewModel.Scale;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
             currentX += width;
@@ -620,8 +620,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 .Subscribe();
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, currentY);
-            Canvas.SetLeft(splitter, currentX - 2);
+            Canvas.SetTop(splitter, currentY * viewModel.Scale);
+            Canvas.SetLeft(splitter, (currentX - 2) * viewModel.Scale);
         }
 
         var exceeding = splitters.Skip(splitterCount).ToArray();

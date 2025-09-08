@@ -20,8 +20,8 @@ namespace HierarchyGrid.Definitions
 
         public float CellFontSize { get; set; }
         public float HeaderFontSize { get; set; }
-        public string CellFontFamily { get; set; }
-        public string HeaderFontFamily { get; set; }
+        public string? CellFontFamily { get; set; }
+        public string? HeaderFontFamily { get; set; }
 
         public double[] RowsHeadersWidth { get; private set; }
         public double[] ColumnsHeadersHeight { get; private set; }
