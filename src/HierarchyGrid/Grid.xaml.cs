@@ -600,7 +600,7 @@ namespace HierarchyGrid
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter(splitterCount++);
-                splitter.Height = coord.Height;
+                splitter.Height = coord.Height * viewModel.Scale;
                 splitter.Width = 2;
                 splitter.ResizeDirection = GridResizeDirection.Columns;
                 var dsp = splitter
@@ -625,19 +625,19 @@ namespace HierarchyGrid
                         var rect = new Rectangle
                         {
                             Fill = Brushes.DarkSlateGray,
-                            Height = coord.Height,
+                            Height = coord.Height * viewModel.Scale,
                             Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, coord.Top);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange));
+                        Canvas.SetTop(rect, coord.Top * viewModel.Scale);
+                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
                     })
                     .Subscribe();
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, coord.Top);
-                Canvas.SetLeft(splitter, coord.Right);
+                Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
+                Canvas.SetLeft(splitter, coord.Right * viewModel.Scale);
             }
 
             foreach (var p in headers.Where(t => t.Definition.Definition is ProducerDefinition))
@@ -645,7 +645,7 @@ namespace HierarchyGrid
                 var (coord, def) = p;
                 var splitter = GetSplitter(splitterCount++);
                 splitter.Height = 2;
-                splitter.Width = coord.Width;
+                splitter.Width = coord.Width * viewModel.Scale;
                 splitter.ResizeDirection = GridResizeDirection.Rows;
                 var dsp = splitter
                     .Events()
@@ -670,18 +670,18 @@ namespace HierarchyGrid
                         {
                             Fill = Brushes.DarkSlateGray,
                             Height = 2d,
-                            Width = coord.Width,
+                            Width = coord.Width * viewModel.Scale,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, (posY + args.VerticalChange));
-                        Canvas.SetLeft(rect, coord.Left);
+                        Canvas.SetTop(rect, (posY + args.VerticalChange) * viewModel.Scale);
+                        Canvas.SetLeft(rect, coord.Left * viewModel.Scale);
                     })
                     .Subscribe();
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, coord.Bottom);
-                Canvas.SetLeft(splitter, coord.Left);
+                Canvas.SetTop(splitter, coord.Bottom * viewModel.Scale);
+                Canvas.SetLeft(splitter, coord.Left * viewModel.Scale);
             }
 
             var currentX = 0d;
@@ -697,7 +697,7 @@ namespace HierarchyGrid
                 var currentIndex = i;
                 var width = viewModel.RowsHeadersWidth[currentIndex];
                 var splitter = GetSplitter(splitterCount++);
-                splitter.Height = height;
+                splitter.Height = height * viewModel.Scale;
                 splitter.Width = 2;
                 splitter.ResizeDirection = GridResizeDirection.Columns;
                 currentX += width;
@@ -725,19 +725,19 @@ namespace HierarchyGrid
                         var rect = new Rectangle
                         {
                             Fill = Brushes.DarkSlateGray,
-                            Height = height,
+                            Height = height * viewModel.Scale,
                             Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, currentY);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange));
+                        Canvas.SetTop(rect, currentY * viewModel.Scale);
+                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
                     })
                     .Subscribe();
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, currentY);
-                Canvas.SetLeft(splitter, currentX);
+                Canvas.SetTop(splitter, currentY * viewModel.Scale);
+                Canvas.SetLeft(splitter, currentX * viewModel.Scale);
             }
 
             var exceeding = splitters.Skip(splitterCount).ToArray();

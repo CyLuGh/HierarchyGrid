@@ -4,11 +4,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using DynamicData;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
 
 namespace HierarchyGrid.Definitions;
 
-public abstract class HierarchyDefinition
+public abstract partial class HierarchyDefinition
     : ReactiveObject,
         IActivatableViewModel,
         IComparable<HierarchyDefinition>,
@@ -253,10 +253,10 @@ public abstract class HierarchyDefinition
     }
 
     [Reactive]
-    public bool CanToggle { get; set; } = true;
+    public partial bool CanToggle { get; set; } = true;
 
     [Reactive]
-    public bool IsHighlighted { get; set; }
+    public partial bool IsHighlighted { get; set; }
 
     /// <summary>
     /// Sets state to expanded for current element and all its children.

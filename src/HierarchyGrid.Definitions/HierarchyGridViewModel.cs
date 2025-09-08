@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 using DynamicData.Binding;
 using LanguageExt;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.SourceGenerators;
 using Splat;
 using RxCommand = ReactiveUI.ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit>;
 using RxUnit = System.Reactive.Unit;
@@ -23,28 +22,36 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public bool IsValid => RowsHeadersWidth.Length > 0 && ColumnsHeadersHeight.Length > 0;
 
     [Reactive]
-    public Seq<ProducerDefinition> Producers { get; private set; }
+    public partial Seq<ProducerDefinition> Producers { get; private set; }
 
     [Reactive]
-    public Seq<ConsumerDefinition> Consumers { get; private set; }
+    public partial Seq<ConsumerDefinition> Consumers { get; private set; }
 
     /// <summary>
     /// Indicates whether the grid has at least one producer and one consumer definition
     /// </summary>
-    public bool HasData
-    {
-        [ObservableAsProperty]
-        get;
-    }
+    [ObservableAsProperty(PropertyName = "HasData")]
+    private IObservable<bool> HasDataObservable =>
+        this.WhenAnyValue(x => x.Producers)
+            .Select(seq => seq.Length > 0)
+            .CombineLatest(this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0))
+            .Select(t => t is { First: true, Second: true })
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Do(b =>
+            {
+                if (!b && string.IsNullOrEmpty(StatusMessage))
+                    StatusMessage = "No data";
+            })
+            .ObserveOn(RxApp.MainThreadScheduler);
 
     /// <summary>
     /// Message displayed when the grid has no data
     /// </summary>
     [Reactive]
-    public string? StatusMessage { get; set; }
+    public partial string? StatusMessage { get; set; }
 
     [Reactive]
-    public string EditionContent { get; set; }
+    public partial string EditionContent { get; set; }
 
     /// <summary>
     /// Stores the mapping of producer and consumer pairs to their associated <see cref="ResultSet"/> objects.
@@ -52,7 +59,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     private AtomHashMap<CellId, ResultSet> ResultSets { get; } =
         Prelude.AtomHashMap<CellId, ResultSet>();
 
-    internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = new();
+    internal ObservableUniqueCollection<PositionedCell> SelectedCells { get; } = [];
 
     public Seq<PositionedCell> Selections
     {
@@ -88,10 +95,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// Represents the cell currently being edited within the hierarchy grid.
     /// </summary>
     [Reactive]
-    public Option<PositionedCell> EditedCell { get; internal set; }
+    public partial Option<PositionedCell> EditedCell { get; internal set; }
 
     [Reactive]
-    public Option<PositionedDefinition> HoveredDefinitionHeader { get; internal set; }
+    public partial Option<PositionedDefinition> HoveredDefinitionHeader { get; internal set; }
 
     /// <summary>
     /// An observable stream that signals whenever the currently edited cell changes.
@@ -103,11 +110,19 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// Indicates whether the grid is currently in editing mode. True when <see cref="EditedCell"/> is some
     /// and its associated <see cref="ResultSet"/> has a defined editor.
     /// </summary>
-    public bool IsEditing
-    {
-        [ObservableAsProperty]
-        get;
-    }
+    [ObservableAsProperty(PropertyName = "IsEditing")]
+    private IObservable<bool> IsEditingObservable =>
+        EditedCellChanged
+            .Select(cell =>
+            {
+                /* Editor is none if no editing has been defined or if the cell is locked */
+                var editor = from c in cell from e in c.ResultSet.Editor select e;
+                editor.IfSome(_ =>
+                    EditionContent = cell.Some(c => c.ResultSet.Result).None(() => string.Empty)
+                );
+                return editor.IsSome;
+            })
+            .ObserveOn(RxApp.MainThreadScheduler);
 
     public Interaction<Seq<PositionedCell>, RxUnit> DrawEditionTextBoxInteraction { get; } =
         new(RxApp.MainThreadScheduler);
@@ -116,7 +131,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// Cells with extra rendering elements
     /// </summary>
     [Reactive]
-    public HashMap<PositionedCell, FocusCellInfo> FocusCells { get; set; }
+    public partial HashMap<PositionedCell, FocusCellInfo> FocusCells { get; set; }
 
     /// <summary>
     /// Represents a collection of coordinates and corresponding positioned definitions
@@ -144,64 +159,74 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     )> GlobalHeadersCoordinates { get; } = new();
 
     [Reactive]
-    public int HorizontalOffset { get; set; }
+    public partial int HorizontalOffset { get; set; }
 
     [Reactive]
-    public int VerticalOffset { get; set; }
+    public partial int VerticalOffset { get; set; }
 
     [Reactive]
-    public double Scale { get; set; } = 1d;
+    public partial double Scale { get; set; } = 1d;
 
     [Reactive]
-    public double Width { get; set; } = double.NaN;
+    public partial double Width { get; set; } = double.NaN;
 
     [Reactive]
-    public double Height { get; set; } = double.NaN;
+    public partial double Height { get; set; } = double.NaN;
 
     [Reactive]
-    public int MaxHorizontalOffset { get; set; }
+    public partial int MaxHorizontalOffset { get; set; }
 
     [Reactive]
-    public int MaxVerticalOffset { get; set; }
+    public partial int MaxVerticalOffset { get; set; }
 
     [Reactive]
-    public bool IsTransposed { get; set; }
+    public partial bool IsTransposed { get; set; }
 
     [Reactive]
-    public bool EnableCrosshair { get; set; }
+    public partial bool EnableCrosshair { get; set; }
 
     [Reactive]
-    public int HoveredColumn { get; private set; }
+    public partial int HoveredColumn { get; private set; }
 
     [Reactive]
-    public int HoveredRow { get; private set; }
+    public partial int HoveredRow { get; private set; }
 
     [Reactive]
-    public SelectionMode SelectionMode { get; set; }
+    public partial SelectionMode SelectionMode { get; set; }
 
     [Reactive]
-    public CellTextAlignment TextAlignment { get; set; } = CellTextAlignment.Right;
+    public partial CellTextAlignment TextAlignment { get; set; } = CellTextAlignment.Right;
 
     [Reactive]
-    public ITheme Theme { get; set; } = HierarchyGridTheme.Default;
+    public partial ITheme Theme { get; set; } = HierarchyGridTheme.Default;
 
     [Reactive]
-    public Option<PositionedCell> HoveredCell { get; set; }
+    public partial Option<PositionedCell> HoveredCell { get; set; }
 
     [Reactive]
-    public Guid HoveredElementId { get; private set; }
+    public partial Guid HoveredElementId { get; private set; }
 
-    public Seq<HierarchyDefinition> ColumnsDefinitions
-    {
-        [ObservableAsProperty]
-        get;
-    }
+    [ObservableAsProperty(PropertyName = "ColumnsDefinitions")]
+    private IObservable<Seq<HierarchyDefinition>> ColumnsDefinitionsObservable =>
+        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
+            .Select(t =>
+            {
+                var (consumers, producers, isTransposed) = t;
+                return isTransposed
+                    ? producers.Cast<HierarchyDefinition>()
+                    : consumers.Cast<HierarchyDefinition>();
+            });
 
-    public Seq<HierarchyDefinition> RowsDefinitions
-    {
-        [ObservableAsProperty]
-        get;
-    }
+    [ObservableAsProperty(PropertyName = "RowsDefinitions")]
+    private IObservable<Seq<HierarchyDefinition>> RowsDefinitionsObservable =>
+        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
+            .Select(t =>
+            {
+                var (consumers, producers, isTransposed) = t;
+                return isTransposed
+                    ? consumers.Cast<HierarchyDefinition>()
+                    : producers.Cast<HierarchyDefinition>();
+            });
 
     public HierarchyGridState GetGridState() => new(this);
 
@@ -310,11 +335,9 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public Interaction<string, RxUnit> FillClipboardInteraction { get; } =
         new(RxApp.MainThreadScheduler);
 
-    public bool IsCopyingToClipboard
-    {
-        [ObservableAsProperty]
-        get;
-    }
+    [ObservableAsProperty(PropertyName = "IsCopyingToClipboard")]
+    private IObservable<bool> IsCopyingToClipboardObservable =>
+        CopyToClipboardCommand.IsExecuting.ObserveOn(RxApp.MainThreadScheduler);
 
     public ReactiveCommand<bool, RxUnit> ToggleStatesCommand { get; }
 
@@ -353,63 +376,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
         this.WhenActivated(disposables =>
         {
-            ManageEditionProcess(disposables);
             ManageScaleConstraints(disposables);
-            UpdateDataStatus(disposables);
             ManageOffsets(disposables);
             HandleTooltipDisplay(disposables);
             TriggerGridDrawing(disposables);
             ManageSelectionChange(disposables);
-
-            CopyToClipboardCommand
-                .IsExecuting.ToPropertyEx(
-                    this,
-                    x => x.IsCopyingToClipboard,
-                    scheduler: RxApp.MainThreadScheduler
-                )
-                .DisposeWith(disposables);
         });
 
-        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
-            .Select(t =>
-            {
-                var (consumers, producers, isTransposed) = t;
-                return isTransposed
-                    ? producers.Cast<HierarchyDefinition>()
-                    : consumers.Cast<HierarchyDefinition>();
-            })
-            .ToPropertyEx(this, x => x.ColumnsDefinitions);
-
-        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
-            .Select(t =>
-            {
-                var (consumers, producers, isTransposed) = t;
-                return isTransposed
-                    ? consumers.Cast<HierarchyDefinition>()
-                    : producers.Cast<HierarchyDefinition>();
-            })
-            .ToPropertyEx(this, x => x.RowsDefinitions);
-    }
-
-    private void ManageEditionProcess(CompositeDisposable disposables)
-    {
-        EditedCellChanged
-            .Select(cell =>
-            {
-                /* Editor is none if no editing has been defined or if the cell is locked */
-                var editor = from c in cell from e in c.ResultSet.Editor select e;
-                editor.IfSome(_ =>
-                    EditionContent = cell.Some(c => c.ResultSet.Result).None(() => string.Empty)
-                );
-                return editor.IsSome;
-            })
-            .ToPropertyEx(
-                this,
-                x => x.IsEditing,
-                initialValue: false,
-                scheduler: RxApp.MainThreadScheduler
-            )
-            .DisposeWith(disposables);
+        InitializeOAPH();
     }
 
     private void ManageSelectionChange(CompositeDisposable disposables)
@@ -437,22 +411,6 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         this.WhenAnyValue(x => x.Scale)
             .Where(x => x > 1)
             .SubscribeSafe(_ => Scale = 1)
-            .DisposeWith(disposables);
-    }
-
-    private void UpdateDataStatus(CompositeDisposable disposables)
-    {
-        this.WhenAnyValue(x => x.Producers)
-            .Select(seq => seq.Length > 0)
-            .CombineLatest(this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0))
-            .Select(t => t is { First: true, Second: true })
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Do(b =>
-            {
-                if (!b && string.IsNullOrEmpty(StatusMessage))
-                    StatusMessage = "No data";
-            })
-            .ToPropertyEx(this, x => x.HasData, scheduler: RxApp.MainThreadScheduler)
             .DisposeWith(disposables);
     }
 
@@ -995,7 +953,6 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 HandleMultiSimpleSelection(cell);
                 break;
 
-            case SelectionMode.None:
             default:
                 SelectedCells.Clear();
                 break;
@@ -1022,7 +979,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         }
         else if (isShiftPressed && SelectedCells.Count > 0)
         {
-            var lastSelection = SelectedCells.Last();
+            var lastSelection = SelectedCells[^1];
             var rows = Enumerable
                 .Range(
                     Math.Min(lastSelection.VerticalPosition, cell.VerticalPosition),

@@ -207,6 +207,7 @@ namespace HierarchyGrid.Skia
                 ? theme.HoverHeaderForegroundColor
                 : theme.HeaderForegroundColor;
             paint.Style = SKPaintStyle.StrokeAndFill;
+            paint.IsAntialias = true;
             canvas.DrawPath(decorator, paint);
 
             void Act()
@@ -604,6 +605,7 @@ namespace HierarchyGrid.Skia
                     using var localPaint = new SKPaint();
                     localPaint.Color = renderInfo.ForegroundColor;
                     localPaint.Style = SKPaintStyle.StrokeAndFill;
+                    localPaint.IsAntialias = true;
                     canvas.DrawPath(decorator, localPaint);
                 });
 
@@ -659,7 +661,7 @@ namespace HierarchyGrid.Skia
             );
 
             const float textVPadding = 6f;
-            const float textHPadding = 22f;
+            const float textHPadding = 26f;
 
             TextDrawer.MaxHeight = (float)(height * screenScale);
             TextDrawer.MaxWidth = (float)((width - textHPadding) * screenScale);
@@ -709,84 +711,35 @@ namespace HierarchyGrid.Skia
 
         private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            float startX = left + (width - 24) / 2;
+            float startY = top + (height - 24) / 2;
 
-            /*
-                Path width is 20 - 3: 17 Shift is 11 - 3: 8
-                Path height is 21 - 5: 16 Shift is 13 - 5: 8
-             */
-            float startX = left + (width - 17) / 2;
-            const float shiftX = 8;
-            const float gapX = 2;
-            const float shiftY = 8;
-            float startY = top + (height - 16) / 2;
+            const string data = """
+                M19 9h-2.58l3.29-3.29a1 1 0 1 0-1.42-1.42L15 7.57V5a1 1 0 0 0-1-1 1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2z
+                M10 13H5a1 1 0 0 0 0 2h2.57l-3.28 3.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L9 16.42V19a1 1 0 0 0 1 1 1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1z
+                """;
 
-            var startPoint = new SKPoint(startX + shiftX, startY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            var p = SKPath.ParseSvgPathData(data);
+            //p.Transform(SKMatrix.CreateScale(1.5f, 1.5f));
+            p.Transform(SKMatrix.CreateTranslation(startX, startY));
 
-            startPoint = new SKPoint(startX, startY + shiftY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(startX + shiftX + gapX, startY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(startX + shiftX + gapX, startY + shiftY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 7f, startPoint.Y);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            return path;
+            return p;
         }
 
         private static SKPath BuildExpandAllPath(float left, float top, float width, float height)
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            float startX = left + (width - 24) / 2;
+            float startY = top + (height - 24) / 2;
 
-            /*
-                Path width is 20 - 3: 17 Shift is 11 - 3: 8
-                Path height is 21 - 5: 16 Shift is 13 - 5: 8
-             */
-            float startX = left + (width - 16) / 2;
-            const float shiftX = 8;
-            const float gapX = 9;
-            const float shiftY = 9;
-            float startY = top + (height - 16) / 2;
+            const string data = """
+                M20 5a1 1 0 0 0-1-1h-5a1 1 0 0 0 0 2h2.57l-3.28 3.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L18 7.42V10a1 1 0 0 0 1 1 1 1 0 0 0 1-1z
+                M10.71 13.29a1 1 0 0 0-1.42 0L6 16.57V14a1 1 0 0 0-1-1 1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2H7.42l3.29-3.29a1 1 0 0 0 0-1.42z
+                """;
 
-            var startPoint = new SKPoint(startX, startY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 7f, startPoint.Y);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startX, startY));
 
-            startPoint = new SKPoint(startX, startY + shiftY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(startX + gapX, startY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(startX + gapX + shiftX, startY + shiftY);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            return path;
+            return p;
         }
 
         private static SKPath BuildFoldedPath(
@@ -796,16 +749,19 @@ namespace HierarchyGrid.Skia
             float height = 0f
         )
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
             var startPoint =
                 width > 0f && height > 0f
-                    ? new SKPoint(left + (width - 16) / 2, top + (height - 16) / 2)
+                    ? new SKPoint(left + (width - 24) / 2, top + (height - 24) / 2)
                     : new SKPoint(3f + left, 5f + top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);
-            path.LineTo(startPoint.X, startPoint.Y + 16f);
-            path.Close();
-            return path;
+
+            const string data = """
+                M10.46 18a2.23 2.23 0 0 1-.91-.2 1.76 1.76 0 0 1-1.05-1.59V7.79A1.76 1.76 0 0 1 9.55 6.2a2.1 2.1 0 0 1 2.21.26l5.1 4.21a1.7 1.7 0 0 1 0 2.66l-5.1 4.21a2.06 2.06 0 0 1-1.3.46z
+                """;
+
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startPoint.X, startPoint.Y));
+
+            return p;
         }
 
         private static SKPath BuildExpandedPath(
@@ -815,17 +771,19 @@ namespace HierarchyGrid.Skia
             float height = 0f
         )
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
-
             var startPoint =
                 width > 0f && height > 0f
-                    ? new SKPoint(left + (width - 16f) / 2, top + (height - 8f) / 2)
-                    : new SKPoint(3f + left, 9f + top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 16f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);
-            path.Close();
-            return path;
+                    ? new SKPoint(left + (width - 24f) / 2, top + (height - 24f) / 2)
+                    : new SKPoint(3f + left, 5f + top);
+
+            const string data = """
+                M12 17a1.72 1.72 0 0 1-1.33-.64l-4.21-5.1a2.1 2.1 0 0 1-.26-2.21A1.76 1.76 0 0 1 7.79 8h8.42a1.76 1.76 0 0 1 1.59 1.05 2.1 2.1 0 0 1-.26 2.21l-4.21 5.1A1.72 1.72 0 0 1 12 17z
+                """;
+
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startPoint.X, startPoint.Y));
+
+            return p;
         }
 
         internal static void DrawCells(
@@ -1074,6 +1032,10 @@ namespace HierarchyGrid.Skia
 
         private static TextBlock TextDrawer { get; } = new();
         private static TextPaintOptions TextPaintOptions { get; } =
-            new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
+            new TextPaintOptions
+            {
+                Edging = SKFontEdging.SubpixelAntialias,
+                SubpixelPositioning = true
+            };
     }
 }
