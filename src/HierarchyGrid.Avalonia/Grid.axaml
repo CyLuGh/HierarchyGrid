@@ -5,6 +5,7 @@
              xmlns:skia="using:SkiaSharp"
              xmlns:local="using:HierarchyGrid.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:rxui="using:ReactiveUI.Avalonia"
              x:Class="HierarchyGrid.Avalonia.Grid">
   <Grid RowDefinitions="*,Auto" ColumnDefinitions="*,Auto">
       <local:SKXamlCanvas x:Name="SkiaElement" />

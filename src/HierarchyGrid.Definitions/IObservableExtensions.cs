@@ -1,11 +1,12 @@
-﻿using ReactiveUI;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using ReactiveUI;
 
 namespace HierarchyGrid.Definitions;
 
@@ -26,24 +27,22 @@ public static class IObservableExtensions
     /// </summary>
     // Credit: Kent Boogaart
     // https://github.com/kentcb/YouIandReactiveUI
-    public static IObservable<T> DoLifetime<T>(this IObservable<T> @this, Action subscribed, Action unsubscribed)
+    public static IObservable<T> DoLifetime<T>(
+        this IObservable<T> @this,
+        Action subscribed,
+        Action unsubscribed
+    )
     {
-        return Observable
-            .Create<T>(
-                observer =>
-                {
-                    subscribed();
+        return Observable.Create<T>(observer =>
+        {
+            subscribed();
 
-                    var disposables = new CompositeDisposable();
-                    @this
-                        .Subscribe(observer)
-                        .DisposeWith(disposables);
-                    Disposable
-                        .Create(() => unsubscribed())
-                        .DisposeWith(disposables);
+            var disposables = new CompositeDisposable();
+            @this.Subscribe(observer).DisposeWith(disposables);
+            Disposable.Create(() => unsubscribed()).DisposeWith(disposables);
 
-                    return disposables;
-                });
+            return disposables;
+        });
     }
 
     /// <summary>
@@ -56,27 +55,29 @@ public static class IObservableExtensions
         this IObservable<T> @this,
         [CallerMemberName] string? callerMemberName = null,
         [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+        [CallerLineNumber] int callerLineNumber = 0
+    )
     {
-        return @this
-            .Subscribe(
-                _ => { },
-                ex =>
-                {
-                    // Replace with your logger library.
-                    Console.Error.WriteLine(
-                        "An exception went unhandled: {0}" +
-                        "Caller member name: {1}, " +
-                        "caller file path: {2}, " +
-                        "caller line number: {3}.",
-                        ex,
-                        callerMemberName,
-                        callerFilePath,
-                        callerLineNumber);
+        return @this.Subscribe(
+            _ => { },
+            ex =>
+            {
+                // Replace with your logger library.
+                Console.Error.WriteLine(
+                    "An exception went unhandled: {0}"
+                        + "Caller member name: {1}, "
+                        + "caller file path: {2}, "
+                        + "caller line number: {3}.",
+                    ex,
+                    callerMemberName,
+                    callerFilePath,
+                    callerLineNumber
+                );
 
-                    // Delete this line if you're not using ReactiveUI.
-                    RxApp.DefaultExceptionHandler.OnNext(ex);
-                });
+                // Delete this line if you're not using ReactiveUI.
+                RxApp.DefaultExceptionHandler.OnNext(ex);
+            }
+        );
     }
 
     /// <summary>
@@ -90,27 +91,29 @@ public static class IObservableExtensions
         Action<T> onNext,
         [CallerMemberName] string? callerMemberName = null,
         [CallerFilePath] string? callerFilePath = null,
-        [CallerLineNumber] int callerLineNumber = 0)
+        [CallerLineNumber] int callerLineNumber = 0
+    )
     {
-        return @this
-            .Subscribe(
-                onNext,
-                ex =>
-                {
-                    // Replace with your logger library.
-                    Console.Error.WriteLine(
-                        "An exception went unhandled: {0}" +
-                        "Caller member name: {1}, " +
-                        "caller file path: {2}, " +
-                        "caller line number: {3}.",
-                        ex,
-                        callerMemberName,
-                        callerFilePath,
-                        callerLineNumber);
+        return @this.Subscribe(
+            onNext,
+            ex =>
+            {
+                // Replace with your logger library.
+                Console.Error.WriteLine(
+                    "An exception went unhandled: {0}"
+                        + "Caller member name: {1}, "
+                        + "caller file path: {2}, "
+                        + "caller line number: {3}.",
+                    ex,
+                    callerMemberName,
+                    callerFilePath,
+                    callerLineNumber
+                );
 
-                    // Delete this line if you're not using ReactiveUI.
-                    RxApp.DefaultExceptionHandler.OnNext(ex);
-                });
+                // Delete this line if you're not using ReactiveUI.
+                RxApp.DefaultExceptionHandler.OnNext(ex);
+            }
+        );
     }
 
     /// <summary>
@@ -118,12 +121,13 @@ public static class IObservableExtensions
     /// </summary>
     // Credit: James World
     // http://www.zerobugbuild.com/?p=213
-    public static IObservable<T> WithPrevious<T>(this IObservable<T> @this, Func<T?, T?, T> projection)
+    public static IObservable<T> WithPrevious<T>(
+        this IObservable<T> @this,
+        Func<T?, T?, T> projection
+    )
     {
         return @this
-            .Scan(
-                (default(T), default(T)),
-                (acc, current) => (acc.Item2, current))
+            .Scan((default(T), default(T)), (acc, current) => (acc.Item2, current))
             .Select(t => projection(t.Item1, t.Item2));
     }
 
@@ -134,31 +138,29 @@ public static class IObservableExtensions
     // http://www.zerobugbuild.com/?p=323
     public static IObservable<T> MaxRate<T>(this IObservable<T> @this, TimeSpan interval)
     {
-        return @this
-            .Select(
-                x => Observable
-                    .Empty<T>()
-                    .Delay(interval)
-                    .StartWith(x) )
-            .Concat();
+        return @this.Select(x => Observable.Empty<T>().Delay(interval).StartWith(x)).Concat();
     }
 
     /// <summary>
     /// Like TakeWhile, except includes the emitted item that triggered the exit condition.
     /// </summary>
     // Credit: Someone's answer on Stack Overflow
-    public static IObservable<T> TakeWhileInclusive<T>(this IObservable<T> @this, Func<T, bool> predicate)
+    public static IObservable<T> TakeWhileInclusive<T>(
+        this IObservable<T> @this,
+        Func<T, bool> predicate
+    )
     {
-        return @this
-            .Publish(x => x.TakeWhile(predicate)
-                .Merge(x.SkipWhile(predicate).Take(1)));
+        return @this.Publish(x => x.TakeWhile(predicate).Merge(x.SkipWhile(predicate).Take(1)));
     }
 
     /// <summary>
     /// Buffers items in a stream until the provided predicate is true.
     /// </summary>
     // Credit: Someone's answer on Stack Overflow
-    public static IObservable<IList<T>> BufferUntil<T>(this IObservable<T> @this, Func<T, bool> predicate)
+    public static IObservable<IList<T>> BufferUntil<T>(
+        this IObservable<T> @this,
+        Func<T, bool> predicate
+    )
     {
         var published = @this.Publish().RefCount();
         return published.Buffer(() => published.Where(predicate));
@@ -172,31 +174,64 @@ public static class IObservableExtensions
     public static IObservable<T> Spy<T>(this IObservable<T> @this, string? opName = null)
     {
         opName = opName ?? "IObservable";
-        Console.WriteLine("{0}: Observable obtained on Thread: {1}", opName, Environment.CurrentManagedThreadId );
+        Console.WriteLine(
+            "{0}: Observable obtained on Thread: {1}",
+            opName,
+            Environment.CurrentManagedThreadId
+        );
 
-        return Observable.Create<T>(
-            obs =>
+        return Observable.Create<T>(obs =>
+        {
+            Console.WriteLine(
+                "{0}: Subscribed to on Thread: {1}",
+                opName,
+                Environment.CurrentManagedThreadId
+            );
+
+            try
             {
-                Console.WriteLine("{0}: Subscribed to on Thread: {1}", opName, Environment.CurrentManagedThreadId);
+                var subscription = @this
+                    .Do(
+                        x =>
+                            Console.WriteLine(
+                                "{0}: OnNext({1}) on Thread: {2}",
+                                opName,
+                                x,
+                                Environment.CurrentManagedThreadId
+                            ),
+                        ex =>
+                            Console.WriteLine(
+                                "{0}: OnError({1}) on Thread: {2}",
+                                opName,
+                                ex,
+                                Environment.CurrentManagedThreadId
+                            ),
+                        () =>
+                            Console.WriteLine(
+                                "{0}: OnCompleted() on Thread: {1}",
+                                opName,
+                                Environment.CurrentManagedThreadId
+                            )
+                    )
+                    .Subscribe(obs);
 
-                try
-                {
-                    var subscription = @this
-                        .Do(
-                            x => Console.WriteLine("{0}: OnNext({1}) on Thread: {2}", opName, x, Environment.CurrentManagedThreadId),
-                            ex => Console.WriteLine("{0}: OnError({1}) on Thread: {2}", opName, ex, Environment.CurrentManagedThreadId),
-                            () => Console.WriteLine("{0}: OnCompleted() on Thread: {1}", opName,Environment.CurrentManagedThreadId))
-                        .Subscribe(obs);
-
-                    return new CompositeDisposable(
-                        subscription,
-                        Disposable.Create(() => Console.WriteLine("{0}: Cleaned up on Thread: {1}", opName, Environment.CurrentManagedThreadId)));
-                }
-                finally
-                {
-                    Console.WriteLine("{0}: Subscription completed.", opName);
-                }
-            });
+                return new CompositeDisposable(
+                    subscription,
+                    Disposable.Create(
+                        () =>
+                            Console.WriteLine(
+                                "{0}: Cleaned up on Thread: {1}",
+                                opName,
+                                Environment.CurrentManagedThreadId
+                            )
+                    )
+                );
+            }
+            finally
+            {
+                Console.WriteLine("{0}: Subscription completed.", opName);
+            }
+        });
     }
 
     /// <summary>
@@ -209,6 +244,7 @@ public static class IObservableExtensions
         @this.Subscribe(
             i => Console.WriteLine("{0}-->{1}", name, i),
             ex => Console.WriteLine("{0} failed-->{1}", name, ex.Message),
-            () => Console.WriteLine("{0} completed", name));
+            () => Console.WriteLine("{0} completed", name)
+        );
     }
 }

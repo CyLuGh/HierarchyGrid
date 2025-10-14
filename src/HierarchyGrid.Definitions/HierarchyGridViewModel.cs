@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
@@ -186,10 +187,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public partial bool EnableCrosshair { get; set; }
 
     [Reactive]
-    public partial int HoveredColumn { get; private set; }
+    public partial int HoveredColumn { get; set; }
 
     [Reactive]
-    public partial int HoveredRow { get; private set; }
+    public partial int HoveredRow { get; set; }
 
     [Reactive]
     public partial SelectionMode SelectionMode { get; set; }
@@ -628,12 +629,12 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
         RowsHeadersWidth =
         [
-            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth)
+            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth),
         ];
 
         ColumnsHeadersHeight =
         [
-            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight)
+            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight),
         ];
 
         var columnsCount = columnDefinitions.TotalCount(true);

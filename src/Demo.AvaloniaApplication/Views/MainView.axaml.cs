@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using Avalonia.Controls;
-using Avalonia.ReactiveUI;
 using Demo.AvaloniaApplication.ViewModels;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 
 namespace Demo.AvaloniaApplication.Views;
 

@@ -1,19 +1,19 @@
+using System;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
-using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
-using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.ReactiveUI;
 using Avalonia.VisualTree;
 using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 using LanguageExt;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 using SkiaSharp;
 using Key = Avalonia.Input.Key;
 using KeyEventArgs = Avalonia.Input.KeyEventArgs;
@@ -33,7 +33,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             ShowMode = FlyoutShowMode.Transient,
             OverlayInputPassThroughElement = this,
-            FlyoutPresenterClasses = { "TooltipFlyoutPresenter" }
+            FlyoutPresenterClasses = { "TooltipFlyoutPresenter" },
         };
 
         _tooltipRectangle = new()
