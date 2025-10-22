@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reactive.Linq;
 using LanguageExt;
 using ReactiveUI;
 
@@ -90,19 +91,11 @@ public class ConsumerDefinition : HierarchyDefinition
 
         var tooltipText = GenerateTooltipContent(inputSet, data);
 
-        var contextCommands = Option<(
-            string,
-            ReactiveCommand<ResultSet, System.Reactive.Unit>
-        )[]>.None;
+        var contextCommands = Option<(string, Action<ResultSet>)[]>.None;
 
         if (ContextItems != null)
         {
-            var cis = ContextItems(inputSet.Input);
-            if (cis.Length > 0)
-                contextCommands = cis.Select(ci =>
-                        (ci.description, ReactiveCommand.Create((ResultSet rs) => ci.action(rs)))
-                    )
-                    .ToArray();
+            contextCommands = ContextItems(inputSet.Input);
         }
 
         Option<string> leftDecor = LeftDecor is not null

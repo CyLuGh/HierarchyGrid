@@ -366,7 +366,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     }
 
     private static IEnumerable<MenuItem> BuildCustomItems(
-        (string, ReactiveCommand<ResultSet, System.Reactive.Unit>)[] commands,
+        (string, Action<ResultSet>)[] commands,
         ResultSet resultSet
     )
     {
@@ -382,7 +382,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 yield return new MenuItem
                 {
                     Header = header,
-                    Command = command,
+                    Command = ReactiveCommand.Create((ResultSet r) => command(r)),
                     CommandParameter = resultSet,
                 };
             }
@@ -398,7 +398,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                             new MenuItem
                             {
                                 Header = splits[i],
-                                Command = command,
+                                Command = ReactiveCommand.Create((ResultSet r) => command(r)),
                                 CommandParameter = resultSet,
                             }
                         );
