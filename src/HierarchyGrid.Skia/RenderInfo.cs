@@ -29,10 +29,11 @@ namespace HierarchyGrid.Skia
                 Qualification.Empty => theme.EmptyBackgroundColor,
                 Qualification.ReadOnly => theme.ReadOnlyBackgroundColor,
                 Qualification.Computed => theme.ComputedBackgroundColor,
-                Qualification.Custom => cell.ResultSet.BackgroundColor.Match(
-                    t => new SKColor(t.R, t.G, t.B, t.A),
-                    () => theme.BackgroundColor
-                ),
+                Qualification.Custom
+                    => cell.ResultSet.BackgroundColor.Match(
+                        t => new SKColor(t.R, t.G, t.B, t.A),
+                        () => theme.BackgroundColor
+                    ),
                 _ => theme.BackgroundColor,
             };
         }
@@ -57,10 +58,11 @@ namespace HierarchyGrid.Skia
                 Qualification.Empty => theme.EmptyForegroundColor,
                 Qualification.ReadOnly => theme.ReadOnlyForegroundColor,
                 Qualification.Computed => theme.ComputedForegroundColor,
-                Qualification.Custom => cell.ResultSet.ForegroundColor.Match(
-                    t => new SKColor(t.R, t.G, t.B, t.A),
-                    () => theme.ForegroundColor
-                ),
+                Qualification.Custom
+                    => cell.ResultSet.ForegroundColor.Match(
+                        t => new SKColor(t.R, t.G, t.B, t.A),
+                        () => theme.ForegroundColor
+                    ),
                 _ => theme.ForegroundColor,
             };
         }

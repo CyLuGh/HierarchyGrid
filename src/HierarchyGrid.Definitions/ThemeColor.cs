@@ -53,12 +53,8 @@ public readonly struct ThemeColor
         }
     }
 
-    public readonly ThemeColor With(
-        byte? a = null,
-        byte? r = null,
-        byte? g = null,
-        byte? b = null
-    ) => new(a ?? A, r ?? R, g ?? G, b ?? B);
+    public ThemeColor With(byte? a = null, byte? r = null, byte? g = null, byte? b = null) =>
+        new(a ?? A, r ?? R, g ?? G, b ?? B);
 
     /// <summary>
     /// Gets the alpha (transparency) component of the color, ranging from 0 (completely transparent) to 255 (completely opaque).

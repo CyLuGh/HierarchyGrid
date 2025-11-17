@@ -26,13 +26,12 @@ namespace HierarchyGrid.Definitions
         public double[] RowsHeadersWidth { get; private set; }
         public double[] ColumnsHeadersHeight { get; private set; }
 
-        public Dictionary<int, double> ColumnsWidths { get; } = new Dictionary<int, double>();
-        public Dictionary<int, double> RowsHeights { get; } = new Dictionary<int, double>();
+        public Dictionary<int, double> ColumnsWidths { get; } = [];
+        public Dictionary<int, double> RowsHeights { get; } = [];
 
-        public List<HierarchyDefinition> ColumnsParents { get; } = new();
-        public List<HierarchyDefinition> RowsParents { get; } = new();
+        public List<HierarchyDefinition> ColumnsParents { get; } = [];
+        public List<HierarchyDefinition> RowsParents { get; } = [];
 
-        //[Reactive] public System.Windows.TextAlignment TextAlignment { get; set; }
 
         public void SetColumnsWidths(double width)
         {

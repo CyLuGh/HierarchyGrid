@@ -4,9 +4,7 @@ public sealed class HierarchyGridTheme : ITheme
 {
     public static HierarchyGridTheme Default { get; } = new HierarchyGridTheme();
 
-    private HierarchyGridTheme()
-    {
-    }
+    private HierarchyGridTheme() { }
 
     public ThemeColor BackgroundColor => ThemeColors.White;
 

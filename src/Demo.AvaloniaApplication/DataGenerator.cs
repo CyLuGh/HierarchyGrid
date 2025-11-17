@@ -107,11 +107,7 @@ namespace Demo.AvaloniaApplication
         }
 
         private IEnumerable<ConsumerDefinition> BuildConsumers() =>
-            new[]
-            {
-                BuildConsumer("With motors"),
-                /*, BuildConsumer("Without motors")*/
-            };
+            new[] { BuildConsumer("With motors"), BuildConsumer("Without motors") };
 
         private ConsumerDefinition BuildConsumer(string vehicle)
         {

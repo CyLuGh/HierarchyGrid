@@ -631,7 +631,7 @@ namespace HierarchyGrid.Skia
             double height,
             double screenScale,
             RenderInfo renderInfo,
-            string fontFamily = "",
+            string? fontFamily = "",
             float headerFontSize = 16f
         )
         {

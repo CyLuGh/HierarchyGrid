@@ -7,130 +7,129 @@ namespace HierarchyGrid.Definitions;
 
 public static class HierarchyDefinitionExtensions
 {
-    public static void Invalidate(this IEnumerable<HierarchyDefinition> definitions) =>
-        definitions.ForEach(definition => definition.Invalidate());
-
-    /// <summary>
-    /// Returns total elements in hierarchy, according to leaves and folded elements.
-    /// </summary>
-    /// <param name="ignoreState">If true, will take collapsed element into account. If false, will only take expanded items.</param>
-    /// <returns></returns>
-    public static int TotalCount(
-        this IEnumerable<HierarchyDefinition> definitions,
-        bool ignoreState = false
-    ) => definitions.Sum(definition => definition.Count(ignoreState));
-
-    /// <summary>
-    /// Returns max layers found in the hierarchy.
-    /// </summary>
-    /// <param name="ignoreState">If true, will take collapsed element into account. If false, will only take expanded items.</param>
-    /// <returns></returns>
-    public static int TotalDepth(
-        this IEnumerable<HierarchyDefinition> definitions,
-        bool ignoreState = true
-    )
+    extension( IEnumerable<HierarchyDefinition> definitions )
     {
-        var hierarchyDefinitions = definitions as HierarchyDefinition[] ?? definitions.ToArray();
-        return hierarchyDefinitions?.Length > 0
-            ? hierarchyDefinitions.Max(o => o.Depth(ignoreState))
-            : 0;
+        public void Invalidate() => definitions.ForEach( definition => definition.Invalidate() );
+
+        /// <summary>
+        /// Returns total elements in hierarchy, according to leaves and folded elements.
+        /// </summary>
+        /// <param name="ignoreState">If true, will take collapsed element into account. If false, will only take expanded items.</param>
+        /// <returns></returns>
+        public int TotalCount(
+            bool ignoreState = false
+        ) => definitions.Sum( definition => definition.Count( ignoreState ) );
+
+        /// <summary>
+        /// Returns max layers found in the hierarchy.
+        /// </summary>
+        /// <param name="ignoreState">If true, will take collapsed element into account. If false, will only take expanded items.</param>
+        /// <returns></returns>
+        public int TotalDepth(
+            bool ignoreState = true
+        )
+        {
+            var hierarchyDefinitions = definitions as HierarchyDefinition[] ?? [.. definitions];
+            return hierarchyDefinitions.Length > 0
+                ? hierarchyDefinitions.Max( o => o.Depth( ignoreState ) )
+                : 0;
+        }
     }
 
-    /// <summary>
-    /// Returns hierarchy definitions on root level.
-    /// </summary>
-    public static IEnumerable<T> Roots<T>(this IEnumerable<T> definitions)
-        where T : HierarchyDefinition =>
-        definitions.Select(definition => (T)definition.Root).Distinct();
-
-    /// <summary>
-    /// Returns all elements that are either leaves or folded.
-    /// </summary>
-    /// <param name="definitions"></param>
-    /// <param name="isTrueLeaf">If true, folded elements won't be considered as leaves.</param>
-    /// <returns></returns>
-    public static Seq<T> Leaves<T>(this IEnumerable<T>? definitions, bool isTrueLeaf = false)
-        where T : HierarchyDefinition
+    extension<T>( IEnumerable<T> definitions ) where T : HierarchyDefinition
     {
-        if (definitions == null)
-            return Seq<T>.Empty;
+        /// <summary>
+        /// Returns hierarchy definitions on root level.
+        /// </summary>
+        public IEnumerable<T> Roots() =>
+            definitions.Select( definition => (T) definition.Root ).Distinct();
 
-        var leaves = new List<T>();
-
-        var hierarchyDefinitions = definitions as T[] ?? definitions.ToArray();
-        foreach (var definition in hierarchyDefinitions.Where(o => o.Frozen))
+        /// <summary>
+        /// Returns the hierarchy on a single list.
+        /// </summary>
+        /// <param name="definitions">Collection of definitions to be flattened.</param>
+        /// <param name="includeAll">Whether or not the list should include the children of collapsed elements. True by default.</param>
+        /// <returns></returns>
+        public Seq<T> FlatList( bool includeAll = true )
         {
-            if (!definition.HasChild || (!isTrueLeaf && !definition.IsExpanded))
-                leaves.Add(definition);
-            else
-                leaves.AddRange(definition.Children.OfType<T>().Leaves());
+            var flat = new Seq<T>();
+
+            foreach ( var definition in definitions )
+            {
+                flat = flat.Add( definition );
+
+                if ( includeAll || definition.IsExpanded )
+                    flat = flat.Append( definition.Children.OfType<T>().FlatList( includeAll ) );
+            }
+
+            return flat;
         }
 
-        foreach (var definition in hierarchyDefinitions.Where(o => !o.Frozen))
+        public int GetPosition( T definition ) =>
+            definitions.Leaves().Count( x => x.Position < definition.Position );
+
+        public void ExpandAll()
         {
-            if (!definition.HasChild || (!isTrueLeaf && !definition.IsExpanded))
-                leaves.Add(definition);
-            else
-                leaves.AddRange(definition.Children.OfType<T>().Leaves());
+            foreach ( var definition in definitions )
+                definition.ExpandAll();
         }
 
-        return leaves.ToSeq();
-    }
-
-    /// <summary>
-    /// Returns the hierarchy on a single list.
-    /// </summary>
-    /// <param name="definitions">Collection of definitions to be flattened.</param>
-    /// <param name="includeAll">Whether or not the list should include the children of collapsed elements. True by default.</param>
-    /// <returns></returns>
-    public static Seq<T> FlatList<T>(this IEnumerable<T> definitions, bool includeAll = true)
-        where T : HierarchyDefinition
-    {
-        var flat = new Seq<T>();
-
-        foreach (var definition in definitions)
+        public void FoldAll()
         {
-            flat = flat.Add(definition);
-
-            if (includeAll || definition.IsExpanded)
-                flat = flat.Append(definition.Children.OfType<T>().FlatList(includeAll));
+            foreach ( var definition in definitions )
+                definition.FoldAll();
         }
 
-        return flat;
+        /// <summary>
+        /// Get definitions position/index on its level
+        /// </summary>
+        public int GetRelativePosition( T definition )
+        {
+            if ( definition.Parent is null )
+                return definitions
+                    .Roots()
+                    .Where( d => d.Position < definition.Position )
+                    .Sum( d => d.Count() );
+
+            return definition
+                    .Parent.Children.Where( d => d.Position < definition.Position )
+                    .Sum( d => d.Count() ) + definitions.GetRelativePosition( definition.Parent );
+        }
     }
 
-    public static int GetPosition<T>(this IEnumerable<T> definitions, T definition)
-        where T : HierarchyDefinition =>
-        definitions.Leaves().Count(x => x.Position < definition.Position);
-
-    public static void ExpandAll<T>(this IEnumerable<T> definitions)
-        where T : HierarchyDefinition
+    extension<T>( IEnumerable<T>? definitions ) where T : HierarchyDefinition
     {
-        foreach (var definition in definitions)
-            definition.ExpandAll();
-    }
+        /// <summary>
+        /// Returns all elements that are either leaves or folded.
+        /// </summary>
+        /// <param name="definitions"></param>
+        /// <param name="isTrueLeaf">If true, folded elements won't be considered as leaves.</param>
+        /// <returns></returns>
+        public Seq<T> Leaves( bool isTrueLeaf = false )
+        {
+            if ( definitions == null )
+                return Seq<T>.Empty;
 
-    public static void FoldAll<T>(this IEnumerable<T> definitions)
-        where T : HierarchyDefinition
-    {
-        foreach (var definition in definitions)
-            definition.FoldAll();
-    }
+            var leaves = new List<T>();
 
-    /// <summary>
-    /// Get definitions position/index on its level
-    /// </summary>
-    public static int GetRelativePosition<T>(this IEnumerable<T> definitions, T definition)
-        where T : HierarchyDefinition
-    {
-        if (definition.Parent is null)
-            return definitions
-                .Roots()
-                .Where(d => d.Position < definition.Position)
-                .Sum(d => d.Count());
+            var hierarchyDefinitions = definitions as T[] ?? definitions.ToArray();
+            foreach ( var definition in hierarchyDefinitions.Where( o => o.Frozen ) )
+            {
+                if ( !definition.HasChild || ( !isTrueLeaf && !definition.IsExpanded ) )
+                    leaves.Add( definition );
+                else
+                    leaves.AddRange( definition.Children.OfType<T>().Leaves() );
+            }
 
-        return definition
-                .Parent.Children.Where(d => d.Position < definition.Position)
-                .Sum(d => d.Count()) + definitions.GetRelativePosition(definition.Parent);
+            foreach ( var definition in hierarchyDefinitions.Where( o => !o.Frozen ) )
+            {
+                if ( !definition.HasChild || ( !isTrueLeaf && !definition.IsExpanded ) )
+                    leaves.Add( definition );
+                else
+                    leaves.AddRange( definition.Children.OfType<T>().Leaves() );
+            }
+
+            return leaves.ToSeq();
+        }
     }
 }

@@ -1095,20 +1095,20 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             s =>
             {
                 HoveredElementId = s.Definition.DefinitionId;
-                if (s.Definition is ConsumerDefinition consumer && consumer.Count() == 1)
+                switch (s.Definition)
                 {
-                    HoveredColumn = ColumnsDefinitions.GetPosition(consumer);
-                    HoveredRow = -1;
-                }
-                else if (s.Definition is ProducerDefinition producer && producer.Count() == 1)
-                {
-                    HoveredRow = RowsDefinitions.GetPosition(producer);
-                    HoveredColumn = -1;
-                }
-                else
-                {
-                    HoveredColumn = -1;
-                    HoveredRow = -1;
+                    case ConsumerDefinition consumer when consumer.Count() == 1:
+                        HoveredColumn = ColumnsDefinitions.GetPosition(consumer);
+                        HoveredRow = -1;
+                        break;
+                    case ProducerDefinition producer when producer.Count() == 1:
+                        HoveredRow = RowsDefinitions.GetPosition(producer);
+                        HoveredColumn = -1;
+                        break;
+                    default:
+                        HoveredColumn = -1;
+                        HoveredRow = -1;
+                        break;
                 }
             },
             () =>

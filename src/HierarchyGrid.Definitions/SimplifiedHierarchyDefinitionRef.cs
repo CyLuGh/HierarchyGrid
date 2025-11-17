@@ -17,6 +17,6 @@ public readonly record struct SimplifiedHierarchyDefinitionRef
 
         Position = definition.Position;
         FullPath = definition.ToString();
-        ChildrenPaths = definition.Children.Select(c => c.ToString()).ToArray();
+        ChildrenPaths = [.. definition.Children.Select(c => c.ToString())];
     }
 }

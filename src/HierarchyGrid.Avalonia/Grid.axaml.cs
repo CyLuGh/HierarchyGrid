@@ -88,9 +88,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 var clipboard = TopLevel.GetTopLevel(view)?.Clipboard;
                 if (clipboard is not null)
                 {
-                    var dataObject = new DataObject();
-                    dataObject.Set(DataFormats.Text, ctx.Input);
-                    await clipboard.SetDataObjectAsync(dataObject);
+                    await clipboard.SetTextAsync(ctx.Input);
                 }
                 ctx.SetOutput(System.Reactive.Unit.Default);
             })
@@ -98,7 +96,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         Observable
             .FromEventPattern<EventHandler<SKPaintSurfaceEventArgs>, SKPaintSurfaceEventArgs>(
-                handler => async (sender, args) => await SkiaElement_PaintSurface(args, viewModel),
+                _ => async (_, args) => await SkiaElement_PaintSurface(args, viewModel),
                 handler => view.SkiaElement.PaintSurface += handler,
                 handler => view.SkiaElement.PaintSurface -= handler
             )
@@ -108,8 +106,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         Observable
             .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                handler =>
-                    (sender, args) => SkiaElement_PointerMove(args, view.SkiaElement, viewModel),
+                _ => (_, args) => SkiaElement_PointerMove(args, view.SkiaElement, viewModel),
                 handler => view.SkiaElement.PointerMoved += handler,
                 handler => view.SkiaElement.PointerMoved -= handler
             )
@@ -119,7 +116,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         Observable
             .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                handler => (sender, args) => SkiaElement_PointerExit(viewModel),
+                _ => (_, _) => SkiaElement_PointerExit(viewModel),
                 handler => view.SkiaElement.PointerExited += handler,
                 handler => view.SkiaElement.PointerExited -= handler
             )
@@ -128,8 +125,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         Observable
             .FromEventPattern<EventHandler<PointerPressedEventArgs>, PointerPressedEventArgs>(
-                handler =>
-                    (sender, args) => SkiaElement_PointerPressed(args, view.SkiaElement, viewModel),
+                _ => (_, args) => SkiaElement_PointerPressed(args, view.SkiaElement, viewModel),
                 handler => view.SkiaElement.PointerPressed += handler,
                 handler => view.SkiaElement.PointerPressed -= handler
             )
@@ -139,7 +135,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         Observable
             .FromEventPattern<EventHandler<PointerWheelEventArgs>, PointerWheelEventArgs>(
-                handler => (sender, args) => SkiaElement_PointerWheel(args, viewModel),
+                _ => (_, args) => SkiaElement_PointerWheel(args, viewModel),
                 handler => view.SkiaElement.PointerWheelChanged += handler,
                 handler => view.SkiaElement.PointerWheelChanged -= handler
             )
@@ -175,8 +171,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.HorizontalOffset,
                 v => v.HorizontalScrollBar.Value,
-                vmToViewConverter: i => Convert.ToDouble(i),
-                viewToVmConverter: d => Convert.ToInt32(d)
+                vmToViewConverter: Convert.ToDouble,
+                viewToVmConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
@@ -184,8 +180,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.VerticalOffset,
                 v => v.VerticalScrollBar.Value,
-                vmToViewConverter: i => Convert.ToDouble(i),
-                viewToVmConverter: d => Convert.ToInt32(d)
+                vmToViewConverter: Convert.ToDouble,
+                viewToVmConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
