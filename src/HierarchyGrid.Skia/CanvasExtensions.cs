@@ -882,15 +882,18 @@ namespace HierarchyGrid.Skia
                         cell.Top + (screenScale * ((cell.Height - picture.CullRect.Height) / 2))
                     );
 
-            canvas.DrawPicture(
-                picture,
-                new SKPoint(x, y),
-                new SKPaint()
-                {
-                    Color = renderInfo.ForegroundColor,
-                    Style = SKPaintStyle.StrokeAndFill,
-                }
-            );
+            /* Override path colors to match grid rendering info */
+            using var paint = new SKPaint()
+            {
+                Color = renderInfo.ForegroundColor,
+                Style = SKPaintStyle.StrokeAndFill,
+                ColorFilter = SKColorFilter.CreateBlendMode(
+                    renderInfo.ForegroundColor,
+                    SKBlendMode.SrcIn
+                )
+            };
+
+            canvas.DrawPicture(picture, new SKPoint(x, y), paint);
         }
 
         private static void RenderRightSideDecor(
