@@ -509,7 +509,13 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         // Events starting a grid redraw
         Observable
             .Merge(
-                this.WhenAnyValue(x => x.IsTransposed).Select(_ => false),
+                this.WhenAnyValue(x => x.IsTransposed)
+                    .Do(isTransposed =>
+                    {
+                        /* Need to adapt headers size on transpose */
+                        SetHeadersDimension(isTransposed);
+                    })
+                    .Select(_ => false),
                 this.WhenAnyValue(x => x.Theme).WhereNotNull().Select(_ => false),
                 SelectionChanged.DistinctUntilChanged().Select(_ => false),
                 gridLayoutEventsObservable.Select(_ => false),
@@ -521,6 +527,42 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .Throttle(TimeSpan.FromMilliseconds(10))
             .InvokeCommand(DrawGridCommand)
             .DisposeWith(disposables);
+    }
+
+    private void SetHeadersDimension(bool isTransposed, bool preserveSizes = false)
+    {
+        var rowDefinitions = !isTransposed
+            ? Producers.Cast<HierarchyDefinition>()
+            : Consumers.Cast<HierarchyDefinition>();
+        var columnDefinitions = !isTransposed
+            ? Consumers.Cast<HierarchyDefinition>()
+            : Producers.Cast<HierarchyDefinition>();
+
+        RowsHeadersWidth =
+        [
+            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth),
+        ];
+
+        ColumnsHeadersHeight =
+        [
+            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight),
+        ];
+
+        var columnsCount = columnDefinitions.TotalCount(true);
+        if (!preserveSizes || columnsCount != ColumnsWidths.Count)
+        {
+            ColumnsWidths.Clear();
+            for (int x = 0; x <= columnsCount; x++)
+                ColumnsWidths.Add(x, DefaultColumnWidth);
+        }
+
+        var rowsCount = rowDefinitions.TotalCount(true);
+        if (!preserveSizes || rowsCount != RowsHeights.Count)
+        {
+            RowsHeights.Clear();
+            for (int x = 0; x <= rowsCount; x++)
+                RowsHeights.Add(x, DefaultRowHeight);
+        }
     }
 
     /// <summary>
@@ -623,36 +665,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         Producers = hierarchyDefinitions.Producers;
         Consumers = hierarchyDefinitions.Consumers;
 
-        // TODO: change if transposed is implemented
-        var rowDefinitions = Producers;
-        var columnDefinitions = Consumers;
-
-        RowsHeadersWidth =
-        [
-            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth),
-        ];
-
-        ColumnsHeadersHeight =
-        [
-            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight),
-        ];
-
-        var columnsCount = columnDefinitions.TotalCount(true);
-        if (!preserveSizes || columnsCount != ColumnsWidths.Count)
-        {
-            ColumnsWidths.Clear();
-            for (int x = 0; x <= columnsCount; x++)
-                ColumnsWidths.Add(x, DefaultColumnWidth);
-        }
-
-        var rowsCount = rowDefinitions.TotalCount(true);
-        if (!preserveSizes || rowsCount != RowsHeights.Count)
-        {
-            RowsHeights.Clear();
-            for (int x = 0; x <= rowsCount; x++)
-                RowsHeights.Add(x, DefaultRowHeight);
-        }
-
+        SetHeadersDimension(IsTransposed, preserveSizes);
         Observable.Return(true).InvokeCommand(DrawGridCommand);
     }
 
@@ -1095,19 +1108,33 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             s =>
             {
                 HoveredElementId = s.Definition.DefinitionId;
+
+                // Reset first
+                HoveredRow = -1;
+                HoveredColumn = -1;
+
                 switch (s.Definition)
                 {
                     case ConsumerDefinition consumer when consumer.Count() == 1:
-                        HoveredColumn = ColumnsDefinitions.GetPosition(consumer);
-                        HoveredRow = -1;
+                    {
+                        if (IsTransposed)
+                            HoveredRow = RowsDefinitions.GetPosition(consumer);
+                        else
+                            HoveredColumn = ColumnsDefinitions.GetPosition(consumer);
                         break;
+                    }
+
                     case ProducerDefinition producer when producer.Count() == 1:
-                        HoveredRow = RowsDefinitions.GetPosition(producer);
-                        HoveredColumn = -1;
+                    {
+                        if (IsTransposed)
+                            HoveredColumn = ColumnsDefinitions.GetPosition(producer);
+                        else
+                            HoveredRow = RowsDefinitions.GetPosition(producer);
                         break;
+                    }
+
                     default:
-                        HoveredColumn = -1;
-                        HoveredRow = -1;
+                        // Already reset above; nothing to do
                         break;
                 }
             },

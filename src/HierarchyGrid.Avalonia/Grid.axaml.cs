@@ -487,6 +487,14 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 CommandParameter = false,
             }
         );
+        contextMenu.Items.Add(
+            new MenuItem
+            {
+                Header = "Transpose",
+                IsChecked = viewModel.IsTransposed,
+                Command = viewModel.ToggleTransposeCommand
+            }
+        );
 
         contextMenu.Items.Add(new Separator());
 

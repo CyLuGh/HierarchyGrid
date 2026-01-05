@@ -51,5 +51,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
 
         view.BindCommand(viewModel, vm => vm.CycleFontSizes, v => v.ButtonCycleFontSize)
             .DisposeWith(disposables);
+
+        view.BindCommand(viewModel, vm => vm.TransposeGrid, v => v.ButtonTranspose)
+            .DisposeWith(disposables);
     }
 }

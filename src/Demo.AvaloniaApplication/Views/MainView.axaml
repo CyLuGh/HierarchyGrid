@@ -24,6 +24,10 @@
                   Content="Fill"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonTranspose"
+                  Content="Transpose"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
         </UniformGrid>
         <hierarchyGrid:Grid x:Name="HierarchyGrid"
                             DefaultColumnWidth="250"
