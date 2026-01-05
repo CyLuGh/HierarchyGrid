@@ -27,6 +27,7 @@ public class MainViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> SwitchTestTheme { get; }
     public ReactiveCommand<Unit, Unit> CycleRowHeights { get; }
     public ReactiveCommand<Unit, Unit> CycleFontSizes { get; }
+    public ReactiveCommand<Unit, Unit> TransposeGrid { get; }
 
     public MainViewModel()
     {
@@ -34,6 +35,11 @@ public class MainViewModel : ViewModelBase
         {
             var dg = new DataGenerator();
             return dg.GenerateSample();
+        });
+
+        TransposeGrid = ReactiveCommand.Create(() =>
+        {
+            DemoViewModel.IsTransposed = !DemoViewModel.IsTransposed;
         });
 
         BuildTestDefinitions = ReactiveCommand.CreateRunInBackground(
@@ -178,18 +184,21 @@ public class MainViewModel : ViewModelBase
                                         int.TryParse(o.ToString(), out var i)
                                             ? i switch
                                             {
-                                                17 => (
-                                                    new ThemeColor(150, 100, 120, 0),
-                                                    new ThemeColor(255, 0, 0, 0)
-                                                ),
-                                                18 => (
-                                                    new ThemeColor(150, 0, 100, 120),
-                                                    new ThemeColor(255, 255, 0, 0)
-                                                ),
-                                                _ => (
-                                                    new ThemeColor(0, 0, 0, 0),
-                                                    new ThemeColor(0, 255, 0, 0)
-                                                ),
+                                                17
+                                                    => (
+                                                        new ThemeColor(150, 100, 120, 0),
+                                                        new ThemeColor(255, 0, 0, 0)
+                                                    ),
+                                                18
+                                                    => (
+                                                        new ThemeColor(150, 0, 100, 120),
+                                                        new ThemeColor(255, 255, 0, 0)
+                                                    ),
+                                                _
+                                                    => (
+                                                        new ThemeColor(0, 0, 0, 0),
+                                                        new ThemeColor(0, 255, 0, 0)
+                                                    ),
                                             }
                                             : (
                                                 new ThemeColor(0, 0, 0, 0),
@@ -203,9 +212,10 @@ public class MainViewModel : ViewModelBase
                                         cdef.RightDecor = (_, o) =>
                                             o switch
                                             {
-                                                int i => i % 2 == 0
-                                                    ? "Resources/comment.svg"
-                                                    : string.Empty,
+                                                int i
+                                                    => i % 2 == 0
+                                                        ? "Resources/comment.svg"
+                                                        : string.Empty,
                                                 _ => string.Empty,
                                             };
                                         cdef.Editor = (p, c, s) =>

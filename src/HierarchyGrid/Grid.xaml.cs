@@ -437,13 +437,15 @@ namespace HierarchyGrid
                     CommandParameter = false,
                 }
             );
-            //contextMenu.Items.Add( new MenuItem
-            //{
-            //    Header = "Transposed" ,
-            //    IsChecked = viewModel.IsTransposed ,
-            //    IsCheckable = true ,
-            //    Command = viewModel.ToggleTransposeCommand
-            //} );
+            contextMenu.Items.Add(
+                new MenuItem
+                {
+                    Header = "Transpose",
+                    IsChecked = viewModel.IsTransposed,
+                    IsCheckable = true,
+                    Command = viewModel.ToggleTransposeCommand
+                }
+            );
 
             contextMenu.Items.Add(new Separator());
 

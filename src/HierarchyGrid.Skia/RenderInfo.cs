@@ -190,14 +190,13 @@ namespace HierarchyGrid.Skia
 
         private static bool IsHovered(HierarchyGridViewModel viewModel, HierarchyDefinition hdef)
         {
-            var isColumn = hdef is ConsumerDefinition && !viewModel.IsTransposed;
-            var position = isColumn
-                ? viewModel.ColumnsDefinitions.GetPosition(hdef)
-                : viewModel.RowsDefinitions.GetPosition(hdef);
-            var isHovered = isColumn
-                ? viewModel.HoveredColumn == position
-                : viewModel.HoveredRow == position;
-            return isHovered;
+            return hdef is ConsumerDefinition
+                ? viewModel.IsTransposed
+                    ? viewModel.HoveredRow == viewModel.RowsDefinitions.GetPosition(hdef)
+                    : viewModel.HoveredColumn == viewModel.ColumnsDefinitions.GetPosition(hdef)
+                : viewModel.IsTransposed
+                    ? viewModel.HoveredColumn == viewModel.ColumnsDefinitions.GetPosition(hdef)
+                    : viewModel.HoveredRow == viewModel.RowsDefinitions.GetPosition(hdef);
         }
     }
 }
