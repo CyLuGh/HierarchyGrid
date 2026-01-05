@@ -146,7 +146,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel
             .ShowTooltipInteraction.RegisterHandler(ctx =>
             {
-                view.ShowTooltip(ctx.Input);
+                view.ShowTooltip(ctx.Input, viewModel.Scale);
                 ctx.SetOutput(System.Reactive.Unit.Default);
             })
             .DisposeWith(disposables);
@@ -305,7 +305,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         args.Handled = true;
     }
 
-    private void ShowTooltip(PositionedCell pCell)
+    private void ShowTooltip(PositionedCell pCell, double scale)
     {
         _tooltip.Hide();
 
@@ -323,13 +323,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         _tooltipRectangle.Width = pCell.Width - 6;
         _tooltipRectangle.Height = pCell.Height - 6;
-        Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
-        Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
-
-        // var border = new Border() { HorizontalAlignment = HorizontalAlignment.Stretch };
-        // border.Background = Brushes.Wheat;
-        // border.Child = new TextBlock() { Text = text.Trim() };
-        // _tooltip.Content = border;
+        Canvas.SetLeft(_tooltipRectangle, (pCell.Left * scale) + 3);
+        Canvas.SetTop(_tooltipRectangle, (pCell.Top * scale) + 3);
 
         _tooltip.Content = text.Trim();
         _tooltip.Placement = PlacementMode.Bottom;
