@@ -50,7 +50,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             this.WhenAnyValue(x => x.ViewModel)
                 .WhereNotNull()
                 .Throttle(TimeSpan.FromMilliseconds(50))
-                .ObserveOn(RxApp.MainThreadScheduler)
+                .ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Do(vm => PopulateFromViewModel(this, vm, disposables))
                 .Subscribe()
                 .DisposeWith(disposables);
@@ -100,7 +100,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PaintSurface += handler,
                 handler => view.SkiaElement.PaintSurface -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(disposables);
 
@@ -110,7 +110,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PointerMoved += handler,
                 handler => view.SkiaElement.PointerMoved -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(disposables);
 
@@ -129,7 +129,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PointerPressed += handler,
                 handler => view.SkiaElement.PointerPressed -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(disposables);
 
@@ -139,7 +139,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PointerWheelChanged += handler,
                 handler => view.SkiaElement.PointerWheelChanged -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Subscribe()
             .DisposeWith(disposables);
 
@@ -185,10 +185,20 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             )
             .DisposeWith(disposables);
 
-        view.OneWayBind(viewModel, vm => vm.MaxHorizontalOffset, v => v.HorizontalScrollBar.Maximum)
+        view.OneWayBind(
+                viewModel,
+                vm => vm.MaxHorizontalOffset,
+                v => v.HorizontalScrollBar.Maximum,
+                Convert.ToDouble
+            )
             .DisposeWith(disposables);
 
-        view.OneWayBind(viewModel, vm => vm.MaxVerticalOffset, v => v.VerticalScrollBar.Maximum)
+        view.OneWayBind(
+                viewModel,
+                vm => vm.MaxVerticalOffset,
+                v => v.VerticalScrollBar.Maximum,
+                Convert.ToDouble
+            )
             .DisposeWith(disposables);
 
         view.SkiaElement.Invalidate();

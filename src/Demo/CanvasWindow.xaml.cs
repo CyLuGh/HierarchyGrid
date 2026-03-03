@@ -31,14 +31,14 @@ namespace Demo
             TestGrid.ViewModel.SelectionMode = SelectionMode.Single;
 
             HierarchyGrid
-                .ViewModel.SelectionChanged.ObserveOn(RxApp.MainThreadScheduler)
+                .ViewModel.SelectionChanged.ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Subscribe(selections =>
                 {
                     TextBlockSelection.Text = $"Selection count: {selections.Length}";
                 });
 
             HierarchyGrid
-                .ViewModel.EditedCellChanged.ObserveOn(RxApp.MainThreadScheduler)
+                .ViewModel.EditedCellChanged.ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Subscribe(oec =>
                 {
                     TextBlockEdition.Text = oec.Match(

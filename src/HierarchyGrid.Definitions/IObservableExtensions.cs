@@ -75,7 +75,7 @@ public static class IObservableExtensions
                 );
 
                 // Delete this line if you're not using ReactiveUI.
-                RxApp.DefaultExceptionHandler.OnNext(ex);
+                RxState.DefaultExceptionHandler.OnNext(ex);
             }
         );
     }
@@ -111,7 +111,7 @@ public static class IObservableExtensions
                 );
 
                 // Delete this line if you're not using ReactiveUI.
-                RxApp.DefaultExceptionHandler.OnNext(ex);
+                RxState.DefaultExceptionHandler.OnNext(ex);
             }
         );
     }

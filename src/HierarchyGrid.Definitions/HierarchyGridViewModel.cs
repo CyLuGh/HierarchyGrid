@@ -37,13 +37,13 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .Select(seq => seq.Length > 0)
             .CombineLatest(this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0))
             .Select(t => t is { First: true, Second: true })
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Do(b =>
             {
                 if (!b && string.IsNullOrEmpty(StatusMessage))
                     StatusMessage = "No data";
             })
-            .ObserveOn(RxApp.MainThreadScheduler);
+            .ObserveOn(RxSchedulers.MainThreadScheduler);
 
     /// <summary>
     /// Message displayed when the grid has no data
@@ -123,10 +123,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 );
                 return editor.IsSome;
             })
-            .ObserveOn(RxApp.MainThreadScheduler);
+            .ObserveOn(RxSchedulers.MainThreadScheduler);
 
     public Interaction<Seq<PositionedCell>, RxUnit> DrawEditionTextBoxInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
 
     /// <summary>
     /// Cells with extra rendering elements
@@ -326,7 +326,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
     public ReactiveCommand<bool, RxUnit> DrawGridCommand { get; }
     public Interaction<RxUnit, RxUnit> DrawGridInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
 
     public ReactiveCommand<
         (Option<PositionedCell>, Option<PositionedDefinition>),
@@ -334,19 +334,19 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     > HandleTooltipCommand { get; }
     public RxCommand CloseTooltip { get; }
     public Interaction<RxUnit, RxUnit> CloseTooltipInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
     public Interaction<PositionedCell, RxUnit> ShowTooltipInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
     public Interaction<PositionedDefinition, RxUnit> ShowHeaderTooltipInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
 
     public ReactiveCommand<CopyMode, RxUnit> CopyToClipboardCommand { get; }
     public Interaction<string, RxUnit> FillClipboardInteraction { get; } =
-        new(RxApp.MainThreadScheduler);
+        new(RxSchedulers.MainThreadScheduler);
 
     [ObservableAsProperty(PropertyName = "IsCopyingToClipboard")]
     private IObservable<bool> IsCopyingToClipboardObservable =>
-        CopyToClipboardCommand.IsExecuting.ObserveOn(RxApp.MainThreadScheduler);
+        CopyToClipboardCommand.IsExecuting.ObserveOn(RxSchedulers.MainThreadScheduler);
 
     public ReactiveCommand<bool, RxUnit> ToggleStatesCommand { get; }
 
@@ -433,7 +433,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             )
             .Throttle(TimeSpan.FromMilliseconds(5))
             .Where(x => x)
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .SubscribeSafe(_ => HorizontalOffset = MaxHorizontalOffset)
             .DisposeWith(disposables);
 
@@ -442,7 +442,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .CombineLatest(this.WhenAnyValue(x => x.MaxVerticalOffset), (vo, m) => vo > m && m > 0)
             .Throttle(TimeSpan.FromMilliseconds(5))
             .Where(x => x)
-            .ObserveOn(RxApp.MainThreadScheduler)
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
             .SubscribeSafe(_ => VerticalOffset = MaxVerticalOffset)
             .DisposeWith(disposables);
 
