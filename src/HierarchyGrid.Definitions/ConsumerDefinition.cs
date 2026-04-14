@@ -71,11 +71,6 @@ public class ConsumerDefinition : HierarchyDefinition
     {
         var data = Consumer is not null ? Consumer(inputSet.Input) : inputSet.Input;
 
-        var (background, foreground) = inputSet.CustomColors.Match(
-            c => c,
-            () => Colorize?.Invoke(data) ?? (Option<ThemeColor>.None, Option<ThemeColor>.None)
-        );
-
         /* A cell can't be edited if the whole producer is read-only, or if the IsLocked func returns true. */
         var locked = inputSet.IsLocked || (IsLocked != null && IsLocked(inputSet.Input, data));
 
@@ -102,11 +97,22 @@ public class ConsumerDefinition : HierarchyDefinition
             ? RightDecor(inputSet.Input, data)
             : Option<string>.None;
 
+        // Only invoke a defined colorize when qualification is indeed set to Custom
+        var qualifier = GetQualification(inputSet, data);
+        var (background, foreground) =
+            qualifier == Qualification.Custom
+                ? inputSet.CustomColors.Match(
+                    c => c,
+                    () =>
+                        Colorize?.Invoke(data) ?? (Option<ThemeColor>.None, Option<ThemeColor>.None)
+                )
+                : (Option<ThemeColor>.None, Option<ThemeColor>.None);
+
         var resultSet = new ResultSet
         {
             ProducerId = inputSet.ProducerId,
             ConsumerId = ConsumerDefinitionId,
-            Qualifier = GetQualification(inputSet, data),
+            Qualifier = qualifier,
             Result = (Formatter is not null ? Formatter(data) : data.ToString()) ?? string.Empty,
             BackgroundColor = background,
             ForegroundColor = foreground,
