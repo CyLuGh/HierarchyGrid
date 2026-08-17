@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using DynamicData;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using ReactiveUI.SourceGenerators;
 
 namespace HierarchyGrid.Definitions;
@@ -107,15 +107,15 @@ public abstract partial class HierarchyDefinition
         Activator = new ViewModelActivator();
 
         this.WhenAnyValue(o => o.Parent)
-            .WhereNotNull()
-            .SubscribeSafe(p =>
+            .Where(x => x is not null)
+            .Subscribe(p =>
             {
                 CanToggle = p.CanToggle;
                 Invalidate();
             });
 
         this.WhenAnyValue(o => o.CanToggle)
-            .SubscribeSafe(can =>
+            .Subscribe(can =>
             {
                 foreach (var child in _children)
                     child.CanToggle = can;
@@ -208,7 +208,11 @@ public abstract partial class HierarchyDefinition
     }
 
     public int RelativePositionFrom(HierarchyDefinition hierarchyDefinition) =>
-        new[] { hierarchyDefinition }.Leaves().IndexOf(this);
+        new[] { hierarchyDefinition }
+            .Leaves()
+            .Select((x, i) => (Definition: x, Index: i))
+            .Find(t => t.Definition.Equals(this))
+            .Match(t => t.Index, () => -1);
 
     public HierarchyDefinition Root
     {

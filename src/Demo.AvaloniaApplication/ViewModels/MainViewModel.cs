@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
 using HierarchyGrid.Definitions;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using Splat;
 
 namespace Demo.AvaloniaApplication.ViewModels;
@@ -22,12 +20,12 @@ public class MainViewModel : ViewModelBase
     public HierarchyGridViewModel TestViewModel { get; } =
         new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
 
-    public ReactiveCommand<Unit, HierarchyDefinitions> BuildSampleDefinitions { get; }
-    public ReactiveCommand<Unit, HierarchyDefinitions> BuildTestDefinitions { get; }
-    public ReactiveCommand<Unit, Unit> SwitchTestTheme { get; }
-    public ReactiveCommand<Unit, Unit> CycleRowHeights { get; }
-    public ReactiveCommand<Unit, Unit> CycleFontSizes { get; }
-    public ReactiveCommand<Unit, Unit> TransposeGrid { get; }
+    public ReactiveCommand<RxVoid, HierarchyDefinitions> BuildSampleDefinitions { get; }
+    public ReactiveCommand<RxVoid, HierarchyDefinitions> BuildTestDefinitions { get; }
+    public ReactiveCommand<RxVoid, RxVoid> SwitchTestTheme { get; }
+    public ReactiveCommand<RxVoid, RxVoid> CycleRowHeights { get; }
+    public ReactiveCommand<RxVoid, RxVoid> CycleFontSizes { get; }
+    public ReactiveCommand<RxVoid, RxVoid> TransposeGrid { get; }
 
     public MainViewModel()
     {
@@ -75,16 +73,16 @@ public class MainViewModel : ViewModelBase
 
         this.WhenActivated(disposables =>
         {
-            BuildSampleDefinitions
-                .WhereNotNull()
+            ObservableMixins
+                .WhereNotNull(BuildSampleDefinitions)
                 .Subscribe(defs =>
                 {
                     DemoViewModel.Set(defs);
                 })
                 .DisposeWith(disposables);
 
-            BuildTestDefinitions
-                .WhereNotNull()
+            ObservableMixins
+                .WhereNotNull(BuildTestDefinitions)
                 .Subscribe(defs =>
                 {
                     TestViewModel.Set(defs);
@@ -184,21 +182,18 @@ public class MainViewModel : ViewModelBase
                                         int.TryParse(o.ToString(), out var i)
                                             ? i switch
                                             {
-                                                17
-                                                    => (
-                                                        new ThemeColor(150, 100, 120, 0),
-                                                        new ThemeColor(255, 0, 0, 0)
-                                                    ),
-                                                18
-                                                    => (
-                                                        new ThemeColor(150, 0, 100, 120),
-                                                        new ThemeColor(255, 255, 0, 0)
-                                                    ),
-                                                _
-                                                    => (
-                                                        new ThemeColor(0, 0, 0, 0),
-                                                        new ThemeColor(0, 255, 0, 0)
-                                                    ),
+                                                17 => (
+                                                    new ThemeColor(150, 100, 120, 0),
+                                                    new ThemeColor(255, 0, 0, 0)
+                                                ),
+                                                18 => (
+                                                    new ThemeColor(150, 0, 100, 120),
+                                                    new ThemeColor(255, 255, 0, 0)
+                                                ),
+                                                _ => (
+                                                    new ThemeColor(0, 0, 0, 0),
+                                                    new ThemeColor(0, 255, 0, 0)
+                                                ),
                                             }
                                             : (
                                                 new ThemeColor(0, 0, 0, 0),
@@ -212,10 +207,9 @@ public class MainViewModel : ViewModelBase
                                         cdef.RightDecor = (_, o) =>
                                             o switch
                                             {
-                                                int i
-                                                    => i % 2 == 0
-                                                        ? "Resources/comment.svg"
-                                                        : string.Empty,
+                                                int i => i % 2 == 0
+                                                    ? "Resources/comment.svg"
+                                                    : string.Empty,
                                                 _ => string.Empty,
                                             };
                                         cdef.Editor = (p, c, s) =>

@@ -20,5 +20,8 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-            .UseReactiveUI(builder => { });
+            .UseReactiveUI(builder =>
+            {
+                builder.WithExceptionHandler(ViewModelLocator.GeneralExceptionHandler);
+            });
 }

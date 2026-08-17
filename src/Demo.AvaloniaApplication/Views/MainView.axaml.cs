@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
-using System.Reactive.Linq;
 using Avalonia.Controls;
 using Demo.AvaloniaApplication.ViewModels;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Disposables;
 
 namespace Demo.AvaloniaApplication.Views;
 
@@ -18,7 +17,7 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
         this.WhenActivated(disposables =>
         {
             this.WhenAnyValue(x => x.ViewModel)
-                .WhereNotNull()
+                .Where(x => x is not null)
                 .Do(vm => PopulateFromViewModel(this, vm, disposables))
                 .Subscribe()
                 .DisposeWith(disposables);
@@ -28,7 +27,7 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
     private static void PopulateFromViewModel(
         MainView view,
         MainViewModel viewModel,
-        CompositeDisposable disposables
+        MultipleDisposable disposables
     )
     {
         view.OneWayBind(viewModel, vm => vm.DemoViewModel, v => v.HierarchyGrid.ViewModel)

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Reactive.Linq;
 using ReactiveUI;
+using ReactiveUI.Primitives.Signals;
 
 namespace HierarchyGrid.Definitions
 {
@@ -32,13 +32,12 @@ namespace HierarchyGrid.Definitions
         public List<HierarchyDefinition> ColumnsParents { get; } = [];
         public List<HierarchyDefinition> RowsParents { get; } = [];
 
-
         public void SetColumnsWidths(double width)
         {
             foreach (var kvp in ColumnsWidths)
                 ColumnsWidths[kvp.Key] = width;
 
-            Observable.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
         }
 
         public void SetRowsHeights(double height)
@@ -46,21 +45,21 @@ namespace HierarchyGrid.Definitions
             foreach (var kvp in RowsHeights)
                 RowsHeights[kvp.Key] = height;
 
-            Observable.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
         }
 
         public void SetFontSize(float fontSize)
         {
             CellFontSize = fontSize;
 
-            Observable.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
         }
 
         public void SetHeaderFontSize(float fontSize)
         {
             HeaderFontSize = fontSize;
 
-            Observable.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
         }
     }
 }

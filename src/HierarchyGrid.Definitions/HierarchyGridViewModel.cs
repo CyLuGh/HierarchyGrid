@@ -2,18 +2,19 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using DynamicData.Binding;
 using LanguageExt;
 using ReactiveUI;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Disposables;
+using ReactiveUI.Primitives.Signals;
 using ReactiveUI.SourceGenerators;
 using Splat;
-using RxCommand = ReactiveUI.ReactiveCommand<System.Reactive.Unit, System.Reactive.Unit>;
-using RxUnit = System.Reactive.Unit;
+using RxCommand = ReactiveUI.ReactiveCommand<
+    ReactiveUI.Primitives.RxVoid,
+    ReactiveUI.Primitives.RxVoid
+>;
+using RxUnit = ReactiveUI.Primitives.RxVoid;
 
 namespace HierarchyGrid.Definitions;
 
@@ -35,7 +36,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     private IObservable<bool> HasDataObservable =>
         this.WhenAnyValue(x => x.Producers)
             .Select(seq => seq.Length > 0)
-            .CombineLatest(this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0))
+            .CombineLatest(
+                this.WhenAnyValue(x => x.Consumers).Select(seq => seq.Length > 0),
+                (a, b) => (First: a, Second: b)
+            )
             .Select(t => t is { First: true, Second: true })
             .ObserveOn(RxSchedulers.MainThreadScheduler)
             .Do(b =>
@@ -87,7 +91,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         }
     }
 
-    private Subject<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
+    private Signal<Seq<PositionedCell>> SelectionChangedSubject { get; } = new();
 
     public IObservable<Seq<PositionedCell>> SelectionChanged =>
         SelectionChangedSubject.AsObservable().Publish().RefCount();
@@ -296,7 +300,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             HorizontalOffset = 0;
         }
 
-        Observable.Return(false).InvokeCommand(DrawGridCommand);
+        Signal.Return(false).InvokeCommand(DrawGridCommand);
     }
 
     private IEnumerable<PositionedCell> MatchPositionedCells(IEnumerable<PositionedCell> cells)
@@ -395,7 +399,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         InitializeOAPH();
     }
 
-    private void ManageSelectionChange(CompositeDisposable disposables)
+    private void ManageSelectionChange(MultipleDisposable disposables)
     {
         SelectedCells
             .ObserveCollectionChanges()
@@ -408,7 +412,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .DisposeWith(disposables);
     }
 
-    private void ManageScaleConstraints(CompositeDisposable disposables)
+    private void ManageScaleConstraints(MultipleDisposable disposables)
     {
         /* Don't allow scale < 0.75 */
         this.WhenAnyValue(x => x.Scale)
@@ -423,7 +427,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .DisposeWith(disposables);
     }
 
-    private void ManageOffsets(CompositeDisposable disposables)
+    private void ManageOffsets(MultipleDisposable disposables)
     {
         /* Don't allow horizontal offset to go above max offset */
         this.WhenAnyValue(x => x.HorizontalOffset)
@@ -459,7 +463,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .DisposeWith(disposables);
     }
 
-    private void HandleTooltipDisplay(CompositeDisposable disposables)
+    private void HandleTooltipDisplay(MultipleDisposable disposables)
     {
         this.WhenAnyValue(x => x.HoveredCell)
             .DistinctUntilChanged()
@@ -477,13 +481,16 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
         this.WhenAnyValue(x => x.HoveredCell)
             .DistinctUntilChanged()
-            .CombineLatest(this.WhenAnyValue(x => x.HoveredDefinitionHeader).DistinctUntilChanged())
+            .CombineLatest(
+                this.WhenAnyValue(x => x.HoveredDefinitionHeader).DistinctUntilChanged(),
+                (a, b) => (a, b)
+            )
             .Throttle(TimeSpan.FromMilliseconds(1000))
             .InvokeCommand(HandleTooltipCommand)
             .DisposeWith(disposables);
     }
 
-    private void TriggerGridDrawing(CompositeDisposable disposables)
+    private void TriggerGridDrawing(MultipleDisposable disposables)
     {
         /* Redraw grid when scrolling or changing scale */
         var gridLayoutEventsObservable = this.WhenAnyValue(
@@ -494,7 +501,9 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 x => x.Height
             )
             .Throttle(TimeSpan.FromMilliseconds(5))
-            .DistinctUntilChanged();
+            .DistinctUntilChanged()
+            .Publish()
+            .RefCount();
 
         var gridMouseEventsObservable = this.WhenAnyValue(
                 x => x.HoveredColumn,
@@ -504,10 +513,12 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 x => x.EditedCell
             )
             .Throttle(TimeSpan.FromMilliseconds(2))
-            .DistinctUntilChanged();
+            .DistinctUntilChanged()
+            .Publish()
+            .RefCount();
 
         // Events starting a grid redraw
-        Observable
+        Signal
             .Merge(
                 this.WhenAnyValue(x => x.IsTransposed)
                     .Do(isTransposed =>
@@ -516,7 +527,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                         SetHeadersDimension(isTransposed);
                     })
                     .Select(_ => false),
-                this.WhenAnyValue(x => x.Theme).WhereNotNull().Select(_ => false),
+                this.WhenAnyValue(x => x.Theme).Where(x => x is not null).Select(_ => false),
                 SelectionChanged.DistinctUntilChanged().Select(_ => false),
                 gridLayoutEventsObservable.Select(_ => false),
                 gridMouseEventsObservable.Select(_ => false),
@@ -666,7 +677,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         Consumers = hierarchyDefinitions.Consumers;
 
         SetHeadersDimension(IsTransposed, preserveSizes);
-        Observable.Return(true).InvokeCommand(DrawGridCommand);
+        Signal.Return(true).InvokeCommand(DrawGridCommand);
     }
 
     private void Clear(bool preserveSizes = false)
@@ -921,7 +932,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 .IfSome(a =>
                 {
                     a();
-                    Observable.Return(false).InvokeCommand(DrawGridCommand);
+                    Signal.Return(false).InvokeCommand(DrawGridCommand);
                 });
         }
         else
@@ -1059,7 +1070,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         else
             definition.IsHighlighted = !definition.IsHighlighted;
 
-        Observable.Return(false).InvokeCommand(DrawGridCommand);
+        Signal.Return(false).InvokeCommand(DrawGridCommand);
     }
 
     internal void HandleDoubleClick(double x, double y, double screenScale)

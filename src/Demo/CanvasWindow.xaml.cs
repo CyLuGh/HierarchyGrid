@@ -5,6 +5,12 @@ using System.Reactive.Linq;
 using System.Windows;
 using HierarchyGrid.Definitions;
 using LanguageExt;
+using Primitives;
+using Primitives;
+using Primitives;
+using Primitives;
+using Primitives;
+using Primitives;
 using ReactiveUI;
 using Splat;
 using SelectionMode = HierarchyGrid.Definitions.SelectionMode;
@@ -58,7 +64,7 @@ namespace Demo
                     {
                         Content = x.ToString(),
                         Producer = () => x,
-                        IsExpanded = true
+                        IsExpanded = true,
                     };
 
                     if (x == 0)
@@ -108,7 +114,7 @@ namespace Demo
                         Content = $"Parent {a}",
                         IsExpanded = a != 3,
                         Consumer = o => o is int idx ? idx * a : "Oops",
-                        Formatter = o => $"Parent: {o}"
+                        Formatter = o => $"Parent: {o}",
                     };
 
                     if (a > 1)
@@ -132,28 +138,25 @@ namespace Demo
                                                     10 => Qualification.ReadOnly,
                                                     17 => Qualification.Custom,
                                                     18 => Qualification.Custom,
-                                                    _ => Qualification.Normal
+                                                    _ => Qualification.Normal,
                                                 }
                                                 : Qualification.Normal,
                                         Colorize = o =>
                                             int.TryParse(o.ToString(), out var i)
                                                 ? i switch
                                                 {
-                                                    17
-                                                        => (
-                                                            new ThemeColor(150, 100, 120, 0),
-                                                            new ThemeColor(255, 0, 0, 0)
-                                                        ),
-                                                    18
-                                                        => (
-                                                            new ThemeColor(150, 0, 100, 120),
-                                                            new ThemeColor(255, 255, 0, 0)
-                                                        ),
-                                                    _
-                                                        => (
-                                                            new ThemeColor(0, 0, 0, 0),
-                                                            new ThemeColor(0, 255, 0, 0)
-                                                        )
+                                                    17 => (
+                                                        new ThemeColor(150, 100, 120, 0),
+                                                        new ThemeColor(255, 0, 0, 0)
+                                                    ),
+                                                    18 => (
+                                                        new ThemeColor(150, 0, 100, 120),
+                                                        new ThemeColor(255, 255, 0, 0)
+                                                    ),
+                                                    _ => (
+                                                        new ThemeColor(0, 0, 0, 0),
+                                                        new ThemeColor(0, 255, 0, 0)
+                                                    ),
                                                 }
                                                 : (
                                                     new ThemeColor(0, 0, 0, 0),
@@ -163,7 +166,7 @@ namespace Demo
                                         {
                                             this.Log().Debug($"{p} _ {c} _ {s}");
                                             return !string.IsNullOrWhiteSpace(s);
-                                        }
+                                        },
                                     };
 
                                     switch (x)
@@ -172,10 +175,9 @@ namespace Demo
                                             cdef.RightDecor = (_, o) =>
                                                 o switch
                                                 {
-                                                    int i
-                                                        => i % 2 == 0
-                                                            ? "Resources/comment.svg"
-                                                            : string.Empty,
+                                                    int i => i % 2 == 0
+                                                        ? "Resources/comment.svg"
+                                                        : string.Empty,
                                                     _ => string.Empty,
                                                 };
                                             cdef.Editor = (p, c, s) =>
@@ -218,7 +220,7 @@ namespace Demo
                 ProducerDefinition = (ProducerDefinition)
                     HierarchyGrid.ViewModel.RowsDefinitions.Leaves().Skip(3).First(),
                 ConsumerDefinition = (ConsumerDefinition)
-                    HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip(2).First()
+                    HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip(2).First(),
             };
 
             HierarchyGrid.ViewModel.FocusCells = HashMap.create(
@@ -229,7 +231,7 @@ namespace Demo
                         BackgroundColor = ThemeColors.IndianRed.With(a: 100),
                         TooltipInfo = "Extra tooltip message",
                         BorderThickness = 1,
-                        BorderColor = ThemeColors.Blue
+                        BorderColor = ThemeColors.Blue,
                     }
                 )
             );

@@ -13,6 +13,8 @@ using System.Windows.Shapes;
 using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 using LanguageExt;
+using Primitives;
+using Primitives;
 using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
 using SkiaSharp;
@@ -443,7 +445,7 @@ namespace HierarchyGrid
                     Header = "Transpose",
                     IsChecked = viewModel.IsTransposed,
                     IsCheckable = true,
-                    Command = viewModel.ToggleTransposeCommand
+                    Command = viewModel.ToggleTransposeCommand,
                 }
             );
 

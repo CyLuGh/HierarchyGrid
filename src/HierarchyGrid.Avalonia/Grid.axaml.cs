@@ -1,7 +1,4 @@
 using System;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
-using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -15,6 +12,10 @@ using HierarchyGrid.Skia;
 using LanguageExt;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Disposables;
+using ReactiveUI.Primitives.Extensions;
+using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
 using Key = Avalonia.Input.Key;
 using KeyEventArgs = Avalonia.Input.KeyEventArgs;
@@ -49,7 +50,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         this.WhenActivated(disposables =>
         {
             this.WhenAnyValue(x => x.ViewModel)
-                .WhereNotNull()
+                .Where(x => x is not null)
                 .Throttle(TimeSpan.FromMilliseconds(50))
                 .ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Do(vm => PopulateFromViewModel(this, vm, disposables))
@@ -61,7 +62,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     private static void PopulateFromViewModel(
         Grid view,
         HierarchyGridViewModel viewModel,
-        CompositeDisposable disposables
+        MultipleDisposable disposables
     )
     {
         ApplyDependencyProperties(view, viewModel);
@@ -71,7 +72,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 view.SkiaElement.Invalidate();
                 DrawSplitters(view, viewModel);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -79,7 +80,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .DrawEditionTextBoxInteraction.RegisterHandler(ctx =>
             {
                 DrawEditingTextBox(view, viewModel, ctx.Input, disposables);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -91,64 +92,80 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     await clipboard.SetTextAsync(ctx.Input);
                 }
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<SKPaintSurfaceEventArgs>, SKPaintSurfaceEventArgs>(
-                _ => async (_, args) => await SkiaElement_PaintSurface(args, viewModel),
+        Signal
+            .FromEventPattern<SKPaintSurfaceEventArgs>(
                 handler => view.SkiaElement.PaintSurface += handler,
                 handler => view.SkiaElement.PaintSurface -= handler
             )
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe()
+            .SubscribeAsync(async t =>
+            {
+                var args = t.EventArgs;
+                await SkiaElement_PaintSurface(args, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                _ => (_, args) => SkiaElement_PointerMove(args, view.SkiaElement, viewModel),
+        Signal
+            .FromEventPattern<PointerEventArgs>(
                 handler => view.SkiaElement.PointerMoved += handler,
                 handler => view.SkiaElement.PointerMoved -= handler
             )
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe()
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerMove(args, view.SkiaElement, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                _ => (_, _) => SkiaElement_PointerExit(viewModel),
+        Signal
+            .FromEventPattern<PointerEventArgs>(
                 handler => view.SkiaElement.PointerExited += handler,
                 handler => view.SkiaElement.PointerExited -= handler
             )
-            .Subscribe()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerExit(viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerPressedEventArgs>, PointerPressedEventArgs>(
-                _ => (_, args) => SkiaElement_PointerPressed(args, view.SkiaElement, viewModel),
+        Signal
+            .FromEventPattern<PointerPressedEventArgs>(
                 handler => view.SkiaElement.PointerPressed += handler,
                 handler => view.SkiaElement.PointerPressed -= handler
             )
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe()
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerPressed(args, view.SkiaElement, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerWheelEventArgs>, PointerWheelEventArgs>(
-                _ => (_, args) => SkiaElement_PointerWheel(args, viewModel),
+        Signal
+            .FromEventPattern<PointerWheelEventArgs>(
                 handler => view.SkiaElement.PointerWheelChanged += handler,
                 handler => view.SkiaElement.PointerWheelChanged -= handler
             )
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe()
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerWheel(args, viewModel);
+            })
             .DisposeWith(disposables);
 
         viewModel
             .ShowTooltipInteraction.RegisterHandler(ctx =>
             {
                 view.ShowTooltip(ctx.Input, viewModel.Scale);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -156,7 +173,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .ShowHeaderTooltipInteraction.RegisterHandler(ctx =>
             {
                 view.ShowHeaderTooltip(ctx.Input);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -164,7 +181,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .CloseTooltipInteraction.RegisterHandler(ctx =>
             {
                 view._tooltip.Hide();
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -172,8 +189,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.HorizontalOffset,
                 v => v.HorizontalScrollBar.Value,
-                vmToViewConverter: Convert.ToDouble,
-                viewToVmConverter: Convert.ToInt32
+                viewModelToViewConverter: Convert.ToDouble,
+                viewToViewModelConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
@@ -181,8 +198,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.VerticalOffset,
                 v => v.VerticalScrollBar.Value,
-                vmToViewConverter: Convert.ToDouble,
-                viewToVmConverter: Convert.ToInt32
+                viewModelToViewConverter: Convert.ToDouble,
+                viewToViewModelConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
@@ -503,7 +520,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "Transpose",
                 IsChecked = viewModel.IsTransposed,
-                Command = viewModel.ToggleTransposeCommand
+                Command = viewModel.ToggleTransposeCommand,
             }
         );
 
@@ -589,14 +606,13 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
 
-            var dsp = Observable
-                .FromEventPattern<EventHandler<VectorEventArgs>, VectorEventArgs>(
-                    handler =>
-                        (sender, args) => Splitter_DragComplete(args, viewModel, def.Definition),
+            var dsp = Signal
+                .FromEventPattern<VectorEventArgs>(
                     handler => splitter.DragCompleted += handler,
                     handler => splitter.DragCompleted -= handler
                 )
-                .Subscribe();
+                .Subscribe(t => Splitter_DragComplete(t.EventArgs, viewModel, def.Definition));
+
             viewModel.ResizeObservables.Enqueue(dsp);
 
             Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
@@ -619,15 +635,13 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             splitter.ResizeDirection = GridResizeDirection.Columns;
             currentX += width;
 
-            var dsp = Observable
-                .FromEventPattern<EventHandler<VectorEventArgs>, VectorEventArgs>(
-                    handler =>
-                        (sender, args) =>
-                            Splitter_Header_DragComplete(args, viewModel, currentIndex),
+            var dsp = Signal
+                .FromEventPattern<VectorEventArgs>(
                     handler => splitter.DragCompleted += handler,
                     handler => splitter.DragCompleted -= handler
                 )
-                .Subscribe();
+                .Subscribe(t => Splitter_Header_DragComplete(t.EventArgs, viewModel, currentIndex));
+
             viewModel.ResizeObservables.Enqueue(dsp);
 
             Canvas.SetTop(splitter, currentY * viewModel.Scale);
@@ -647,7 +661,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var pos = viewModel.ColumnsDefinitions.GetPosition(definition);
         viewModel.ColumnsWidths[pos] = Math.Max(viewModel.ColumnsWidths[pos] + args.Vector.X, 10d);
 
-        Observable
+        Signal
             .Return(false)
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
@@ -664,7 +678,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             10d
         );
 
-        Observable
+        Signal
             .Return(false)
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
@@ -686,7 +700,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             case Key.Enter:
                 var content = viewModel.EditionContent;
                 viewModel.EditedCell = Option<PositionedCell>.None;
-                Observable
+                Signal
                     .Return(editor(content ?? string.Empty))
                     .InvokeCommand(viewModel.DrawGridCommand);
                 break;
@@ -701,7 +715,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         Grid view,
         HierarchyGridViewModel viewModel,
         Seq<PositionedCell> drawnCells,
-        CompositeDisposable disposables
+        MultipleDisposable disposables
     )
     {
         /* Make sure there's no editing textbox when there is no edition */
@@ -736,14 +750,12 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                             Path = nameof(HierarchyGridViewModel.EditionContent),
                         };
 
-                        Observable
-                            .FromEventPattern<EventHandler<KeyEventArgs>, KeyEventArgs>(
-                                handler =>
-                                    (sender, args) => EditorKeyDown(tb, args, viewModel, editor),
+                        Signal
+                            .FromEventPattern<KeyEventArgs>(
                                 handler => tb.KeyDown += handler,
                                 handler => tb.KeyDown -= handler
                             )
-                            .Subscribe()
+                            .Subscribe(t => EditorKeyDown(tb, t.EventArgs, viewModel, editor))
                             .DisposeWith(disposables);
 
                         tb.Bind(TextBox.TextProperty, binding).DisposeWith(disposables);
