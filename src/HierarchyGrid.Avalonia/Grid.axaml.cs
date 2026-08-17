@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -14,7 +13,6 @@ using ReactiveUI;
 using ReactiveUI.Avalonia;
 using ReactiveUI.Primitives;
 using ReactiveUI.Primitives.Disposables;
-using ReactiveUI.Primitives.Extensions;
 using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
 using Key = Avalonia.Input.Key;
@@ -101,11 +99,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PaintSurface += handler,
                 handler => view.SkiaElement.PaintSurface -= handler
             )
-            .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .SubscribeAsync(async t =>
+            .Subscribe(t =>
             {
                 var args = t.EventArgs;
-                await SkiaElement_PaintSurface(args, viewModel);
+                SkiaElement_PaintSurface(args, viewModel);
             })
             .DisposeWith(disposables);
 
@@ -236,7 +233,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.HeaderFontFamily = view.HeaderFontFamily;
     }
 
-    private static async Task SkiaElement_PaintSurface(
+    private static void SkiaElement_PaintSurface(
         SKPaintSurfaceEventArgs args,
         HierarchyGridViewModel viewModel
     )
@@ -248,7 +245,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var height = canvas.LocalClipBounds.Height;
 
         // Avalonia does not need screen scale adjustment with windows zoomed display
-        await HierarchyGridDrawer.Draw(viewModel, canvas, width, height, 1d, false);
+        HierarchyGridDrawer.Draw(viewModel, canvas, width, height, 1d, false);
     }
 
     private static void SkiaElement_PointerMove(
@@ -276,9 +273,25 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         if (args.KeyModifiers.HasFlag(KeyModifiers.Control))
             viewModel.Scale += .05 * (delta < 0 ? 1 : -1);
         else if (args.KeyModifiers.HasFlag(KeyModifiers.Shift))
-            viewModel.HorizontalOffset += 5 * (delta < 0 ? 1 : -1);
+        {
+            var ho = viewModel.HorizontalOffset + (5 * (delta < 0 ? 1 : -1));
+            if (ho < 0)
+                viewModel.HorizontalOffset = 0;
+            else if (ho > viewModel.MaxHorizontalOffset)
+                viewModel.HorizontalOffset = viewModel.MaxHorizontalOffset;
+            else
+                viewModel.HorizontalOffset = ho;
+        }
         else
-            viewModel.VerticalOffset += 5 * (delta < 0 ? 1 : -1);
+        {
+            var vo = viewModel.VerticalOffset + (5 * (delta < 0 ? 1 : -1));
+            if (vo < 0)
+                viewModel.VerticalOffset = 0;
+            else if (vo > viewModel.MaxVerticalOffset)
+                viewModel.VerticalOffset = viewModel.MaxVerticalOffset;
+            else
+                viewModel.VerticalOffset = vo;
+        }
 
         args.Handled = true;
     }

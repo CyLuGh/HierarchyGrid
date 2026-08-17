@@ -26,7 +26,11 @@ namespace Demo
         {
             base.OnStartup(e);
 
-            var _ = RxAppBuilder.CreateReactiveUIBuilder().WithWpf().BuildApp();
+            var _ = RxAppBuilder
+                .CreateReactiveUIBuilder()
+                .WithWpf()
+                .WithExceptionHandler(new GeneralExceptionHandler())
+                .BuildApp();
         }
 
         private void ConfigureLogs()

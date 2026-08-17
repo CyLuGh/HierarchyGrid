@@ -1,26 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
-using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 using LanguageExt;
-using Primitives;
-using Primitives;
-using ReactiveMarbles.ObservableEvents;
 using ReactiveUI;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Disposables;
+using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
+using SkiaSharp.Views.Desktop;
 using Splat;
 using TextCopy;
-using Unit = System.Reactive.Unit;
 
 namespace HierarchyGrid
 {
@@ -41,7 +37,7 @@ namespace HierarchyGrid
                     .DisposeWith(disposables);
 
                 this.WhenAnyValue(x => x.ViewModel)
-                    .WhereNotNull()
+                    .Where(x => x is not null)
                     .Do(vm => PopulateFromViewModel(this, vm, disposables))
                     .Subscribe()
                     .DisposeWith(disposables);
@@ -51,7 +47,7 @@ namespace HierarchyGrid
         private static void PopulateFromViewModel(
             Grid view,
             HierarchyGridViewModel viewModel,
-            CompositeDisposable disposables
+            MultipleDisposable disposables
         )
         {
             ApplyDependencyProperties(view, viewModel);
@@ -69,7 +65,7 @@ namespace HierarchyGrid
                 {
                     view.SkiaElement.InvalidateVisual();
                     DrawSplitters(view, viewModel);
-                    ctx.SetOutput(Unit.Default);
+                    ctx.SetOutput(RxVoid.Default);
                 })
                 .DisposeWith(disposables);
 
@@ -77,7 +73,7 @@ namespace HierarchyGrid
                 .FillClipboardInteraction.RegisterHandler(async ctx =>
                 {
                     await ClipboardService.SetTextAsync(ctx.Input);
-                    ctx.SetOutput(Unit.Default);
+                    ctx.SetOutput(RxVoid.Default);
                 })
                 .DisposeWith(disposables);
 
@@ -88,9 +84,14 @@ namespace HierarchyGrid
                 DrawEditingTextBox(view, viewModel, ctx.Input, disposables);
             });
 
-            view.SkiaElement.Events()
-                .PaintSurface.Subscribe(async args =>
+            Signal
+                .FromEventPattern<SKPaintSurfaceEventArgs>(
+                    handler => view.SkiaElement.PaintSurface += handler,
+                    handler => view.SkiaElement.PaintSurface -= handler
+                )
+                .Subscribe(t =>
                 {
+                    var args = t.EventArgs;
                     SKImageInfo info = args.Info;
                     SKSurface surface = args.Surface;
                     SKCanvas canvas = surface.Canvas;
@@ -99,7 +100,7 @@ namespace HierarchyGrid
                     PresentationSource? source = PresentationSource.FromVisual(view);
                     view.ScreenScale = source?.CompositionTarget?.TransformToDevice.M11 ?? 1;
 
-                    await HierarchyGridDrawer.Draw(
+                    HierarchyGridDrawer.Draw(
                         viewModel,
                         canvas,
                         info.Width,
@@ -109,17 +110,14 @@ namespace HierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            view.SkiaElement.Events()
-                .MouseLeave.Subscribe(_ =>
+            Signal
+                .FromEventPattern<MouseEventHandler, MouseEventArgs>(
+                    handler => view.SkiaElement.MouseMove += handler,
+                    handler => view.SkiaElement.MouseMove -= handler
+                )
+                .Subscribe(t =>
                 {
-                    viewModel.HandleMouseLeft();
-                })
-                .DisposeWith(disposables);
-
-            view.SkiaElement.Events()
-                .MouseMove.Subscribe(args =>
-                {
-                    var position = args.GetPosition(view.SkiaElement);
+                    var position = t.EventArgs.GetPosition(view.SkiaElement);
                     viewModel.HandleMouseOver(
                         position.X,
                         position.Y,
@@ -128,9 +126,22 @@ namespace HierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            view.SkiaElement.Events()
-                .MouseLeftButtonDown.Subscribe(args =>
+            Signal
+                .FromEventPattern<MouseEventHandler, MouseEventArgs>(
+                    handler => view.SkiaElement.MouseLeave += handler,
+                    handler => view.SkiaElement.MouseLeave -= handler
+                )
+                .Subscribe(_ => viewModel.HandleMouseLeft())
+                .DisposeWith(disposables);
+
+            Signal
+                .FromEventPattern<MouseButtonEventHandler, MouseButtonEventArgs>(
+                    handler => view.SkiaElement.MouseLeftButtonDown += handler,
+                    handler => view.SkiaElement.MouseLeftButtonDown -= handler
+                )
+                .Subscribe(t =>
                 {
+                    var args = t.EventArgs;
                     var position = args.GetPosition(view.SkiaElement);
                     if (args.ClickCount == 2)
                     {
@@ -156,9 +167,15 @@ namespace HierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            view.SkiaElement.Events()
-                .MouseRightButtonDown.Subscribe(args =>
+            Signal
+                .FromEventPattern<MouseButtonEventHandler, MouseButtonEventArgs>(
+                    handler => view.SkiaElement.MouseRightButtonDown += handler,
+                    handler => view.SkiaElement.MouseRightButtonDown -= handler
+                )
+                .Subscribe(t =>
                 {
+                    var args = t.EventArgs;
+
                     var position = args.GetPosition(view.SkiaElement);
                     viewModel.HandleMouseDown(
                         position.X,
@@ -170,7 +187,7 @@ namespace HierarchyGrid
                     );
 
                     // Show context menu
-                    if (viewModel.IsValid && viewModel.HasData)
+                    if (viewModel is { IsValid: true, HasData: true })
                     {
                         var contextMenu = BuildContextMenu(
                             viewModel,
@@ -183,37 +200,78 @@ namespace HierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            view.SkiaElement.Events()
-                .MouseWheel.Subscribe(e =>
+            Signal
+                .FromEventPattern<MouseWheelEventHandler, MouseWheelEventArgs>(
+                    handler => view.SkiaElement.MouseWheel += handler,
+                    handler => view.SkiaElement.MouseWheel -= handler
+                )
+                .Subscribe(t =>
                 {
+                    var e = t.EventArgs;
                     if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                         viewModel.Scale += .05 * (e.Delta < 0 ? 1 : -1);
                     else if (
                         Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)
                     )
-                        viewModel.HorizontalOffset += 5 * (e.Delta < 0 ? 1 : -1);
+                    {
+                        var ho = viewModel.HorizontalOffset + (5 * (e.Delta < 0 ? 1 : -1));
+                        if (ho < 0)
+                            viewModel.HorizontalOffset = 0;
+                        else if (ho > viewModel.MaxHorizontalOffset)
+                            viewModel.HorizontalOffset = viewModel.MaxHorizontalOffset;
+                        else
+                            viewModel.HorizontalOffset = ho;
+                    }
                     else
-                        viewModel.VerticalOffset += 5 * (e.Delta < 0 ? 1 : -1);
+                    {
+                        var vo = viewModel.VerticalOffset + (5 * (e.Delta < 0 ? 1 : -1));
+                        if (vo < 0)
+                            viewModel.VerticalOffset = 0;
+                        else if (vo > viewModel.MaxVerticalOffset)
+                            viewModel.VerticalOffset = viewModel.MaxVerticalOffset;
+                        else
+                            viewModel.VerticalOffset = vo;
+                    }
                 })
                 .DisposeWith(disposables);
+
+            var horizontalScrollSignal = Signal
+                .FromEventPattern<ScrollEventHandler, ScrollEventArgs>(
+                    handler => view.HorizontalScrollBar.Scroll += handler,
+                    handler => view.HorizontalScrollBar.Scroll -= handler
+                )
+                .Publish()
+                .RefCount();
+
+            horizontalScrollSignal.Subscribe().DisposeWith(disposables);
 
             view.Bind(
                     viewModel,
                     vm => vm.HorizontalOffset,
                     v => v.HorizontalScrollBar.Value,
-                    view.HorizontalScrollBar.Events().Scroll,
-                    vmToViewConverter: i => Convert.ToDouble(i),
-                    viewToVmConverter: d => Convert.ToInt32(d)
+                    horizontalScrollSignal,
+                    viewModelToViewConverter: Convert.ToDouble,
+                    viewToViewModelConverter: Convert.ToInt32
                 )
                 .DisposeWith(disposables);
+
+            var verticalScrollSignal = Signal
+                .FromEventPattern<ScrollEventHandler, ScrollEventArgs>(
+                    handler => view.VerticalScrollBar.Scroll += handler,
+                    handler => view.VerticalScrollBar.Scroll -= handler
+                )
+                .Publish()
+                .RefCount();
+
+            verticalScrollSignal.Subscribe().DisposeWith(disposables);
 
             view.Bind(
                     viewModel,
                     vm => vm.VerticalOffset,
                     v => v.VerticalScrollBar.Value,
-                    view.VerticalScrollBar.Events().Scroll,
-                    vmToViewConverter: i => Convert.ToDouble(i),
-                    viewToVmConverter: d => Convert.ToInt32(d)
+                    verticalScrollSignal,
+                    viewModelToViewConverter: Convert.ToDouble,
+                    viewToViewModelConverter: Convert.ToInt32
                 )
                 .DisposeWith(disposables);
 
@@ -243,7 +301,7 @@ namespace HierarchyGrid
         private static void RegisterToolTipInteractions(
             Grid view,
             HierarchyGridViewModel viewModel,
-            CompositeDisposable disposables
+            MultipleDisposable disposables
         )
         {
             viewModel
@@ -271,7 +329,7 @@ namespace HierarchyGrid
                         view._tooltip.IsOpen = true;
                     }
 
-                    ctx.SetOutput(Unit.Default);
+                    ctx.SetOutput(RxVoid.Default);
                 })
                 .DisposeWith(disposables);
 
@@ -292,7 +350,7 @@ namespace HierarchyGrid
                         view._tooltip.IsOpen = true;
                     }
 
-                    ctx.SetOutput(Unit.Default);
+                    ctx.SetOutput(RxVoid.Default);
                 })
                 .DisposeWith(disposables);
 
@@ -300,7 +358,7 @@ namespace HierarchyGrid
                 .CloseTooltipInteraction.RegisterHandler(ctx =>
                 {
                     view._tooltip.IsOpen = false;
-                    ctx.SetOutput(Unit.Default);
+                    ctx.SetOutput(RxVoid.Default);
                 })
                 .DisposeWith(disposables);
         }
@@ -493,7 +551,7 @@ namespace HierarchyGrid
             Grid view,
             HierarchyGridViewModel viewModel,
             Seq<PositionedCell> drawnCells,
-            CompositeDisposable disposables
+            MultipleDisposable disposables
         )
         {
             /* Make sure there's no editing textbox when there is no edition */
@@ -528,25 +586,25 @@ namespace HierarchyGrid
                                 UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
                             };
 
-                            tb.Events()
-                                .KeyDown.Subscribe(e =>
-                                {
-                                    switch (e.Key)
-                                    {
-                                        case Key.Escape:
-                                            viewModel.EditedCell = Option<PositionedCell>.None;
-                                            break;
-
-                                        case Key.Enter:
-                                            var content = viewModel.EditionContent;
-                                            viewModel.EditedCell = Option<PositionedCell>.None;
-                                            Observable
-                                                .Return(editor(content))
-                                                .InvokeCommand(viewModel.DrawGridCommand);
-                                            break;
-                                    }
-                                })
-                                .DisposeWith(disposables);
+                            // tb.Events()
+                            //     .KeyDown.Subscribe(e =>
+                            //     {
+                            //         switch (e.Key)
+                            //         {
+                            //             case Key.Escape:
+                            //                 viewModel.EditedCell = Option<PositionedCell>.None;
+                            //                 break;
+                            //
+                            //             case Key.Enter:
+                            //                 var content = viewModel.EditionContent;
+                            //                 viewModel.EditedCell = Option<PositionedCell>.None;
+                            //                 Signal
+                            //                     .Return(editor(content))
+                            //                     .InvokeCommand(viewModel.DrawGridCommand);
+                            //                 break;
+                            //         }
+                            //     })
+                            //     .DisposeWith(disposables);
 
                             tb.SetBinding(TextBox.TextProperty, binding);
 
@@ -573,184 +631,184 @@ namespace HierarchyGrid
 
         private static void DrawSplitters(Grid view, HierarchyGridViewModel viewModel)
         {
-            /* Dispose previous resize events */
-            foreach (var disposables in viewModel.ResizeObservables)
-                disposables.Dispose();
-
-            viewModel.ResizeObservables.Clear();
-
-            var splitters = view.Canvas.Children.OfType<GridSplitter>().ToArray();
-
-            GridSplitter GetSplitter(int idx)
-            {
-                if (idx < splitters.Length)
-                {
-                    return splitters[idx];
-                }
-                else
-                {
-                    var splitter = new GridSplitter
-                    {
-                        BorderThickness = new Thickness(2d),
-                        BorderBrush = Brushes.Transparent,
-                    };
-                    view.Canvas.Children.Add(splitter);
-                    return splitter;
-                }
-            }
-
-            int splitterCount = 0;
-
-            var headers = viewModel
-                .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
-                .ToArray();
-
-            foreach (var c in headers.Where(t => t.Definition.Definition is ConsumerDefinition))
-            {
-                var (coord, def) = c;
-                var splitter = GetSplitter(splitterCount++);
-                splitter.Height = coord.Height * viewModel.Scale;
-                splitter.Width = 2;
-                splitter.ResizeDirection = GridResizeDirection.Columns;
-                var dsp = splitter
-                    .Events()
-                    .DragCompleted.Subscribe(args =>
-                    {
-                        var pos = viewModel.ColumnsDefinitions.GetPosition(def.Definition);
-                        viewModel.ColumnsWidths[pos] = Math.Max(
-                            viewModel.ColumnsWidths[pos] + args.HorizontalChange,
-                            10d
-                        );
-                        Clear<Rectangle>(view);
-                    });
-                viewModel.ResizeObservables.Enqueue(dsp);
-
-                var posX = coord.Right;
-                var delta = splitter
-                    .Events()
-                    .DragDelta.Do(args =>
-                    {
-                        Clear<Rectangle>(view);
-                        var rect = new Rectangle
-                        {
-                            Fill = Brushes.DarkSlateGray,
-                            Height = coord.Height * viewModel.Scale,
-                            Width = 2d,
-                        };
-                        view.Canvas.Children.Add(rect);
-
-                        Canvas.SetTop(rect, coord.Top * viewModel.Scale);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
-                    })
-                    .Subscribe();
-                viewModel.ResizeObservables.Enqueue(delta);
-
-                Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
-                Canvas.SetLeft(splitter, coord.Right * viewModel.Scale);
-            }
-
-            foreach (var p in headers.Where(t => t.Definition.Definition is ProducerDefinition))
-            {
-                var (coord, def) = p;
-                var splitter = GetSplitter(splitterCount++);
-                splitter.Height = 2;
-                splitter.Width = coord.Width * viewModel.Scale;
-                splitter.ResizeDirection = GridResizeDirection.Rows;
-                var dsp = splitter
-                    .Events()
-                    .DragCompleted.Subscribe(args =>
-                    {
-                        var pos = viewModel.RowsDefinitions.GetPosition(def.Definition);
-                        viewModel.RowsHeights[pos] = Math.Max(
-                            viewModel.RowsHeights[pos] + args.VerticalChange,
-                            10d
-                        );
-                        Clear<Rectangle>(view);
-                    });
-                viewModel.ResizeObservables.Enqueue(dsp);
-
-                var posY = coord.Bottom;
-                var delta = splitter
-                    .Events()
-                    .DragDelta.Do(args =>
-                    {
-                        Clear<Rectangle>(view);
-                        var rect = new Rectangle
-                        {
-                            Fill = Brushes.DarkSlateGray,
-                            Height = 2d,
-                            Width = coord.Width * viewModel.Scale,
-                        };
-                        view.Canvas.Children.Add(rect);
-
-                        Canvas.SetTop(rect, (posY + args.VerticalChange) * viewModel.Scale);
-                        Canvas.SetLeft(rect, coord.Left * viewModel.Scale);
-                    })
-                    .Subscribe();
-                viewModel.ResizeObservables.Enqueue(delta);
-
-                Canvas.SetTop(splitter, coord.Bottom * viewModel.Scale);
-                Canvas.SetLeft(splitter, coord.Left * viewModel.Scale);
-            }
-
-            var currentX = 0d;
-            var currentY =
-                (
-                    viewModel
-                        .ColumnsHeadersHeight?.Take(viewModel.ColumnsHeadersHeight.Length - 1)
-                        .Sum()
-                ) ?? 0d;
-            var height = viewModel.ColumnsHeadersHeight?.LastOrDefault(0d) ?? 0d;
-            for (int i = 0; i < viewModel.RowsHeadersWidth.Length; i++)
-            {
-                var currentIndex = i;
-                var width = viewModel.RowsHeadersWidth[currentIndex];
-                var splitter = GetSplitter(splitterCount++);
-                splitter.Height = height * viewModel.Scale;
-                splitter.Width = 2;
-                splitter.ResizeDirection = GridResizeDirection.Columns;
-                currentX += width;
-
-                var dsp = splitter
-                    .Events()
-                    .DragCompleted.Do(args =>
-                    {
-                        viewModel.RowsHeadersWidth[currentIndex] = Math.Max(
-                            viewModel.RowsHeadersWidth[currentIndex] + args.HorizontalChange,
-                            10d
-                        );
-                        Clear<Rectangle>(view);
-                    })
-                    .Select(_ => false)
-                    .InvokeCommand(viewModel, x => x.DrawGridCommand);
-                viewModel.ResizeObservables.Enqueue(dsp);
-
-                var posX = currentX;
-                var delta = splitter
-                    .Events()
-                    .DragDelta.Do(args =>
-                    {
-                        Clear<Rectangle>(view);
-                        var rect = new Rectangle
-                        {
-                            Fill = Brushes.DarkSlateGray,
-                            Height = height * viewModel.Scale,
-                            Width = 2d,
-                        };
-                        view.Canvas.Children.Add(rect);
-
-                        Canvas.SetTop(rect, currentY * viewModel.Scale);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
-                    })
-                    .Subscribe();
-                viewModel.ResizeObservables.Enqueue(delta);
-
-                Canvas.SetTop(splitter, currentY * viewModel.Scale);
-                Canvas.SetLeft(splitter, currentX * viewModel.Scale);
-            }
-
-            var exceeding = splitters.Skip(splitterCount).ToArray();
-            Clear(view, exceeding);
+            // /* Dispose previous resize events */
+            // foreach (var disposables in viewModel.ResizeObservables)
+            //     disposables.Dispose();
+            //
+            // viewModel.ResizeObservables.Clear();
+            //
+            // var splitters = view.Canvas.Children.OfType<GridSplitter>().ToArray();
+            //
+            // GridSplitter GetSplitter(int idx)
+            // {
+            //     if (idx < splitters.Length)
+            //     {
+            //         return splitters[idx];
+            //     }
+            //     else
+            //     {
+            //         var splitter = new GridSplitter
+            //         {
+            //             BorderThickness = new Thickness(2d),
+            //             BorderBrush = Brushes.Transparent,
+            //         };
+            //         view.Canvas.Children.Add(splitter);
+            //         return splitter;
+            //     }
+            // }
+            //
+            // int splitterCount = 0;
+            //
+            // var headers = viewModel
+            //     .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
+            //     .ToArray();
+            //
+            // foreach (var c in headers.Where(t => t.Definition.Definition is ConsumerDefinition))
+            // {
+            //     var (coord, def) = c;
+            //     var splitter = GetSplitter(splitterCount++);
+            //     splitter.Height = coord.Height * viewModel.Scale;
+            //     splitter.Width = 2;
+            //     splitter.ResizeDirection = GridResizeDirection.Columns;
+            //     var dsp = splitter
+            //         .Events()
+            //         .DragCompleted.Subscribe(args =>
+            //         {
+            //             var pos = viewModel.ColumnsDefinitions.GetPosition(def.Definition);
+            //             viewModel.ColumnsWidths[pos] = Math.Max(
+            //                 viewModel.ColumnsWidths[pos] + args.HorizontalChange,
+            //                 10d
+            //             );
+            //             Clear<Rectangle>(view);
+            //         });
+            //     viewModel.ResizeObservables.Enqueue(dsp);
+            //
+            //     var posX = coord.Right;
+            //     var delta = splitter
+            //         .Events()
+            //         .DragDelta.Do(args =>
+            //         {
+            //             Clear<Rectangle>(view);
+            //             var rect = new Rectangle
+            //             {
+            //                 Fill = Brushes.DarkSlateGray,
+            //                 Height = coord.Height * viewModel.Scale,
+            //                 Width = 2d,
+            //             };
+            //             view.Canvas.Children.Add(rect);
+            //
+            //             Canvas.SetTop(rect, coord.Top * viewModel.Scale);
+            //             Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
+            //         })
+            //         .Subscribe();
+            //     viewModel.ResizeObservables.Enqueue(delta);
+            //
+            //     Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
+            //     Canvas.SetLeft(splitter, coord.Right * viewModel.Scale);
+            // }
+            //
+            // foreach (var p in headers.Where(t => t.Definition.Definition is ProducerDefinition))
+            // {
+            //     var (coord, def) = p;
+            //     var splitter = GetSplitter(splitterCount++);
+            //     splitter.Height = 2;
+            //     splitter.Width = coord.Width * viewModel.Scale;
+            //     splitter.ResizeDirection = GridResizeDirection.Rows;
+            //     var dsp = splitter
+            //         .Events()
+            //         .DragCompleted.Subscribe(args =>
+            //         {
+            //             var pos = viewModel.RowsDefinitions.GetPosition(def.Definition);
+            //             viewModel.RowsHeights[pos] = Math.Max(
+            //                 viewModel.RowsHeights[pos] + args.VerticalChange,
+            //                 10d
+            //             );
+            //             Clear<Rectangle>(view);
+            //         });
+            //     viewModel.ResizeObservables.Enqueue(dsp);
+            //
+            //     var posY = coord.Bottom;
+            //     var delta = splitter
+            //         .Events()
+            //         .DragDelta.Do(args =>
+            //         {
+            //             Clear<Rectangle>(view);
+            //             var rect = new Rectangle
+            //             {
+            //                 Fill = Brushes.DarkSlateGray,
+            //                 Height = 2d,
+            //                 Width = coord.Width * viewModel.Scale,
+            //             };
+            //             view.Canvas.Children.Add(rect);
+            //
+            //             Canvas.SetTop(rect, (posY + args.VerticalChange) * viewModel.Scale);
+            //             Canvas.SetLeft(rect, coord.Left * viewModel.Scale);
+            //         })
+            //         .Subscribe();
+            //     viewModel.ResizeObservables.Enqueue(delta);
+            //
+            //     Canvas.SetTop(splitter, coord.Bottom * viewModel.Scale);
+            //     Canvas.SetLeft(splitter, coord.Left * viewModel.Scale);
+            // }
+            //
+            // var currentX = 0d;
+            // var currentY =
+            //     (
+            //         viewModel
+            //             .ColumnsHeadersHeight?.Take(viewModel.ColumnsHeadersHeight.Length - 1)
+            //             .Sum()
+            //     ) ?? 0d;
+            // var height = viewModel.ColumnsHeadersHeight?.LastOrDefault(0d) ?? 0d;
+            // for (int i = 0; i < viewModel.RowsHeadersWidth.Length; i++)
+            // {
+            //     var currentIndex = i;
+            //     var width = viewModel.RowsHeadersWidth[currentIndex];
+            //     var splitter = GetSplitter(splitterCount++);
+            //     splitter.Height = height * viewModel.Scale;
+            //     splitter.Width = 2;
+            //     splitter.ResizeDirection = GridResizeDirection.Columns;
+            //     currentX += width;
+            //
+            //     var dsp = splitter
+            //         .Events()
+            //         .DragCompleted.Do(args =>
+            //         {
+            //             viewModel.RowsHeadersWidth[currentIndex] = Math.Max(
+            //                 viewModel.RowsHeadersWidth[currentIndex] + args.HorizontalChange,
+            //                 10d
+            //             );
+            //             Clear<Rectangle>(view);
+            //         })
+            //         .Select(_ => false)
+            //         .InvokeCommand(viewModel, x => x.DrawGridCommand);
+            //     viewModel.ResizeObservables.Enqueue(dsp);
+            //
+            //     var posX = currentX;
+            //     var delta = splitter
+            //         .Events()
+            //         .DragDelta.Do(args =>
+            //         {
+            //             Clear<Rectangle>(view);
+            //             var rect = new Rectangle
+            //             {
+            //                 Fill = Brushes.DarkSlateGray,
+            //                 Height = height * viewModel.Scale,
+            //                 Width = 2d,
+            //             };
+            //             view.Canvas.Children.Add(rect);
+            //
+            //             Canvas.SetTop(rect, currentY * viewModel.Scale);
+            //             Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
+            //         })
+            //         .Subscribe();
+            //     viewModel.ResizeObservables.Enqueue(delta);
+            //
+            //     Canvas.SetTop(splitter, currentY * viewModel.Scale);
+            //     Canvas.SetLeft(splitter, currentX * viewModel.Scale);
+            // }
+            //
+            // var exceeding = splitters.Skip(splitterCount).ToArray();
+            // Clear(view, exceeding);
         }
 
         private static void Clear<T>(Grid view)

@@ -129,6 +129,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             })
             .ObserveOn(RxSchedulers.MainThreadScheduler);
 
+    public ReactiveCommand<Seq<PositionedCell>, RxVoid> DrawEditionTextBox { get; }
     public Interaction<Seq<PositionedCell>, RxUnit> DrawEditionTextBoxInteraction { get; } =
         new(RxSchedulers.MainThreadScheduler);
 
@@ -373,6 +374,9 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         EditionContent = string.Empty;
 
         RegisterDefaultInteractions(this);
+        DrawEditionTextBox = ReactiveCommand.CreateFromObservable(
+            (Seq<PositionedCell> cells) => DrawEditionTextBoxInteraction.Handle(cells)
+        );
 
         DrawGridCommand = CreateDrawGridCommand();
         HandleTooltipCommand = CreateHandleTooltipCommand();
@@ -500,6 +504,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 x => x.Width,
                 x => x.Height
             )
+            .Where(t => t is { Value1: >= 0, Value2: >= 0 })
             .Throttle(TimeSpan.FromMilliseconds(5))
             .DistinctUntilChanged()
             .Publish()
@@ -587,7 +592,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         @this.ShowHeaderTooltipInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
         @this.CloseTooltipInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
         @this.FillClipboardInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
-        @this.DrawEditionTextBoxInteraction.RegisterHandler(ctx => ctx.SetOutput(RxUnit.Default));
+        @this.DrawEditionTextBoxInteraction.RegisterHandler(ctx => ctx.SetOutput(RxVoid.Default));
     }
 
     private ReactiveCommand<bool, RxUnit> CreateDrawGridCommand()

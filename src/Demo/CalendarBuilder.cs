@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using HierarchyGrid.Definitions;
 using MoreLinq;
-using Primitives;
-using Primitives;
-using Primitives;
-using Primitives;
 
 namespace Demo
 {

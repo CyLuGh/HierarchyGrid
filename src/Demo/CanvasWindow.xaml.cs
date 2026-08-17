@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Windows;
 using HierarchyGrid.Definitions;
 using LanguageExt;
-using Primitives;
-using Primitives;
-using Primitives;
-using Primitives;
-using Primitives;
-using Primitives;
 using ReactiveUI;
+using ReactiveUI.Primitives;
 using Splat;
 using SelectionMode = HierarchyGrid.Definitions.SelectionMode;
 
@@ -145,18 +139,21 @@ namespace Demo
                                             int.TryParse(o.ToString(), out var i)
                                                 ? i switch
                                                 {
-                                                    17 => (
-                                                        new ThemeColor(150, 100, 120, 0),
-                                                        new ThemeColor(255, 0, 0, 0)
-                                                    ),
-                                                    18 => (
-                                                        new ThemeColor(150, 0, 100, 120),
-                                                        new ThemeColor(255, 255, 0, 0)
-                                                    ),
-                                                    _ => (
-                                                        new ThemeColor(0, 0, 0, 0),
-                                                        new ThemeColor(0, 255, 0, 0)
-                                                    ),
+                                                    17
+                                                        => (
+                                                            new ThemeColor(150, 100, 120, 0),
+                                                            new ThemeColor(255, 0, 0, 0)
+                                                        ),
+                                                    18
+                                                        => (
+                                                            new ThemeColor(150, 0, 100, 120),
+                                                            new ThemeColor(255, 255, 0, 0)
+                                                        ),
+                                                    _
+                                                        => (
+                                                            new ThemeColor(0, 0, 0, 0),
+                                                            new ThemeColor(0, 255, 0, 0)
+                                                        ),
                                                 }
                                                 : (
                                                     new ThemeColor(0, 0, 0, 0),
@@ -175,9 +172,10 @@ namespace Demo
                                             cdef.RightDecor = (_, o) =>
                                                 o switch
                                                 {
-                                                    int i => i % 2 == 0
-                                                        ? "Resources/comment.svg"
-                                                        : string.Empty,
+                                                    int i
+                                                        => i % 2 == 0
+                                                            ? "Resources/comment.svg"
+                                                            : string.Empty,
                                                     _ => string.Empty,
                                                 };
                                             cdef.Editor = (p, c, s) =>

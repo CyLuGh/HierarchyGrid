@@ -1,4 +1,5 @@
 ﻿using HierarchyGrid.Definitions;
+using ReactiveUI;
 using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
 
@@ -8,7 +9,7 @@ namespace HierarchyGrid.Skia
     {
         //TODO Check invalidate
 
-        public static async Task Draw(
+        public static void Draw(
             HierarchyGridViewModel viewModel,
             SKCanvas canvas,
             float width,
@@ -86,7 +87,9 @@ namespace HierarchyGrid.Skia
             canvas.Flush();
 
             // Draw textbox
-            await viewModel.DrawEditionTextBoxInteraction.Handle(viewModel.DrawnCells);
+            Signal
+                .Return(viewModel.DrawnCells)
+                .InvokeCommand(viewModel, x => x.DrawEditionTextBox);
         }
     }
 }
