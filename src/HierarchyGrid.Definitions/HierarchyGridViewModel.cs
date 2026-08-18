@@ -301,7 +301,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             HorizontalOffset = 0;
         }
 
-        Signal.Return(false).InvokeCommand(DrawGridCommand);
+        Signal.Return((false, "gridstate")).InvokeCommand(DrawGridCommand);
     }
 
     private IEnumerable<PositionedCell> MatchPositionedCells(IEnumerable<PositionedCell> cells)
@@ -329,7 +329,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         set => SetGridState(value);
     }
 
-    public ReactiveCommand<bool, RxUnit> DrawGridCommand { get; }
+    public ReactiveCommand<(bool, string), RxVoid> DrawGridCommand { get; }
     public Interaction<RxUnit, RxUnit> DrawGridInteraction { get; } =
         new(RxSchedulers.MainThreadScheduler);
 
@@ -531,14 +531,16 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                         /* Need to adapt headers size on transpose */
                         SetHeadersDimension(isTransposed);
                     })
-                    .Select(_ => false),
-                this.WhenAnyValue(x => x.Theme).Where(x => x is not null).Select(_ => false),
-                SelectionChanged.DistinctUntilChanged().Select(_ => false),
-                gridLayoutEventsObservable.Select(_ => false),
-                gridMouseEventsObservable.Select(_ => false),
-                ToggleCrosshairCommand.Select(_ => false),
-                ClearHighlightsCommand.Select(_ => false),
-                ToggleStatesCommand.Select(_ => false)
+                    .Select(_ => (false, "transpose")),
+                this.WhenAnyValue(x => x.Theme)
+                    .Where(x => x is not null)
+                    .Select(_ => (false, "theme")),
+                SelectionChanged.DistinctUntilChanged().Select(_ => (false, "selection")),
+                gridLayoutEventsObservable.Select(_ => (false, "layout")),
+                gridMouseEventsObservable.Select(_ => (false, "mouse")),
+                ToggleCrosshairCommand.Select(_ => (false, "toggle crosshair")),
+                ClearHighlightsCommand.Select(_ => (false, "highlights")),
+                ToggleStatesCommand.Select(_ => (false, "toggle states"))
             )
             .Throttle(TimeSpan.FromMilliseconds(10))
             .InvokeCommand(DrawGridCommand)
@@ -595,16 +597,27 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         @this.DrawEditionTextBoxInteraction.RegisterHandler(ctx => ctx.SetOutput(RxVoid.Default));
     }
 
-    private ReactiveCommand<bool, RxUnit> CreateDrawGridCommand()
+    private ReactiveCommand<(bool, string), RxUnit> CreateDrawGridCommand()
     {
-        var command = ReactiveCommand.CreateFromTask<bool, RxUnit>(async invalidate =>
-        {
-            if (invalidate)
-                ResultSets.Clear();
+        // var command = ReactiveCommand.CreateFromTask<bool, RxUnit>(async invalidate =>
+        // {
+        //     if (invalidate)
+        //         ResultSets.Clear();
+        //
+        //     await DrawGridInteraction.Handle(RxUnit.Default);
+        //     return RxUnit.Default;
+        // });
 
-            await DrawGridInteraction.Handle(RxUnit.Default);
-            return RxUnit.Default;
-        });
+        var command = ReactiveCommand.CreateFromObservable(
+            ((bool, string) t) =>
+            {
+                var (invalidate, source) = t;
+                Console.WriteLine($"Drawing grid from {source}");
+                if (invalidate)
+                    ResultSets.Clear();
+                return DrawGridInteraction.Handle(RxVoid.Default);
+            }
+        );
         command.ThrownExceptions.SubscribeSafe(e => this.Log().Error(e));
 
         return command;
@@ -676,13 +689,13 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
     public void Set(HierarchyDefinitions hierarchyDefinitions, bool preserveSizes = false)
     {
-        Clear(preserveSizes);
+        //Clear(preserveSizes);
 
         Producers = hierarchyDefinitions.Producers;
         Consumers = hierarchyDefinitions.Consumers;
 
         SetHeadersDimension(IsTransposed, preserveSizes);
-        Signal.Return(true).InvokeCommand(DrawGridCommand);
+        Signal.Return((true, "set definitions")).InvokeCommand(DrawGridCommand);
     }
 
     private void Clear(bool preserveSizes = false)
@@ -937,7 +950,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 .IfSome(a =>
                 {
                     a();
-                    Signal.Return(false).InvokeCommand(DrawGridCommand);
+                    Signal.Return((false, "Global header")).InvokeCommand(DrawGridCommand);
                 });
         }
         else
@@ -1075,7 +1088,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         else
             definition.IsHighlighted = !definition.IsHighlighted;
 
-        Signal.Return(false).InvokeCommand(DrawGridCommand);
+        Signal.Return((false, "Header")).InvokeCommand(DrawGridCommand);
     }
 
     internal void HandleDoubleClick(double x, double y, double screenScale)
@@ -1211,4 +1224,6 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .Find(t => t.Coord.Contains(x, y))
             .Match(s => s.Cell, () => Option<PositionedCell>.None);
     }
+
+    public bool IsEmpty() => Producers.IsEmpty || Consumers.IsEmpty;
 }

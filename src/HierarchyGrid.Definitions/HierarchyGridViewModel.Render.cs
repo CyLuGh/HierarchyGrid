@@ -37,7 +37,7 @@ namespace HierarchyGrid.Definitions
             foreach (var kvp in ColumnsWidths)
                 ColumnsWidths[kvp.Key] = width;
 
-            Signal.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
         }
 
         public void SetRowsHeights(double height)
@@ -45,21 +45,21 @@ namespace HierarchyGrid.Definitions
             foreach (var kvp in RowsHeights)
                 RowsHeights[kvp.Key] = height;
 
-            Signal.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return((false, "Row height")).InvokeCommand(DrawGridCommand);
         }
 
         public void SetFontSize(float fontSize)
         {
             CellFontSize = fontSize;
 
-            Signal.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return((false, "Font size")).InvokeCommand(DrawGridCommand);
         }
 
         public void SetHeaderFontSize(float fontSize)
         {
             HeaderFontSize = fontSize;
 
-            Signal.Return(false).InvokeCommand(DrawGridCommand);
+            Signal.Return((false, "Header font size")).InvokeCommand(DrawGridCommand);
         }
     }
 }

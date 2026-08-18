@@ -27,7 +27,7 @@ namespace HierarchyGrid.Skia
             var rectBackground = SKRect.Create(width, height); // TODO: check scale
             canvas.DrawRect(rectBackground, paintBackground);
 
-            if (viewModel.HasData)
+            if (!viewModel.IsEmpty())
             {
                 int headerCount = 0;
                 var previousGlobalCoordinates = viewModel

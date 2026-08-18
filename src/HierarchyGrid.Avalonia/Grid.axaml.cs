@@ -69,7 +69,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .DrawGridInteraction.RegisterHandler(ctx =>
             {
                 view.SkiaElement.Invalidate();
-                DrawSplitters(view, viewModel);
                 ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
@@ -103,6 +102,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 var args = t.EventArgs;
                 SkiaElement_PaintSurface(args, viewModel);
+                DrawSplitters(view, viewModel);
             })
             .DisposeWith(disposables);
 
@@ -675,7 +675,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.ColumnsWidths[pos] = Math.Max(viewModel.ColumnsWidths[pos] + args.Vector.X, 10d);
 
         Signal
-            .Return(false)
+            .Return((false, "splitter"))
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -692,7 +692,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         );
 
         Signal
-            .Return(false)
+            .Return((false, "splitter header"))
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -714,7 +714,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 var content = viewModel.EditionContent;
                 viewModel.EditedCell = Option<PositionedCell>.None;
                 Signal
-                    .Return(editor(content ?? string.Empty))
+                    .Return((editor(content ?? string.Empty), "editor"))
                     .InvokeCommand(viewModel.DrawGridCommand);
                 break;
 
