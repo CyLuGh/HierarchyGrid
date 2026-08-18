@@ -271,7 +271,16 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var delta = args.Delta.Y;
 
         if (args.KeyModifiers.HasFlag(KeyModifiers.Control))
-            viewModel.Scale += .05 * (delta < 0 ? 1 : -1);
+        {
+            var scale = viewModel.Scale + (.05 * (delta < 0 ? 1 : -1));
+
+            viewModel.Scale = scale switch
+            {
+                < .75 => .75,
+                > 1 => 1,
+                _ => scale
+            };
+        }
         else if (args.KeyModifiers.HasFlag(KeyModifiers.Shift))
         {
             var ho = viewModel.HorizontalOffset + (5 * (delta < 0 ? 1 : -1));

@@ -211,7 +211,16 @@ namespace HierarchyGrid
                 {
                     var e = t.EventArgs;
                     if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
-                        viewModel.Scale += .05 * (e.Delta < 0 ? 1 : -1);
+                    {
+                        var scale = viewModel.Scale + (.05 * (e.Delta < 0 ? 1 : -1));
+
+                        viewModel.Scale = scale switch
+                        {
+                            < .75 => .75,
+                            > 1 => 1,
+                            _ => scale
+                        };
+                    }
                     else if (
                         Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)
                     )
