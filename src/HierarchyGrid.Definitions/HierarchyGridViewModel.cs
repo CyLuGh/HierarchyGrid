@@ -689,7 +689,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
     public void Set(HierarchyDefinitions hierarchyDefinitions, bool preserveSizes = false)
     {
-        //Clear(preserveSizes);
+        Clear(preserveSizes);
 
         Producers = hierarchyDefinitions.Producers;
         Consumers = hierarchyDefinitions.Consumers;
