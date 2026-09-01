@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>default</LangVersion>
@@ -16,13 +16,13 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp" Version="3.116.0" />
-    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.116.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.116.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.116.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.0" />
-    <PackageReference Include="Topten.RichTextKit" Version="0.4.167" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" />
+    <PackageReference Include="Svg.Skia" />
+    <PackageReference Include="Topten.RichTextKit" />
   </ItemGroup>
 
   <ItemGroup>

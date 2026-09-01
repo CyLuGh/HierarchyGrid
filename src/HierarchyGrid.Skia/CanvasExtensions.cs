@@ -1,17 +1,39 @@
 ﻿using HierarchyGrid.Definitions;
 using LanguageExt;
 using SkiaSharp;
+using Svg.Skia;
 using Topten.RichTextKit;
 
 namespace HierarchyGrid.Skia
 {
     internal static class CanvasExtensions
     {
+        private static readonly Dictionary<string, Option<SKSvg>> _svgCache = [];
+
+        private static Option<SKSvg> GetSvg(string path)
+        {
+            if (_svgCache.TryGetValue(path, out var osvg))
+                return osvg;
+
+            try
+            {
+                var svg = new SKSvg();
+                svg.Load(path);
+                _svgCache.Add(path, svg);
+                return svg;
+            }
+            catch (Exception)
+            {
+                _svgCache.Add(path, Option<SKSvg>.None);
+                return Option<SKSvg>.None;
+            }
+        }
+
         private enum GlobalHeader
         {
             CollapseAll,
             ExpandAll,
-            Local
+            Local,
         }
 
         internal static void DrawGlobalHeaders(
@@ -19,9 +41,16 @@ namespace HierarchyGrid.Skia
             HierarchyGridViewModel viewModel,
             SkiaTheme theme,
             IList<(ElementCoordinates, Guid)> previousGlobalCoordinates,
-            double screenScale = 1d
+            double screenScale
         )
         {
+            // Don't draw if structure doesn't allow it
+            if (
+                viewModel.ColumnsHeadersHeight.Length <= 1
+                || viewModel.RowsHeadersWidth.Length <= 1
+            )
+                return;
+
             var rowDepth = viewModel.RowsDefinitions.TotalDepth();
             var colDepth = viewModel.ColumnsDefinitions.TotalDepth();
 
@@ -135,17 +164,19 @@ namespace HierarchyGrid.Skia
             GlobalHeader globalHeader = GlobalHeader.Local
         )
         {
+            var actualScale = screenScale * viewModel.Scale;
             var rect = SKRect.Create(
-                (float)(left * screenScale),
-                (float)(top * screenScale),
-                (float)(width * screenScale),
-                (float)(height * screenScale)
+                (float)(left * actualScale),
+                (float)(top * actualScale),
+                (float)(width * actualScale),
+                (float)(height * actualScale)
             );
             var coordinates = new ElementCoordinates(
-                left * screenScale,
-                top * screenScale,
-                (left + width) * screenScale,
-                (top + height) * screenScale
+                left,
+                top,
+                (left + width),
+                (top + height),
+                actualScale
             );
 
             var isHovered = previousGlobalCoordinates
@@ -166,14 +197,17 @@ namespace HierarchyGrid.Skia
 
             var decorator = GetGlobalHeaderDecorator(
                 !expanded,
-                left * screenScale,
-                top * screenScale,
+                rect.Left,
+                rect.Top,
+                rect.Width,
+                rect.Height,
                 globalHeader
             );
             paint.Color = isHovered
                 ? theme.HoverHeaderForegroundColor
                 : theme.HeaderForegroundColor;
             paint.Style = SKPaintStyle.StrokeAndFill;
+            paint.IsAntialias = true;
             canvas.DrawPath(decorator, paint);
 
             void Act()
@@ -192,9 +226,11 @@ namespace HierarchyGrid.Skia
             Func<HierarchyGridViewModel, HierarchyDefinition[]> selector,
             float availableWidth,
             ref int headerCount,
-            double screenScale = 1d
+            double screenScale
         )
         {
+            var actualAvailableWidth = availableWidth / viewModel.Scale;
+
             viewModel.ColumnsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
 
@@ -223,7 +259,7 @@ namespace HierarchyGrid.Skia
                 column++;
             }
 
-            while (column < hdefs.Length && currentPosition < availableWidth)
+            while (column < hdefs.Length && currentPosition < actualAvailableWidth)
             {
                 var hdef = hdefs[column];
                 var width = viewModel.ColumnsWidths[column];
@@ -254,27 +290,19 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
-            var height = hdef is { IsExpanded: true, HasChild: true }
-                ? viewModel.ColumnsHeadersHeight[hdef.Level]
-                : Enumerable
-                    .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
-                    .Select(x => viewModel.ColumnsHeadersHeight[x])
-                    .Sum();
+            double height = ComputeHeaderHeight(viewModel, hdef);
 
-            var top = Enumerable
-                .Range(0, hdef.Level)
-                .Select(x => viewModel.ColumnsHeadersHeight[x])
-                .Sum();
+            var top = Enumerable.Range(0, hdef.Level).Sum(x => viewModel.ColumnsHeadersHeight[x]);
 
             canvas.DrawHeader(
                 viewModel,
                 theme,
                 ref headerCount,
                 hdef,
-                currentPosition,
-                top,
-                width,
-                height,
+                (float)currentPosition,
+                (float)top,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -289,6 +317,24 @@ namespace HierarchyGrid.Skia
                 screenScale
             );
             currentPosition += width;
+        }
+
+        /// <summary>
+        /// If the definition is expanded and has any child element,
+        /// it should span on only one row, using the height of its level.
+        /// Otherwise, it should span until the end of the headers display.
+        /// </summary>
+        private static double ComputeHeaderHeight(
+            HierarchyGridViewModel viewModel,
+            HierarchyDefinition hdef
+        )
+        {
+            var height = hdef is { IsExpanded: true, HasChild: true }
+                ? viewModel.ColumnsHeadersHeight[hdef.Level]
+                : Enumerable
+                    .Range(hdef.Level, viewModel.ColumnsHeadersHeight.Length - hdef.Level)
+                    .Sum(x => viewModel.ColumnsHeadersHeight[x]);
+            return height;
         }
 
         private static void DrawParentColumnHeader(
@@ -313,13 +359,9 @@ namespace HierarchyGrid.Skia
 
             var width = Enumerable
                 .Range(column, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.ColumnsWidths.GetValueOrDefault(x, 0))
-                .Sum();
+                .Sum(x => viewModel.ColumnsWidths.GetValueOrDefault(x, 0));
 
-            var top = Enumerable
-                .Range(0, hdef.Level)
-                .Select(x => viewModel.ColumnsHeadersHeight[x])
-                .Sum();
+            var top = Enumerable.Range(0, hdef.Level).Sum(x => viewModel.ColumnsHeadersHeight[x]);
             var height = viewModel.ColumnsHeadersHeight[hdef.Level];
 
             canvas.DrawHeader(
@@ -327,10 +369,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                currentPosition,
-                top,
-                width,
-                height,
+                (float)currentPosition,
+                (float)top,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -358,6 +400,8 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
+            var actualAvailableHeight = availableHeight / viewModel.Scale;
+
             viewModel.RowsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
 
@@ -386,7 +430,7 @@ namespace HierarchyGrid.Skia
                 row++;
             }
 
-            while (row < hdefs.Length && currentPosition < availableHeight)
+            while (row < hdefs.Length && currentPosition < actualAvailableHeight)
             {
                 var hdef = hdefs[row];
                 var height = viewModel.RowsHeights[row];
@@ -422,24 +466,22 @@ namespace HierarchyGrid.Skia
                 : Enumerable
                     .Range(hdef.Level, viewModel.RowsHeadersWidth.Length - hdef.Level)
                     .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                    .Select(x => viewModel.RowsHeadersWidth[x])
-                    .Sum();
+                    .Sum(x => viewModel.RowsHeadersWidth[x]);
 
             var left = Enumerable
                 .Range(0, hdef.Level)
                 .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                .Select(x => viewModel.RowsHeadersWidth[x])
-                .Sum();
+                .Sum(x => viewModel.RowsHeadersWidth[x]);
 
             canvas.DrawHeader(
                 viewModel,
                 theme,
                 ref headerCount,
                 hdef,
-                left,
-                currentPosition,
-                width,
-                height,
+                (float)left,
+                (float)currentPosition,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -479,14 +521,12 @@ namespace HierarchyGrid.Skia
 
             var height = Enumerable
                 .Range(row, hdef.Count() - origin.RelativePositionFrom(hdef))
-                .Select(x => viewModel.RowsHeights.GetValueOrDefault(x, 0))
-                .Sum();
+                .Sum(x => viewModel.RowsHeights.GetValueOrDefault(x, 0));
 
             var left = Enumerable
                 .Range(0, hdef.Level)
                 .Where(x => x < viewModel.RowsHeadersWidth.Length)
-                .Select(x => viewModel.RowsHeadersWidth[x])
-                .Sum();
+                .Sum(x => viewModel.RowsHeadersWidth[x]);
             var width = viewModel.RowsHeadersWidth[hdef.Level];
 
             canvas.DrawHeader(
@@ -494,10 +534,10 @@ namespace HierarchyGrid.Skia
                 theme,
                 ref headerCount,
                 hdef,
-                left,
-                currentPosition,
-                width,
-                height,
+                (float)left,
+                (float)currentPosition,
+                (float)width,
+                (float)height,
                 screenScale
             );
 
@@ -521,18 +561,19 @@ namespace HierarchyGrid.Skia
             SkiaTheme theme,
             ref int headerCount,
             HierarchyDefinition hdef,
-            double left,
-            double top,
-            double width,
-            double height,
+            float left,
+            float top,
+            float width,
+            float height,
             double screenScale
         )
         {
+            float actualScale = (float)(screenScale * viewModel.Scale);
             var rect = SKRect.Create(
-                (float)(left * screenScale),
-                (float)(top * screenScale),
-                (float)(width * screenScale),
-                (float)(height * screenScale)
+                left * actualScale,
+                top * actualScale,
+                width * actualScale,
+                height * actualScale
             );
 
             var renderInfo = RenderInfo.FindRender(viewModel, theme, hdef);
@@ -546,44 +587,90 @@ namespace HierarchyGrid.Skia
             paint.Color = theme.BorderColor;
             canvas.DrawRect(rect, paint);
 
-            GetHeaderDecorator(hdef, left * screenScale, top * screenScale)
+            GetHeaderDecorator(hdef, left * actualScale, top * actualScale)
                 .IfSome(decorator =>
                 {
                     using var localPaint = new SKPaint();
                     localPaint.Color = renderInfo.ForegroundColor;
                     localPaint.Style = SKPaintStyle.StrokeAndFill;
+                    localPaint.IsAntialias = true;
                     canvas.DrawPath(decorator, localPaint);
                 });
 
+            RenderHeaderText(
+                canvas,
+                hdef,
+                left,
+                top,
+                width,
+                height,
+                actualScale,
+                renderInfo,
+                viewModel.HeaderFontFamily,
+                viewModel.HeaderFontSize
+            );
+
+            var coordinates = new ElementCoordinates(
+                left,
+                top,
+                left + width,
+                top + height,
+                actualScale
+            );
+            viewModel.HeadersCoordinates.Add(new(coordinates, new(coordinates, hdef)));
+
+            headerCount++;
+        }
+
+        private static void RenderHeaderText(
+            SKCanvas canvas,
+            HierarchyDefinition hdef,
+            double left,
+            double top,
+            double width,
+            double height,
+            double screenScale,
+            RenderInfo renderInfo,
+            string? fontFamily = "",
+            float headerFontSize = 16f
+        )
+        {
             TextDrawer.Clear();
             TextDrawer.Alignment = TextAlignment.Left;
             TextDrawer.AddText(
                 hdef.Content?.ToString() ?? string.Empty,
                 new Style
                 {
-                    FontSize = TextSize,
+                    FontSize = (float)(headerFontSize * screenScale),
                     TextColor = renderInfo.ForegroundColor,
-                    FontWeight = 600
+                    FontWeight = 600,
+                    FontFamily = !string.IsNullOrEmpty(fontFamily) ? fontFamily : "Sans Serif",
                 }
             );
-            TextDrawer.MaxHeight = (float)((height - 10) * screenScale);
-            TextDrawer.MaxWidth = (float)((width - 24) * screenScale);
 
-            TextDrawer.Paint(
-                canvas,
-                new SKPoint((float)((left + 22) * screenScale), (float)((top + 6) * screenScale)),
-                TextPaintOptions
-            );
-            var coordinates = new ElementCoordinates(left, top, left + width, top + height);
-            viewModel.HeadersCoordinates.Add(new(coordinates, new(coordinates, hdef)));
+            const float textVPadding = 6f;
+            const float textHPadding = 26f;
 
-            headerCount++;
+            TextDrawer.MaxHeight = (float)(height * screenScale);
+            TextDrawer.MaxWidth = (float)((width - textHPadding) * screenScale);
+
+            /* We can center elements that have no child elements,
+             otherwise the text might be out of drawn screen */
+            float x = hdef.HasChild
+                ? (float)((left + textHPadding) * screenScale)
+                : (float)((left + ((width - TextDrawer.MeasuredWidth) / 2)) * screenScale);
+
+            float y = hdef.HasChild
+                ? (float)((top + textVPadding) * screenScale)
+                : (float)((top + ((height - TextDrawer.MeasuredHeight) / 2)) * screenScale);
+
+            TextDrawer.Paint(canvas, new SKPoint(x, y), TextPaintOptions);
         }
 
         private static Option<SKPath> GetHeaderDecorator(
             HierarchyDefinition hdef,
-            double left,
-            double top
+            float left,
+            float top
         )
         {
             if (!hdef.HasChild)
@@ -594,111 +681,107 @@ namespace HierarchyGrid.Skia
 
         private static SKPath GetGlobalHeaderDecorator(
             bool isExpanded,
-            double left,
-            double top,
+            float left,
+            float top,
+            float width,
+            float height,
             GlobalHeader globalHeader
         ) =>
             globalHeader switch
             {
-                GlobalHeader.ExpandAll => BuildExpandAllPath(left, top),
-                GlobalHeader.CollapseAll => BuildFoldAllPath(left, top),
-                _ => isExpanded ? BuildExpandedPath(left, top) : BuildFoldedPath(left, top)
+                GlobalHeader.ExpandAll => BuildExpandAllPath(left, top, width, height),
+                GlobalHeader.CollapseAll => BuildFoldAllPath(left, top, width, height),
+                _
+                    => isExpanded
+                        ? BuildExpandedPath(left, top, width, height)
+                        : BuildFoldedPath(left, top, width, height),
             };
 
-        private static SKPath BuildFoldAllPath(double left, double top)
+        private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            float startX = left + ((width - 24) / 2);
+            float startY = top + ((height - 24) / 2);
 
-            var startPoint = new SKPoint(11f + (float)left, 5f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            const string data = """
+                M19 9h-2.58l3.29-3.29a1 1 0 1 0-1.42-1.42L15 7.57V5a1 1 0 0 0-1-1 1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2z
+                M10 13H5a1 1 0 0 0 0 2h2.57l-3.28 3.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L9 16.42V19a1 1 0 0 0 1 1 1 1 0 0 0 1-1v-5a1 1 0 0 0-1-1z
+                """;
 
-            startPoint = new SKPoint(3f + (float)left, 14f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startX, startY));
 
-            startPoint = new SKPoint(13f + (float)left, 5f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(13f + (float)left, 14f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 7f, startPoint.Y);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            return path;
+            return p;
         }
 
-        private static SKPath BuildExpandAllPath(double left, double top)
+        private static SKPath BuildExpandAllPath(float left, float top, float width, float height)
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
+            float startX = left + ((width - 24) / 2);
+            float startY = top + ((height - 24) / 2);
 
-            var startPoint = new SKPoint(3f + (float)left, 5f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 7f, startPoint.Y);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            const string data = """
+                M20 5a1 1 0 0 0-1-1h-5a1 1 0 0 0 0 2h2.57l-3.28 3.29a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0L18 7.42V10a1 1 0 0 0 1 1 1 1 0 0 0 1-1z
+                M10.71 13.29a1 1 0 0 0-1.42 0L6 16.57V14a1 1 0 0 0-1-1 1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h5a1 1 0 0 0 0-2H7.42l3.29-3.29a1 1 0 0 0 0-1.42z
+                """;
 
-            startPoint = new SKPoint(3f + (float)left, 14f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X + 7f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startX, startY));
 
-            startPoint = new SKPoint(12f + (float)left, 5f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            startPoint = new SKPoint(20f + (float)left, 14f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X, startPoint.Y + 7f);
-            path.LineTo(startPoint.X - 8f, startPoint.Y + 7f);
-            path.LineTo(startPoint);
-
-            return path;
+            return p;
         }
 
-        private static SKPath BuildFoldedPath(double left, double top)
+        private static SKPath BuildFoldedPath(
+            float left,
+            float top,
+            float width = 0f,
+            float height = 0f
+        )
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
-            var startPoint = new SKPoint(3f + (float)left, 5f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);
-            path.LineTo(startPoint.X, startPoint.Y + 16f);
-            path.Close();
-            return path;
+            var startPoint =
+                width > 0f && height > 0f
+                    ? new SKPoint(left + ((width - 24) / 2), top + ((height - 24) / 2))
+                    : new SKPoint(3f + left, 5f + top);
+
+            const string data = """
+                M10.46 18a2.23 2.23 0 0 1-.91-.2 1.76 1.76 0 0 1-1.05-1.59V7.79A1.76 1.76 0 0 1 9.55 6.2a2.1 2.1 0 0 1 2.21.26l5.1 4.21a1.7 1.7 0 0 1 0 2.66l-5.1 4.21a2.06 2.06 0 0 1-1.3.46z
+                """;
+
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startPoint.X, startPoint.Y));
+
+            return p;
         }
 
-        private static SKPath BuildExpandedPath(double left, double top)
+        private static SKPath BuildExpandedPath(
+            float left,
+            float top,
+            float width = 0f,
+            float height = 0f
+        )
         {
-            var path = new SKPath { FillType = SKPathFillType.EvenOdd };
-            var startPoint = new SKPoint(3f + (float)left, 9f + (float)top);
-            path.MoveTo(startPoint);
-            path.LineTo(startPoint.X + 16f, startPoint.Y);
-            path.LineTo(startPoint.X + 8f, startPoint.Y + 8f);
-            path.Close();
-            return path;
+            var startPoint =
+                width > 0f && height > 0f
+                    ? new SKPoint(left + ((width - 24f) / 2), top + ((height - 24f) / 2))
+                    : new SKPoint(3f + left, 5f + top);
+
+            const string data = """
+                M12 17a1.72 1.72 0 0 1-1.33-.64l-4.21-5.1a2.1 2.1 0 0 1-.26-2.21A1.76 1.76 0 0 1 7.79 8h8.42a1.76 1.76 0 0 1 1.59 1.05 2.1 2.1 0 0 1-.26 2.21l-4.21 5.1A1.72 1.72 0 0 1 12 17z
+                """;
+
+            var p = SKPath.ParseSvgPathData(data);
+            p.Transform(SKMatrix.CreateTranslation(startPoint.X, startPoint.Y));
+
+            return p;
         }
 
         internal static void DrawCells(
             this SKCanvas canvas,
             HierarchyGridViewModel viewModel,
             SkiaTheme theme,
-            IEnumerable<PositionedCell> cells,
-            double screenScale = 1d
+            IEnumerable<PositionedCell> cells
         )
         {
             foreach (var cell in cells)
-                canvas.DrawCell(viewModel, theme, cell, screenScale);
+                canvas.DrawCell(viewModel, theme, cell);
         }
 
         private static void DrawCell(
@@ -709,11 +792,13 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
+            var actualScale = screenScale * viewModel.Scale;
+
             var rect = SKRect.Create(
-                (float)(cell.Left * screenScale),
-                (float)(cell.Top * screenScale),
-                (float)(cell.Width * screenScale),
-                (float)(cell.Height * screenScale)
+                (float)(cell.Left * actualScale),
+                (float)(cell.Top * actualScale),
+                (float)(cell.Width * actualScale),
+                (float)(cell.Height * actualScale)
             );
 
             var renderInfo = RenderInfo.FindRender(viewModel, theme, cell);
@@ -730,7 +815,7 @@ namespace HierarchyGrid.Skia
                 paint.Shader = SKShader.CreateLinearGradient(
                     new SKPoint(rect.Left, rect.Top),
                     new SKPoint(rect.Right, rect.Bottom),
-                    new SKColor[] { renderInfo.BackgroundColor, renderInfo.ForegroundColor },
+                    [renderInfo.BackgroundColor, renderInfo.ForegroundColor],
                     SKShaderTileMode.Repeat
                 );
             }
@@ -757,10 +842,10 @@ namespace HierarchyGrid.Skia
                     localPaint.Color = fci.BackgroundColor.ToSKColor();
 
                     rect = SKRect.Create(
-                        (float)(cell.Left * screenScale) + borderThickness,
-                        (float)(cell.Top * screenScale) + borderThickness,
-                        (float)(cell.Width * screenScale) - (borderThickness + 1f),
-                        (float)(cell.Height * screenScale) - (borderThickness + 1f)
+                        (float)(cell.Left * actualScale) + borderThickness,
+                        (float)(cell.Top * actualScale) + borderThickness,
+                        (float)(cell.Width * actualScale) - (borderThickness + 1f),
+                        (float)(cell.Height * actualScale) - (borderThickness + 1f)
                     );
                     canvas.DrawRect(rect, localPaint);
 
@@ -771,48 +856,172 @@ namespace HierarchyGrid.Skia
                     canvas.DrawRect(rect, localPaint);
                 });
 
-            if (viewModel.Selections.Contains(cell))
+            DrawSelectionBorder(canvas, viewModel, theme, cell, actualScale, paint, ref rect);
+
+            RenderCellText(canvas, viewModel, theme, cell, actualScale, renderInfo);
+            RenderLeftSideDecor(canvas, cell, renderInfo, actualScale);
+            RenderRightSideDecor(canvas, cell, renderInfo, actualScale);
+
+            viewModel.CellsCoordinates.Add((new(cell, viewModel.Scale), cell));
+        }
+
+        private static void RenderDecor(
+            SKCanvas canvas,
+            PositionedCell cell,
+            RenderInfo renderInfo,
+            SKPicture picture,
+            float x,
+            double screenScale = 1d
+        )
+        {
+            /* Keep decor center aligned */
+            var y =
+                picture.CullRect.Height > cell.Height
+                    ? (float)(cell.Top * screenScale)
+                    : (float)(
+                        cell.Top + (screenScale * ((cell.Height - picture.CullRect.Height) / 2))
+                    );
+
+            /* Override path colors to match grid rendering info */
+            using var paint = new SKPaint()
             {
-                paint.Color = theme.SelectionBorderColor;
-                paint.StrokeWidth = theme.SelectionBorderThickness;
+                Color = renderInfo.ForegroundColor,
+                Style = SKPaintStyle.StrokeAndFill,
+                ColorFilter = SKColorFilter.CreateBlendMode(
+                    renderInfo.ForegroundColor,
+                    SKBlendMode.SrcIn
+                )
+            };
 
-                rect = SKRect.Create(
-                    (float)(cell.Left * screenScale) + theme.SelectionBorderThickness,
-                    (float)(cell.Top * screenScale) + theme.SelectionBorderThickness,
-                    (float)(cell.Width * screenScale) - (theme.SelectionBorderThickness + 1f),
-                    (float)(cell.Height * screenScale) - (theme.SelectionBorderThickness + 1f)
-                );
-                canvas.DrawRect(rect, paint);
-            }
+            canvas.DrawPicture(picture, new SKPoint(x, y), paint);
+        }
 
-            float textHPadding = (float)((6f + theme.SelectionBorderThickness) * screenScale);
-            var textVPadding = (float)(cell.Height - (TextSize * screenScale));
+        private static void RenderRightSideDecor(
+            SKCanvas canvas,
+            PositionedCell cell,
+            RenderInfo renderInfo,
+            double screenScale = 1d
+        )
+        {
+            var path = cell.ResultSet.RightDecor.Match(p => p, () => string.Empty);
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            GetSvg(path)
+                .IfSome(svg =>
+                {
+                    var picture = svg.Picture;
+                    if (picture is null)
+                        return;
+
+                    var x = (float)(
+                        (cell.Left + cell.Width - picture.CullRect.Width) * screenScale
+                    );
+                    RenderDecor(canvas, cell, renderInfo, picture, x);
+                });
+        }
+
+        private static void RenderLeftSideDecor(
+            SKCanvas canvas,
+            PositionedCell cell,
+            RenderInfo renderInfo,
+            double screenScale = 1d
+        )
+        {
+            var path = cell.ResultSet.LeftDecor.Match(p => p, () => string.Empty);
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            GetSvg(path)
+                .IfSome(svg =>
+                {
+                    var picture = svg.Picture;
+                    if (picture is null)
+                        return;
+
+                    var x = (float)(cell.Left * screenScale);
+                    RenderDecor(canvas, cell, renderInfo, picture, x);
+                });
+        }
+
+        private static void RenderCellText(
+            SKCanvas canvas,
+            HierarchyGridViewModel viewModel,
+            SkiaTheme theme,
+            PositionedCell cell,
+            double screenScale,
+            RenderInfo renderInfo
+        )
+        {
+            float fontSize = viewModel.CellFontSize;
+
+            var rightDecorPadding = (
+                from rd in cell.ResultSet.RightDecor
+                from svg in GetSvg(rd)
+                select svg.Picture?.CullRect.Width * screenScale ?? 0d
+            ).Match(d => (float)d, () => 0f);
+
+            var leftDecorPadding = (
+                from rd in cell.ResultSet.LeftDecor
+                from svg in GetSvg(rd)
+                select svg.Picture?.CullRect.Width * screenScale ?? 0d
+            ).Match(d => (float)d, () => 0f);
 
             TextDrawer.Clear();
             TextDrawer.Alignment = viewModel.TextAlignment.ToRichTextKitTextAlignment();
             TextDrawer.AddText(
                 cell.ResultSet.Result,
-                new Style { FontSize = TextSize, TextColor = renderInfo.ForegroundColor }
+                new Style
+                {
+                    FontSize = (float)(fontSize * screenScale),
+                    TextColor = renderInfo.ForegroundColor,
+                    FontFamily = !string.IsNullOrEmpty(viewModel.CellFontFamily)
+                        ? viewModel.CellFontFamily
+                        : "Sans Serif",
+                }
             );
+
+            float textHPadding =
+                8f + theme.SelectionBorderThickness + rightDecorPadding + leftDecorPadding;
+
             TextDrawer.MaxHeight = (float)(cell.Height * screenScale);
-            TextDrawer.MaxWidth = (float)(cell.Width * screenScale) - textHPadding;
+            TextDrawer.MaxWidth = (float)((cell.Width - textHPadding) * screenScale);
 
-            TextDrawer.Paint(
-                canvas,
-                new SKPoint(
-                    (float)(cell.Left * screenScale) + (textHPadding / 2),
-                    (float)(cell.Top * screenScale) + (textVPadding / 2)
-                ),
-                TextPaintOptions
+            float x = (float)((cell.Left + 4f + leftDecorPadding) * screenScale);
+            float y = (float)(
+                (cell.Top + ((cell.Height - TextDrawer.MeasuredHeight) / 2)) * screenScale
             );
 
-            viewModel.CellsCoordinates.Add((new(cell), cell));
+            TextDrawer.Paint(canvas, new SKPoint(x, y), TextPaintOptions);
+        }
+
+        private static void DrawSelectionBorder(
+            SKCanvas canvas,
+            HierarchyGridViewModel viewModel,
+            SkiaTheme theme,
+            PositionedCell cell,
+            double screenScale,
+            SKPaint paint,
+            ref SKRect rect
+        )
+        {
+            if (!viewModel.Selections.Contains(cell))
+                return;
+
+            paint.Color = theme.SelectionBorderColor;
+            paint.StrokeWidth = theme.SelectionBorderThickness;
+
+            rect = SKRect.Create(
+                (float)(cell.Left * screenScale) + theme.SelectionBorderThickness,
+                (float)(cell.Top * screenScale) + theme.SelectionBorderThickness,
+                (float)(cell.Width * screenScale) - (theme.SelectionBorderThickness + 1f),
+                (float)(cell.Height * screenScale) - (theme.SelectionBorderThickness + 1f)
+            );
+            canvas.DrawRect(rect, paint);
         }
 
         private static TextBlock TextDrawer { get; } = new();
         private static TextPaintOptions TextPaintOptions { get; } =
             new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias };
-
-        private const float TextSize = 15f;
     }
 }

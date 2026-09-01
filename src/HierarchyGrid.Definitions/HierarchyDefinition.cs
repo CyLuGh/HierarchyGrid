@@ -2,21 +2,23 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using DynamicData;
 using ReactiveUI;
-using ReactiveUI.Fody.Helpers;
+using ReactiveUI.Primitives;
+using ReactiveUI.SourceGenerators;
 
 namespace HierarchyGrid.Definitions;
 
-public abstract class HierarchyDefinition
+public abstract partial class HierarchyDefinition
     : ReactiveObject,
         IActivatableViewModel,
-        IComparable<HierarchyDefinition>
+        IComparable<HierarchyDefinition>,
+        IIdentifiedDefinition
 {
     public ViewModelActivator Activator { get; }
-    public Guid Guid { get; }
 
     public HierarchyDefinition? Parent { get; private set; }
+    public abstract Guid DefinitionId { get; }
+    public abstract void SetId(Guid id);
 
     public object? Content { get; init; }
     public object? Tag { get; set; }
@@ -36,7 +38,7 @@ public abstract class HierarchyDefinition
     public int RelativePosition { get; private set; }
 
     /// <summary>
-    /// Relevent dimension of header (width for columns, height for rows)
+    /// Relevant dimension of header (width for columns, height for rows)
     /// </summary>
     public double Size { get; set; }
 
@@ -50,10 +52,7 @@ public abstract class HierarchyDefinition
     /// <remarks>May be modified when scrolling! To get its 'real' span, use Count().</remarks>
     public int Span
     {
-        get
-        {
-            return _span == int.MinValue ? this.Count() : _span;
-        }
+        get { return _span == int.MinValue ? this.Count() : _span; }
         set { _span = value; }
     }
 
@@ -103,20 +102,20 @@ public abstract class HierarchyDefinition
 
     protected HierarchyDefinition(Guid? id = null)
     {
-        Guid = id ?? Guid.NewGuid();
+        SetId(id ?? Guid.NewGuid());
 
         Activator = new ViewModelActivator();
 
         this.WhenAnyValue(o => o.Parent)
-            .WhereNotNull()
-            .SubscribeSafe(p =>
+            .Where(x => x is not null)
+            .Subscribe(p =>
             {
                 CanToggle = p.CanToggle;
                 Invalidate();
             });
 
         this.WhenAnyValue(o => o.CanToggle)
-            .SubscribeSafe(can =>
+            .Subscribe(can =>
             {
                 foreach (var child in _children)
                     child.CanToggle = can;
@@ -209,7 +208,11 @@ public abstract class HierarchyDefinition
     }
 
     public int RelativePositionFrom(HierarchyDefinition hierarchyDefinition) =>
-        new[] { hierarchyDefinition }.Leaves().IndexOf(this);
+        new[] { hierarchyDefinition }
+            .Leaves()
+            .Select((x, i) => (Definition: x, Index: i))
+            .Find(t => t.Definition.Equals(this))
+            .Match(t => t.Index, () => -1);
 
     public HierarchyDefinition Root
     {
@@ -254,10 +257,10 @@ public abstract class HierarchyDefinition
     }
 
     [Reactive]
-    public bool CanToggle { get; set; } = true;
+    public partial bool CanToggle { get; set; } = true;
 
     [Reactive]
-    public bool IsHighlighted { get; set; }
+    public partial bool IsHighlighted { get; set; }
 
     /// <summary>
     /// Sets state to expanded for current element and all its children.
@@ -314,10 +317,13 @@ public abstract class HierarchyDefinition
 
     public override string ToString() => string.Join('.', Path.Select(o => o.Content));
 
-    public static ResultSet Resolve(ProducerDefinition producer, ConsumerDefinition consumer)
+    public static ResultSet Resolve(ProducerDefinition? producer, ConsumerDefinition? consumer)
     {
+        if (producer is null || consumer is null)
+            return ResultSet.Default;
+
         var input = producer.Produce();
-        var rs = input.Some(o => consumer.Process(o)).None(() => ResultSet.Default);
+        var rs = input.Some(consumer.Process).None(() => ResultSet.Default);
 
         return rs;
     }
@@ -333,7 +339,7 @@ public abstract class HierarchyDefinition
         if (compare != 0)
             return compare;
 
-        compare = String.Compare(ToString() , other.ToString(), StringComparison.Ordinal );
+        compare = String.Compare(ToString(), other.ToString(), StringComparison.Ordinal);
         if (compare != 0)
             return compare;
 

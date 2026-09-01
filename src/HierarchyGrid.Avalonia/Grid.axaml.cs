@@ -1,18 +1,19 @@
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
-using Avalonia.ReactiveUI;
 using Avalonia.VisualTree;
 using HierarchyGrid.Definitions;
 using HierarchyGrid.Skia;
 using LanguageExt;
 using ReactiveUI;
+using ReactiveUI.Avalonia;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Disposables;
+using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
 using Key = Avalonia.Input.Key;
 using KeyEventArgs = Avalonia.Input.KeyEventArgs;
@@ -22,7 +23,7 @@ namespace HierarchyGrid.Avalonia;
 public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 {
     private readonly Flyout _tooltip;
-    private Rectangle _tooltipRectangle;
+    private readonly Rectangle _tooltipRectangle;
     private ContextMenu? _contextMenu;
 
     public Grid()
@@ -31,7 +32,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         _tooltip = new()
         {
             ShowMode = FlyoutShowMode.Transient,
-            OverlayInputPassThroughElement = this
+            OverlayInputPassThroughElement = this,
+            FlyoutPresenterClasses = { "TooltipFlyoutPresenter" },
         };
 
         _tooltipRectangle = new()
@@ -39,16 +41,16 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             Width = 40,
             Height = 25,
             Fill = Brushes.Transparent,
-            IsHitTestVisible = false
+            IsHitTestVisible = false,
         };
         Canvas.Children.Add(_tooltipRectangle);
 
         this.WhenActivated(disposables =>
         {
             this.WhenAnyValue(x => x.ViewModel)
-                .WhereNotNull()
+                .Where(x => x is not null)
                 .Throttle(TimeSpan.FromMilliseconds(50))
-                .ObserveOn(RxApp.MainThreadScheduler)
+                .ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Do(vm => PopulateFromViewModel(this, vm, disposables))
                 .Subscribe()
                 .DisposeWith(disposables);
@@ -58,7 +60,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     private static void PopulateFromViewModel(
         Grid view,
         HierarchyGridViewModel viewModel,
-        CompositeDisposable disposables
+        MultipleDisposable disposables
     )
     {
         ApplyDependencyProperties(view, viewModel);
@@ -66,10 +68,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel
             .DrawGridInteraction.RegisterHandler(ctx =>
             {
-                System.Diagnostics.Debug.WriteLine("DrawGridInteraction");
                 view.SkiaElement.Invalidate();
-                DrawSplitters(view, viewModel);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -77,7 +77,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .DrawEditionTextBoxInteraction.RegisterHandler(ctx =>
             {
                 DrawEditingTextBox(view, viewModel, ctx.Input, disposables);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -87,70 +87,82 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 var clipboard = TopLevel.GetTopLevel(view)?.Clipboard;
                 if (clipboard is not null)
                 {
-                    var dataObject = new DataObject();
-                    dataObject.Set(DataFormats.Text, ctx.Input);
-                    await clipboard.SetDataObjectAsync(dataObject);
+                    await clipboard.SetTextAsync(ctx.Input);
                 }
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<SKPaintSurfaceEventArgs>, SKPaintSurfaceEventArgs>(
-                handler => async (sender, args) => await SkiaElement_PaintSurface(args, viewModel),
+        Signal
+            .FromEventPattern<SKPaintSurfaceEventArgs>(
                 handler => view.SkiaElement.PaintSurface += handler,
                 handler => view.SkiaElement.PaintSurface -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PaintSurface(args, viewModel);
+                DrawSplitters(view, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                handler =>
-                    (sender, args) => SkiaElement_PointerMove(args, view.SkiaElement, viewModel),
+        Signal
+            .FromEventPattern<PointerEventArgs>(
                 handler => view.SkiaElement.PointerMoved += handler,
                 handler => view.SkiaElement.PointerMoved -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerMove(args, view.SkiaElement, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerEventArgs>, PointerEventArgs>(
-                handler => (sender, args) => SkiaElement_PointerExit(viewModel),
+        Signal
+            .FromEventPattern<PointerEventArgs>(
                 handler => view.SkiaElement.PointerExited += handler,
                 handler => view.SkiaElement.PointerExited -= handler
             )
-            .Subscribe()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerExit(viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerPressedEventArgs>, PointerPressedEventArgs>(
-                handler =>
-                    (sender, args) => SkiaElement_PointerPressed(args, view.SkiaElement, viewModel),
+        Signal
+            .FromEventPattern<PointerPressedEventArgs>(
                 handler => view.SkiaElement.PointerPressed += handler,
                 handler => view.SkiaElement.PointerPressed -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerPressed(args, view.SkiaElement, viewModel);
+            })
             .DisposeWith(disposables);
 
-        Observable
-            .FromEventPattern<EventHandler<PointerWheelEventArgs>, PointerWheelEventArgs>(
-                handler => (sender, args) => SkiaElement_PointerWheel(args, viewModel),
+        Signal
+            .FromEventPattern<PointerWheelEventArgs>(
                 handler => view.SkiaElement.PointerWheelChanged += handler,
                 handler => view.SkiaElement.PointerWheelChanged -= handler
             )
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe()
+            .ObserveOn(RxSchedulers.MainThreadScheduler)
+            .Subscribe(t =>
+            {
+                var args = t.EventArgs;
+                SkiaElement_PointerWheel(args, viewModel);
+            })
             .DisposeWith(disposables);
 
         viewModel
             .ShowTooltipInteraction.RegisterHandler(ctx =>
             {
-                view.ShowTooltip(ctx.Input);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                view.ShowTooltip(ctx.Input, viewModel.Scale);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -158,7 +170,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .ShowHeaderTooltipInteraction.RegisterHandler(ctx =>
             {
                 view.ShowHeaderTooltip(ctx.Input);
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -166,7 +178,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .CloseTooltipInteraction.RegisterHandler(ctx =>
             {
                 view._tooltip.Hide();
-                ctx.SetOutput(System.Reactive.Unit.Default);
+                ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
 
@@ -174,8 +186,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.HorizontalOffset,
                 v => v.HorizontalScrollBar.Value,
-                vmToViewConverter: i => Convert.ToDouble(i),
-                viewToVmConverter: d => Convert.ToInt32(d)
+                viewModelToViewConverter: Convert.ToDouble,
+                viewToViewModelConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
@@ -183,15 +195,25 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 viewModel,
                 vm => vm.VerticalOffset,
                 v => v.VerticalScrollBar.Value,
-                vmToViewConverter: i => Convert.ToDouble(i),
-                viewToVmConverter: d => Convert.ToInt32(d)
+                viewModelToViewConverter: Convert.ToDouble,
+                viewToViewModelConverter: Convert.ToInt32
             )
             .DisposeWith(disposables);
 
-        view.OneWayBind(viewModel, vm => vm.MaxHorizontalOffset, v => v.HorizontalScrollBar.Maximum)
+        view.OneWayBind(
+                viewModel,
+                vm => vm.MaxHorizontalOffset,
+                v => v.HorizontalScrollBar.Maximum,
+                Convert.ToDouble
+            )
             .DisposeWith(disposables);
 
-        view.OneWayBind(viewModel, vm => vm.MaxVerticalOffset, v => v.VerticalScrollBar.Maximum)
+        view.OneWayBind(
+                viewModel,
+                vm => vm.MaxVerticalOffset,
+                v => v.VerticalScrollBar.Maximum,
+                Convert.ToDouble
+            )
             .DisposeWith(disposables);
 
         view.SkiaElement.Invalidate();
@@ -205,19 +227,25 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
         viewModel.StatusMessage = view.StatusMessage ?? "No message";
         viewModel.EnableCrosshair = view.EnableCrosshair;
+        viewModel.CellFontSize = view.CellFontSize;
+        viewModel.HeaderFontSize = view.HeaderFontSize;
+        viewModel.CellFontFamily = view.CellFontFamily;
+        viewModel.HeaderFontFamily = view.HeaderFontFamily;
     }
 
-    private static async Task SkiaElement_PaintSurface(
+    private static void SkiaElement_PaintSurface(
         SKPaintSurfaceEventArgs args,
         HierarchyGridViewModel viewModel
     )
     {
-        SKImageInfo info = args.Info;
         SKSurface surface = args.Surface;
         SKCanvas canvas = surface.Canvas;
 
-        var scale = 1d;
-        await HierarchyGridDrawer.Draw(viewModel, canvas, info.Width, info.Height, scale, false);
+        var width = canvas.LocalClipBounds.Width;
+        var height = canvas.LocalClipBounds.Height;
+
+        // Avalonia does not need screen scale adjustment with windows zoomed display
+        HierarchyGridDrawer.Draw(viewModel, canvas, width, height, 1d, false);
     }
 
     private static void SkiaElement_PointerMove(
@@ -227,7 +255,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     )
     {
         var position = args.GetPosition(element);
-        viewModel.HandleMouseOver(position.X, position.Y, 1);
+        viewModel.HandleMouseOver(position.X, position.Y, viewModel.Scale);
     }
 
     private static void SkiaElement_PointerExit(HierarchyGridViewModel viewModel)
@@ -243,11 +271,36 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var delta = args.Delta.Y;
 
         if (args.KeyModifiers.HasFlag(KeyModifiers.Control))
-            viewModel.Scale += .05 * (delta < 0 ? 1 : -1);
+        {
+            var scale = viewModel.Scale + (.05 * (delta < 0 ? 1 : -1));
+
+            viewModel.Scale = scale switch
+            {
+                < .75 => .75,
+                > 1 => 1,
+                _ => scale
+            };
+        }
         else if (args.KeyModifiers.HasFlag(KeyModifiers.Shift))
-            viewModel.HorizontalOffset += 5 * (delta < 0 ? 1 : -1);
+        {
+            var ho = viewModel.HorizontalOffset + (5 * (delta < 0 ? 1 : -1));
+            if (ho < 0)
+                viewModel.HorizontalOffset = 0;
+            else if (ho > viewModel.MaxHorizontalOffset)
+                viewModel.HorizontalOffset = viewModel.MaxHorizontalOffset;
+            else
+                viewModel.HorizontalOffset = ho;
+        }
         else
-            viewModel.VerticalOffset += 5 * (delta < 0 ? 1 : -1);
+        {
+            var vo = viewModel.VerticalOffset + (5 * (delta < 0 ? 1 : -1));
+            if (vo < 0)
+                viewModel.VerticalOffset = 0;
+            else if (vo > viewModel.MaxVerticalOffset)
+                viewModel.VerticalOffset = viewModel.MaxVerticalOffset;
+            else
+                viewModel.VerticalOffset = vo;
+        }
 
         args.Handled = true;
     }
@@ -302,7 +355,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         args.Handled = true;
     }
 
-    private void ShowTooltip(PositionedCell pCell)
+    private void ShowTooltip(PositionedCell pCell, double scale)
     {
         _tooltip.Hide();
 
@@ -315,17 +368,17 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             ViewModel.FocusCells.Find(pCell).Match(fci => fci.TooltipInfo, () => string.Empty)
         );
 
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            _tooltipRectangle.Width = pCell.Width - 6;
-            _tooltipRectangle.Height = pCell.Height - 6;
-            Canvas.SetLeft(_tooltipRectangle, pCell.Left + 3);
-            Canvas.SetTop(_tooltipRectangle, pCell.Top + 3);
+        if (string.IsNullOrWhiteSpace(text))
+            return;
 
-            _tooltip.Content = text.Trim();
-            _tooltip.Placement = PlacementMode.Bottom;
-            _tooltip.ShowAt(_tooltipRectangle);
-        }
+        _tooltipRectangle.Width = pCell.Width - 6;
+        _tooltipRectangle.Height = pCell.Height - 6;
+        Canvas.SetLeft(_tooltipRectangle, (pCell.Left * scale) + 3);
+        Canvas.SetTop(_tooltipRectangle, (pCell.Top * scale) + 3);
+
+        _tooltip.Content = text.Trim();
+        _tooltip.Placement = PlacementMode.Bottom;
+        _tooltip.ShowAt(_tooltipRectangle);
     }
 
     private void ShowHeaderTooltip(PositionedDefinition pDefinition)
@@ -337,24 +390,24 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         var text = pDefinition.Definition.Tooltip;
 
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            _tooltipRectangle.Width = pDefinition.Coordinates.Width - 6;
-            _tooltipRectangle.Height = pDefinition.Coordinates.Height - 6;
-            Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left + 3);
-            Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top + 3);
+        if (string.IsNullOrWhiteSpace(text))
+            return;
 
-            _tooltip.Content = text.Trim();
-            _tooltip.Placement =
-                pDefinition.Definition is ConsumerDefinition
-                    ? PlacementMode.Bottom
-                    : PlacementMode.Right;
-            _tooltip.ShowAt(_tooltipRectangle);
-        }
+        _tooltipRectangle.Width = pDefinition.Coordinates.Width - 6;
+        _tooltipRectangle.Height = pDefinition.Coordinates.Height - 6;
+        Canvas.SetLeft(_tooltipRectangle, pDefinition.Coordinates.Left + 3);
+        Canvas.SetTop(_tooltipRectangle, pDefinition.Coordinates.Top + 3);
+
+        _tooltip.Content = text.Trim();
+        _tooltip.Placement =
+            pDefinition.Definition is ConsumerDefinition
+                ? PlacementMode.Bottom
+                : PlacementMode.Right;
+        _tooltip.ShowAt(_tooltipRectangle);
     }
 
     private static IEnumerable<MenuItem> BuildCustomItems(
-        (string, ReactiveCommand<ResultSet, System.Reactive.Unit>)[] commands,
+        (string, Action<ResultSet>)[] commands,
         ResultSet resultSet
     )
     {
@@ -370,8 +423,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 yield return new MenuItem
                 {
                     Header = header,
-                    Command = command,
-                    CommandParameter = resultSet
+                    Command = ReactiveCommand.Create((ResultSet r) => command(r)),
+                    CommandParameter = resultSet,
                 };
             }
             else
@@ -379,31 +432,31 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 MenuItem? parent = null;
                 for (int i = 0; i < splits.Length; i++)
                 {
+                    /* Leaf */
                     if (i == splits.Length - 1 && parent != null)
                     {
                         parent.Items.Add(
                             new MenuItem
                             {
                                 Header = splits[i],
-                                Command = command,
-                                CommandParameter = resultSet
+                                Command = ReactiveCommand.Create((ResultSet r) => command(r)),
+                                CommandParameter = resultSet,
                             }
                         );
                     }
                     else
                     {
-                        if (items.TryGetValue((0, splits[i]), out var mi))
+                        if (items.TryGetValue((i, splits[i]), out var mi))
                         {
                             parent = mi;
                         }
                         else
                         {
                             var menuItem = new MenuItem { Header = splits[i] };
-                            if (parent != null)
-                                parent.Items.Add(menuItem);
+                            parent?.Items.Add(menuItem);
 
                             parent = menuItem;
-                            items.Add((i, splits[i]), menuItem);
+                            items.TryAdd((i, splits[i]), menuItem);
                         }
                     }
                 }
@@ -451,7 +504,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 Header = "Enable crosshair",
                 //IsChecked = viewModel.EnableCrosshair ,
                 //IsCheckable = true ,
-                Command = viewModel.ToggleCrosshairCommand
+                Command = viewModel.ToggleCrosshairCommand,
             }
         );
         highlightsMenuItem.Items.Add(
@@ -464,7 +517,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             new MenuItem
             {
                 Header = "Clear selection",
-                Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear())
+                Command = ReactiveCommand.Create(() => viewModel.SelectedCells.Clear()),
             }
         );
 
@@ -473,7 +526,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "Expand all",
                 Command = viewModel.ToggleStatesCommand,
-                CommandParameter = true
+                CommandParameter = true,
             }
         );
         contextMenu.Items.Add(
@@ -481,7 +534,15 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "Collapse all",
                 Command = viewModel.ToggleStatesCommand,
-                CommandParameter = false
+                CommandParameter = false,
+            }
+        );
+        contextMenu.Items.Add(
+            new MenuItem
+            {
+                Header = "Transpose",
+                IsChecked = viewModel.IsTransposed,
+                Command = viewModel.ToggleTransposeCommand,
             }
         );
 
@@ -493,7 +554,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "with tree structure",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Structure
+                CommandParameter = CopyMode.Structure,
             }
         );
         copyMenuItem.Items.Add(
@@ -501,7 +562,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "without tree structure",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Flat
+                CommandParameter = CopyMode.Flat,
             }
         );
         copyMenuItem.Items.Add(
@@ -509,7 +570,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "highlighted elements",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Highlights
+                CommandParameter = CopyMode.Highlights,
             }
         );
         copyMenuItem.Items.Add(
@@ -517,7 +578,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 Header = "selection",
                 Command = viewModel.CopyToClipboardCommand,
-                CommandParameter = CopyMode.Selection
+                CommandParameter = CopyMode.Selection,
             }
         );
         contextMenu.Items.Add(copyMenuItem);
@@ -546,7 +607,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 {
                     BorderThickness = new Thickness(2d),
                     BorderBrush = Brushes.Transparent,
-                    Opacity = 0
+                    Opacity = 0,
                 };
                 view.Canvas.Children.Add(splitter);
                 return splitter;
@@ -563,22 +624,21 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             var (coord, def) = c;
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = coord.Height;
+            splitter.Height = coord.Height * viewModel.Scale;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
 
-            var dsp = Observable
-                .FromEventPattern<EventHandler<VectorEventArgs>, VectorEventArgs>(
-                    handler =>
-                        (sender, args) => Splitter_DragComplete(args, viewModel, def.Definition),
+            var dsp = Signal
+                .FromEventPattern<VectorEventArgs>(
                     handler => splitter.DragCompleted += handler,
                     handler => splitter.DragCompleted -= handler
                 )
-                .Subscribe();
+                .Subscribe(t => Splitter_DragComplete(t.EventArgs, viewModel, def.Definition));
+
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, coord.Top);
-            Canvas.SetLeft(splitter, coord.Right - 2);
+            Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
+            Canvas.SetLeft(splitter, (coord.Right - 2) * viewModel.Scale);
         }
 
         var currentX = 0d;
@@ -592,24 +652,22 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             var currentIndex = i;
             var width = viewModel.RowsHeadersWidth[currentIndex];
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = height;
+            splitter.Height = height * viewModel.Scale;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
             currentX += width;
 
-            var dsp = Observable
-                .FromEventPattern<EventHandler<VectorEventArgs>, VectorEventArgs>(
-                    handler =>
-                        (sender, args) =>
-                            Splitter_Header_DragComplete(args, viewModel, currentIndex),
+            var dsp = Signal
+                .FromEventPattern<VectorEventArgs>(
                     handler => splitter.DragCompleted += handler,
                     handler => splitter.DragCompleted -= handler
                 )
-                .Subscribe();
+                .Subscribe(t => Splitter_Header_DragComplete(t.EventArgs, viewModel, currentIndex));
+
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, currentY);
-            Canvas.SetLeft(splitter, currentX - 2);
+            Canvas.SetTop(splitter, currentY * viewModel.Scale);
+            Canvas.SetLeft(splitter, (currentX - 2) * viewModel.Scale);
         }
 
         var exceeding = splitters.Skip(splitterCount).ToArray();
@@ -625,8 +683,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         var pos = viewModel.ColumnsDefinitions.GetPosition(definition);
         viewModel.ColumnsWidths[pos] = Math.Max(viewModel.ColumnsWidths[pos] + args.Vector.X, 10d);
 
-        Observable
-            .Return(false)
+        Signal
+            .Return((false, "splitter"))
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -642,8 +700,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             10d
         );
 
-        Observable
-            .Return(false)
+        Signal
+            .Return((false, "splitter header"))
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -664,9 +722,13 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             case Key.Enter:
                 var content = viewModel.EditionContent;
                 viewModel.EditedCell = Option<PositionedCell>.None;
-                Observable
-                    .Return(editor(content ?? string.Empty))
+                Signal
+                    .Return((editor(content ?? string.Empty), "editor"))
                     .InvokeCommand(viewModel.DrawGridCommand);
+                break;
+
+            default:
+                // Do nothing
                 break;
         }
     }
@@ -675,7 +737,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         Grid view,
         HierarchyGridViewModel viewModel,
         Seq<PositionedCell> drawnCells,
-        CompositeDisposable disposables
+        MultipleDisposable disposables
     )
     {
         /* Make sure there's no editing textbox when there is no edition */
@@ -707,17 +769,15 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                         {
                             Source = viewModel,
                             Mode = BindingMode.TwoWay,
-                            Path = nameof(HierarchyGridViewModel.EditionContent)
+                            Path = nameof(HierarchyGridViewModel.EditionContent),
                         };
 
-                        Observable
-                            .FromEventPattern<EventHandler<KeyEventArgs>, KeyEventArgs>(
-                                handler =>
-                                    (sender, args) => EditorKeyDown(tb, args, viewModel, editor),
+                        Signal
+                            .FromEventPattern<KeyEventArgs>(
                                 handler => tb.KeyDown += handler,
                                 handler => tb.KeyDown -= handler
                             )
-                            .Subscribe()
+                            .Subscribe(t => EditorKeyDown(tb, t.EventArgs, viewModel, editor))
                             .DisposeWith(disposables);
 
                         tb.Bind(TextBox.TextProperty, binding).DisposeWith(disposables);

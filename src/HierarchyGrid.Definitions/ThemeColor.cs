@@ -2,6 +2,9 @@
 
 namespace HierarchyGrid.Definitions;
 
+/// <summary>
+/// Represents a color used within a theme, defined using ARGB (alpha, red, green, blue) components.
+/// </summary>
 public readonly struct ThemeColor
 {
     public ThemeColor(byte a, byte r, byte g, byte b)
@@ -50,16 +53,27 @@ public readonly struct ThemeColor
         }
     }
 
-    public readonly ThemeColor With(
-        byte? a = null,
-        byte? r = null,
-        byte? g = null,
-        byte? b = null
-    ) => new(a ?? A, r ?? R, g ?? G, b ?? B);
+    public ThemeColor With(byte? a = null, byte? r = null, byte? g = null, byte? b = null) =>
+        new(a ?? A, r ?? R, g ?? G, b ?? B);
 
+    /// <summary>
+    /// Gets the alpha (transparency) component of the color, ranging from 0 (completely transparent) to 255 (completely opaque).
+    /// </summary>
     public byte A { get; }
+
+    /// <summary>
+    /// Gets the red component of the color, ranging from 0 to 255.
+    /// </summary>
     public byte R { get; }
+
+    /// <summary>
+    /// Gets the green component of the color, ranging from 0 to 255.
+    /// </summary>
     public byte G { get; }
+
+    /// <summary>
+    /// Gets the blue component of the color, ranging from 0 to 255.
+    /// </summary>
     public byte B { get; }
 
     public (byte a, byte r, byte g, byte b) ToArgb() => (A, R, G, B);

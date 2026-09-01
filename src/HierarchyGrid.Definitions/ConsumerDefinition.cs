@@ -1,12 +1,23 @@
 ﻿using System;
-using System.Linq;
 using LanguageExt;
-using ReactiveUI;
 
 namespace HierarchyGrid.Definitions;
 
+/// <summary>
+/// Represents a definition for a consumer node in a hierarchy-based grid system.
+/// This class extends the functionality provided by the <see cref="HierarchyDefinition"/> base class
+/// and includes specific properties and methods related to consumer functionality.
+/// </summary>
 public class ConsumerDefinition : HierarchyDefinition
 {
+    public ConsumerDefinitionId ConsumerDefinitionId { get; private set; }
+    public override Guid DefinitionId => ConsumerDefinitionId;
+
+    public override void SetId(Guid id)
+    {
+        ConsumerDefinitionId = new ConsumerDefinitionId(id);
+    }
+
     public ConsumerDefinition(Guid? id = null)
         : base(id) { }
 
@@ -17,15 +28,35 @@ public class ConsumerDefinition : HierarchyDefinition
     public Func<object, object, string>? TooltipCreator { get; set; }
 
     /// <summary>
+    /// Function that provides custom left-side decorations for display in the UI.
+    /// Takes two input parameters: the raw input object and its transformed data,
+    /// returning a string that represents the left-side decoration content.
+    /// </summary>
+    public Func<object, object, string>? LeftDecor { get; set; }
+
+    /// <summary>
+    /// Function that provides custom right-side decorations for display in the UI.
+    /// Takes two input parameters: the raw input object and its transformed data,
+    /// returning a string that represents the right-side decoration content.
+    /// </summary>
+    public Func<object, object, string>? RightDecor { get; set; }
+
+    /// <summary>
     /// Func that will be called from editing textbox, input being string from textbox and bool being the success state of the update.
     /// </summary>
     public Func<object, object, string, bool>? Editor { get; set; }
 
     /// <summary>
-    /// Indicates that the cell can't be edited. First parameter is raw data from producer and second is the result from the consumer.
+    /// Indicates that the cell can't be edited. The first parameter is raw data from the producer, and the second is the result from the consumer.
     /// </summary>
     public Func<object, object, bool>? IsLocked { get; set; }
 
+    /// <summary>
+    /// A function that defines context-specific items for display or interaction.
+    /// Input is given by the producer.
+    /// Returns an array of tuples, each containing
+    /// a string description and an associated action to be executed with a ResultSet parameter.
+    /// </summary>
     public Func<
         object,
         (string description, Action<ResultSet> action)[]
@@ -40,11 +71,7 @@ public class ConsumerDefinition : HierarchyDefinition
     {
         var data = Consumer is not null ? Consumer(inputSet.Input) : inputSet.Input;
 
-        var (background, foreground) = inputSet.CustomColors.Match(
-            c => c,
-            () => Colorize?.Invoke(data) ?? (Option<ThemeColor>.None, Option<ThemeColor>.None)
-        );
-
+        /* A cell can't be edited if the whole producer is read-only, or if the IsLocked func returns true. */
         var locked = inputSet.IsLocked || (IsLocked != null && IsLocked(inputSet.Input, data));
 
         var editor = Option<Func<string, bool>>.None;
@@ -56,31 +83,44 @@ public class ConsumerDefinition : HierarchyDefinition
 
         var tooltipText = GenerateTooltipContent(inputSet, data);
 
-        var contextCommands = Option<(
-            string,
-            ReactiveCommand<ResultSet, System.Reactive.Unit>
-        )[]>.None;
+        var contextCommands = Option<(string, Action<ResultSet>)[]>.None;
+
         if (ContextItems != null)
         {
-            var cis = ContextItems(inputSet.Input);
-            if (cis.Length > 0)
-                contextCommands = cis.Select(ci =>
-                        (ci.description, ReactiveCommand.Create((ResultSet rs) => ci.action(rs)))
-                    )
-                    .ToArray();
+            contextCommands = ContextItems(inputSet.Input);
         }
+
+        Option<string> leftDecor = LeftDecor is not null
+            ? LeftDecor(inputSet.Input, data)
+            : Option<string>.None;
+        Option<string> rightDecor = RightDecor is not null
+            ? RightDecor(inputSet.Input, data)
+            : Option<string>.None;
+
+        // Only invoke a defined colorize when qualification is indeed set to Custom
+        var qualifier = GetQualification(inputSet, data);
+        var (background, foreground) =
+            qualifier == Qualification.Custom
+                ? inputSet.CustomColors.Match(
+                    c => c,
+                    () =>
+                        Colorize?.Invoke(data) ?? (Option<ThemeColor>.None, Option<ThemeColor>.None)
+                )
+                : (Option<ThemeColor>.None, Option<ThemeColor>.None);
 
         var resultSet = new ResultSet
         {
             ProducerId = inputSet.ProducerId,
-            ConsumerId = Guid,
-            Qualifier = GetQualification(inputSet, data),
+            ConsumerId = ConsumerDefinitionId,
+            Qualifier = qualifier,
             Result = (Formatter is not null ? Formatter(data) : data.ToString()) ?? string.Empty,
             BackgroundColor = background,
             ForegroundColor = foreground,
             Editor = editor,
             TooltipText = tooltipText,
-            ContextCommands = contextCommands
+            ContextCommands = contextCommands,
+            LeftDecor = leftDecor,
+            RightDecor = rightDecor,
         };
 
         return resultSet;

@@ -1,5 +1,6 @@
-﻿using System.Reactive.Linq;
-using HierarchyGrid.Definitions;
+﻿using HierarchyGrid.Definitions;
+using ReactiveUI;
+using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
 
 namespace HierarchyGrid.Skia
@@ -8,12 +9,12 @@ namespace HierarchyGrid.Skia
     {
         //TODO Check invalidate
 
-        public static async Task Draw(
+        public static void Draw(
             HierarchyGridViewModel viewModel,
             SKCanvas canvas,
             float width,
             float height,
-            double screenScale = 1d,
+            double screenScale,
             bool invalidate = false
         )
         {
@@ -23,36 +24,39 @@ namespace HierarchyGrid.Skia
             using var paintBackground = new SKPaint();
             paintBackground.Color = theme.BackgroundColor;
             paintBackground.Style = SKPaintStyle.StrokeAndFill;
-            var rectBackground = SKRect.Create(width, height);
+            var rectBackground = SKRect.Create(width, height); // TODO: check scale
             canvas.DrawRect(rectBackground, paintBackground);
 
-            if (viewModel.HasData)
+            if (!viewModel.IsEmpty())
             {
                 int headerCount = 0;
                 var previousGlobalCoordinates = viewModel
                     .GlobalHeadersCoordinates.Select(t => (t.Coord, t.Guid))
                     .ToList();
+
                 viewModel.ClearCoordinates();
 
                 canvas.DrawGlobalHeaders(viewModel, theme, previousGlobalCoordinates, screenScale);
+
                 canvas.DrawCells(
                     viewModel,
                     theme,
-                    viewModel.GetDrawnCells(width, height, invalidate),
-                    screenScale
+                    viewModel.GetDrawnCells(width, height, invalidate, screenScale)
                 );
+
                 canvas.DrawColumnHeaders(
                     viewModel,
                     theme,
-                    v => v.ColumnsDefinitions.Leaves().ToArray(),
+                    v => [.. v.ColumnsDefinitions.Leaves()],
                     width,
                     ref headerCount,
                     screenScale
                 );
+
                 canvas.DrawRowHeaders(
                     viewModel,
                     theme,
-                    v => v.RowsDefinitions.Leaves().ToArray(),
+                    v => [.. v.RowsDefinitions.Leaves()],
                     height,
                     ref headerCount,
                     screenScale
@@ -67,21 +71,13 @@ namespace HierarchyGrid.Skia
                 paint.IsAntialias = true;
                 paint.Color = theme.ForegroundColor;
 
-                // Skia 2
-                //paint.TextSize = 64f;
-                //paint.TextAlign = SKTextAlign.Center;
-                //canvas.DrawText(
-                //    viewModel.StatusMessage ?? "NO MESSAGE",
-                //    width / 2,
-                //    height / 2,
-                //    paint
-                //);
+                var resultingScale = screenScale * viewModel.Scale;
 
-                // Skia 3
+                // TODO: should probably not take all scale into account
                 canvas.DrawText(
                     viewModel.StatusMessage ?? "NO MESSAGE",
-                    width / 2,
-                    height / 2,
+                    (float)resultingScale * width / 2,
+                    (float)resultingScale * height / 2,
                     SKTextAlign.Center,
                     font,
                     paint
@@ -91,7 +87,9 @@ namespace HierarchyGrid.Skia
             canvas.Flush();
 
             // Draw textbox
-            await viewModel.DrawEditionTextBoxInteraction.Handle(viewModel.DrawnCells);
+            Signal
+                .Return(viewModel.DrawnCells)
+                .InvokeCommand(viewModel, x => x.DrawEditionTextBox);
         }
     }
 }

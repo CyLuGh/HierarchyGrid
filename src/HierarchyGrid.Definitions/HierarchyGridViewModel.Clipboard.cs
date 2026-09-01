@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
 using LanguageExt;
 
 namespace HierarchyGrid.Definitions
@@ -9,22 +10,77 @@ namespace HierarchyGrid.Definitions
         Flat,
         Structure,
         Selection,
-        Highlights
+        Highlights,
     }
 
     public partial class HierarchyGridViewModel
     {
-        private string CreateClipboardContent(CopyMode mode)
+        /// <summary>
+        /// Override the clipboard content builder for structured output, use tab separated format if not defined.
+        /// Func parameters are rows then columns.
+        /// </summary>
+        public Option<
+            Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string>
+        > CreateClipboardStructuredContentOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard content builder for flat output, use tab separated format if not defined.
+        /// Func parameters are rows then columns.
+        /// </summary>
+        public Option<
+            Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string>
+        > CreateClipboardFlatContentOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for cells output, uses ResultSet.Result if not defined.
+        /// </summary>
+        public Option<Func<ResultSet, string>> ClipboardFillerOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for column headers, uses HierarchyDefinition.Content if not defined.
+        /// </summary>
+        public Option<Func<HierarchyDefinition, string>> ClipboardColumnHeaderOverride { get; set; }
+
+        /// <summary>
+        /// Override the clipboard output for row headers, uses HierarchyDefinition.Content if not defined.
+        /// </summary>
+        public Option<Func<HierarchyDefinition, string>> ClipboardRowHeaderOverride { get; set; }
+
+        private string FillClipboardContent(Option<ResultSet> option) =>
+            option.Match(
+                rs => ClipboardFillerOverride.Match(f => f(rs), rs.Result),
+                () => string.Empty
+            );
+
+        private string FillClipboardColumnHeaderContent(HierarchyDefinition hdef) =>
+            ClipboardColumnHeaderOverride.Match(
+                f => f(hdef),
+                () => hdef.Content?.ToString() ?? string.Empty
+            );
+
+        private string FillClipboardRowHeaderContent(HierarchyDefinition hdef) =>
+            ClipboardRowHeaderOverride.Match(
+                f => f(hdef),
+                () => hdef.Content?.ToString() ?? string.Empty
+            );
+
+        private Task<string> CreateClipboardContent(CopyMode mode)
         {
             var rows = GetRows(mode);
             var columns = GetColumns(mode);
 
             Func<Seq<HierarchyDefinition>, Seq<HierarchyDefinition>, string> builder =
                 mode == CopyMode.Structure
-                    ? CreateClipboardStructuredContent
-                    : CreateClipboardFlatContent;
+                    ? CreateClipboardStructuredContentOverride.Match(
+                        f => f,
+                        () => CreateClipboardStructuredContent
+                    )
+                    : CreateClipboardFlatContentOverride.Match(
+                        f => f,
+                        () => CreateClipboardFlatContent
+                    );
 
-            return builder(rows, columns);
+            return Task.Run(() => builder(rows, columns));
         }
 
         private Seq<HierarchyDefinition> GetRows(CopyMode mode)
@@ -39,9 +95,9 @@ namespace HierarchyGrid.Definitions
 
                 case CopyMode.Highlights:
                     var leaves = RowsDefinitions.Leaves();
-                    if (leaves.Any(l => l.IsHighlighted))
-                        return leaves.Where(l => l.IsHighlighted);
-                    return leaves;
+                    return leaves.Any(l => l.IsHighlighted)
+                        ? leaves.Where(l => l.IsHighlighted)
+                        : leaves;
 
                 case CopyMode.Selection:
                     var selected = Selections
@@ -52,10 +108,7 @@ namespace HierarchyGrid.Definitions
                         )
                         .Distinct();
 
-                    if (selected.Length > 0)
-                        return selected;
-
-                    return Seq<HierarchyDefinition>.Empty;
+                    return selected.Length > 0 ? selected : Seq<HierarchyDefinition>.Empty;
 
                 default:
                     return RowsDefinitions;
@@ -74,9 +127,9 @@ namespace HierarchyGrid.Definitions
 
                 case CopyMode.Highlights:
                     var leaves = ColumnsDefinitions.Leaves();
-                    if (leaves.Any(l => l.IsHighlighted))
-                        return leaves.Where(l => l.IsHighlighted);
-                    return leaves;
+                    return leaves.Any(l => l.IsHighlighted)
+                        ? leaves.Where(l => l.IsHighlighted)
+                        : leaves;
 
                 case CopyMode.Selection:
                     var selected = Selections
@@ -87,17 +140,14 @@ namespace HierarchyGrid.Definitions
                         )
                         .Distinct();
 
-                    if (selected.Length > 0)
-                        return selected;
-
-                    return Seq<HierarchyDefinition>.Empty;
+                    return selected.Length > 0 ? selected : Seq<HierarchyDefinition>.Empty;
 
                 default:
                     return ColumnsDefinitions;
             }
         }
 
-        private static string CreateClipboardFlatContent(
+        private string CreateClipboardFlatContent(
             Seq<HierarchyDefinition> rows,
             Seq<HierarchyDefinition> columns
         )
@@ -111,18 +161,18 @@ namespace HierarchyGrid.Definitions
 
             // Columns titles
             foreach (var column in columns)
-                sb.Append(column.Content).Append(separator);
+                sb.Append(FillClipboardColumnHeaderContent(column)).Append(separator);
 
             sb.Length--;
             sb.AppendLine();
 
             foreach (var row in rows)
             {
-                sb.Append(row.Content).Append(separator);
+                sb.Append(FillClipboardRowHeaderContent(row)).Append(separator);
 
                 foreach (var column in columns)
                 {
-                    sb.Append(Resolve(row, column).Some(rs => rs.Result).None(() => string.Empty));
+                    sb.Append(FillClipboardContent(Resolve(row, column)));
                     sb.Append(separator);
                 }
 
@@ -133,7 +183,7 @@ namespace HierarchyGrid.Definitions
             return sb.ToString();
         }
 
-        private static string CreateClipboardStructuredContent(
+        private string CreateClipboardStructuredContent(
             Seq<HierarchyDefinition> rows,
             Seq<HierarchyDefinition> columns
         )
@@ -154,10 +204,22 @@ namespace HierarchyGrid.Definitions
                     sb.Append(separator);
 
                 var currentLevelColumns = columns.Where(c => c.Level == currentLevel);
+                int currentPosition = 0;
                 foreach (var column in currentLevelColumns)
                 {
+                    var columnPosition = columns.GetRelativePosition(column);
+
+                    while (currentPosition < columnPosition)
+                    {
+                        sb.Append(separator);
+                        currentPosition++;
+                    }
+
                     for (int _ = 0; _ < column.Span; _++)
-                        sb.Append(column.Content).Append(separator);
+                    {
+                        sb.Append(FillClipboardColumnHeaderContent(column)).Append(separator);
+                        currentPosition++;
+                    }
                 }
 
                 sb.Length--;
@@ -173,7 +235,7 @@ namespace HierarchyGrid.Definitions
 
                 foreach (var row in path)
                 {
-                    sb.Append(row.Content).Append(separator);
+                    sb.Append(FillClipboardRowHeaderContent(row)).Append(separator);
                     position++;
                 }
 
@@ -182,9 +244,7 @@ namespace HierarchyGrid.Definitions
 
                 foreach (var column in columnLeaves)
                 {
-                    sb.Append(
-                        Resolve(leafRow, column).Some(rs => rs.Result).None(() => string.Empty)
-                    );
+                    sb.Append(FillClipboardContent(Resolve(leafRow, column)));
                     sb.Append(separator);
                 }
 
@@ -200,12 +260,14 @@ namespace HierarchyGrid.Definitions
             HierarchyDefinition colDef
         )
         {
-            if (rowDef is ProducerDefinition p && colDef is ConsumerDefinition c)
-                return Option<ResultSet>.Some(HierarchyDefinition.Resolve(p, c));
-            else if (rowDef is ConsumerDefinition cr && colDef is ProducerDefinition pr)
-                return Option<ResultSet>.Some(HierarchyDefinition.Resolve(pr, cr));
-
-            return Option<ResultSet>.None;
+            return rowDef switch
+            {
+                ProducerDefinition p when colDef is ConsumerDefinition c
+                    => Option<ResultSet>.Some(HierarchyDefinition.Resolve(p, c)),
+                ConsumerDefinition cr when colDef is ProducerDefinition pr
+                    => Option<ResultSet>.Some(HierarchyDefinition.Resolve(pr, cr)),
+                _ => Option<ResultSet>.None,
+            };
         }
     }
 }

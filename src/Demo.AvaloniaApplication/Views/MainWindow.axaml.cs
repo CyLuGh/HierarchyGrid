@@ -1,6 +1,5 @@
-﻿using Avalonia.Controls;
-using Avalonia.ReactiveUI;
-using Demo.AvaloniaApplication.ViewModels;
+﻿using Demo.AvaloniaApplication.ViewModels;
+using ReactiveUI.Avalonia;
 
 namespace Demo.AvaloniaApplication.Views;
 

@@ -29,17 +29,33 @@
                    Minimum="0"
                    SmallChange="1"
                    LargeChange="5"
+                   Grid.Row="0"
                    Grid.Column="1" />
         <ScrollBar x:Name="HorizontalScrollBar"
                    Minimum="0"
                    SmallChange="1"
                    LargeChange="5"
                    Orientation="Horizontal"
-                   Grid.Row="1" />
+                   Grid.Row="1"
+                   Grid.Column="0" />
 
         <Rectangle x:Name="Corner"
                    Grid.Row="1"
                    Grid.Column="1" />
+
+        <Border x:Name="BorderBusy" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Grid.ColumnSpan="2">
+            <Border.Background>
+                <SolidColorBrush Color="DarkGray" Opacity=".9" />
+            </Border.Background>
+
+            <ProgressBar IsIndeterminate="True"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Center"
+                         Height="20"
+                         MinWidth="300"
+                         MaxWidth="1200" />
+
+        </Border>
 
     </Grid>
 </rxui:ReactiveUserControl>

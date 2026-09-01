@@ -24,6 +24,10 @@
                   Content="Fill"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonTranspose"
+                  Content="Transpose"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
         </UniformGrid>
         <hierarchyGrid:Grid x:Name="HierarchyGrid"
                             DefaultColumnWidth="250"
@@ -32,7 +36,23 @@
                             DefaultRowHeight="60"
                             StatusMessage="I'm a test message!"
                             EnableCrosshair="True"
-                            DockPanel.Dock="Top"/>
+                            HeaderFontSize="18"
+                            CellFontSize="12"
+                            CellFontFamily="Futura"
+                            DockPanel.Dock="Top">
+          <hierarchyGrid:Grid.Styles>
+            <Style Selector="FlyoutPresenter.TooltipFlyoutPresenter">
+              <Setter Property="Background" Value="LightYellow"/>
+              <Setter Property="BorderBrush" Value="Black"/>
+              <Setter Property="BorderThickness" Value="1"/>
+              <Setter Property="Padding" Value="5"/>
+              <Setter Property="MaxWidth" Value="300"/>
+              <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+              <Setter Property="VerticalAlignment" Value="Center"/>
+              <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+          </hierarchyGrid:Grid.Styles>
+        </hierarchyGrid:Grid>
       </DockPanel>
     </TabItem>
     <TabItem Header="Test">
@@ -47,6 +67,14 @@
                   HorizontalContentAlignment="Center"/>
           <Button x:Name="ButtonSwitchTheme"
                   Content="Switch theme"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonToggleRowHeight"
+                  Content="Cycle row heights"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"/>
+          <Button x:Name="ButtonCycleFontSize"
+                  Content="Cycle font size"
                   HorizontalAlignment="Stretch"
                   HorizontalContentAlignment="Center"/>
         </UniformGrid>

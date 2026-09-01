@@ -7,55 +7,51 @@ namespace HierarchyGrid.Definitions
 {
     public static class PositionedCellExtensions
     {
-        public static bool IsHovered(this PositionedCell cell, HierarchyGridViewModel viewModel) =>
-            cell.VerticalPosition == viewModel.HoveredRow
-            && cell.HorizontalPosition == viewModel.HoveredColumn;
-
-        public static bool IsCrosshaired(
-            this PositionedCell cell,
-            HierarchyGridViewModel viewModel
-        ) =>
-            viewModel.EnableCrosshair
-            && (
-                cell.VerticalPosition == viewModel.HoveredRow
-                || cell.HorizontalPosition == viewModel.HoveredColumn
-            );
-
-        public static bool HasHoverState(
-            this PositionedCell cell,
-            HierarchyGridViewModel viewModel
-        ) => cell.IsHovered(viewModel) || cell.IsCrosshaired(viewModel);
-
-        public static bool IsHighlighted(this PositionedCell cell) =>
-            cell.ProducerDefinition?.IsHighlighted == true
-            || cell.ConsumerDefinition?.IsHighlighted == true;
-
-        public static bool HasSpecialRenderStatus(
-            this PositionedCell cell,
-            HierarchyGridViewModel viewModel
-        ) => cell.HasHoverState(viewModel) || cell.IsHighlighted();
-
-        public static Option<PositionedCell> FindPositionedCell(
-            this HierarchyGridViewModel viewModel,
-            SimplifiedCellPosition simplifiedCellPosition
-        )
+        extension(PositionedCell cell)
         {
-            var producers = viewModel.Producers.FlatList();
-            var consumers = viewModel.Consumers.FlatList();
-            return FindPositionedCell(producers, consumers, simplifiedCellPosition);
+            public bool IsHovered( HierarchyGridViewModel viewModel) =>
+                cell.VerticalPosition == viewModel.HoveredRow
+                && cell.HorizontalPosition == viewModel.HoveredColumn;
+
+            public bool IsCrosshaired( HierarchyGridViewModel viewModel
+            ) =>
+                viewModel.EnableCrosshair
+                && (
+                    cell.VerticalPosition == viewModel.HoveredRow
+                    || cell.HorizontalPosition == viewModel.HoveredColumn
+                );
+
+            public bool HasHoverState( HierarchyGridViewModel viewModel
+            ) => cell.IsHovered(viewModel) || cell.IsCrosshaired(viewModel);
+
+            public bool IsHighlighted() =>
+                cell.ProducerDefinition?.IsHighlighted == true
+                || cell.ConsumerDefinition?.IsHighlighted == true;
+
+            public bool HasSpecialRenderStatus( HierarchyGridViewModel viewModel
+            ) => cell.HasHoverState(viewModel) || cell.IsHighlighted();
         }
 
-        public static Seq<PositionedCell> FindPositionedCells(
-            this HierarchyGridViewModel viewModel,
-            IEnumerable<SimplifiedCellPosition> simplifiedCellPositions
-        )
+        extension(HierarchyGridViewModel viewModel)
         {
-            var producers = viewModel.Producers.FlatList();
-            var consumers = viewModel.Consumers.FlatList();
-            return simplifiedCellPositions
-                .Select(scp => FindPositionedCell(producers, consumers, scp))
-                .ToSeq()
-                .Somes();
+            public Option<PositionedCell> FindPositionedCell( SimplifiedCellPosition simplifiedCellPosition
+            )
+            {
+                var producers = viewModel.Producers.FlatList();
+                var consumers = viewModel.Consumers.FlatList();
+                return FindPositionedCell(producers, consumers, simplifiedCellPosition);
+            }
+
+            public Seq<PositionedCell> FindPositionedCells( IEnumerable<SimplifiedCellPosition> simplifiedCellPositions
+            )
+            {
+                var producers = viewModel.Producers.FlatList();
+                var consumers = viewModel.Consumers.FlatList();
+                return simplifiedCellPositions
+                    .Select(scp => FindPositionedCell(producers, consumers, scp))
+                    .ToSeq()
+                    .Somes();
+            }
         }
 
         private static Option<PositionedCell> FindPositionedCell(

@@ -18,6 +18,9 @@ namespace Demo.AvaloniaApplication
 
         static DataGenerator()
         {
+            _regions = new Dictionary<string, string[]> { { "Europe", [] }, { "Asia", [] } };
+            _vehicles = new Dictionary<string, string[]> { { "With motors", [] } };
+
             _regions = new Dictionary<string, string[]>
             {
                 {
@@ -26,13 +29,13 @@ namespace Demo.AvaloniaApplication
                 },
                 { "Benelux", new[] { "Belgium", "Netherlands", "Luxemburg" } },
                 { "North America", new[] { "USA", "Canada", "Mexico" } },
-                { "Asia", new[] { "Japan", "China", "Thailand", "Korea" } }
+                { "Asia", new[] { "Japan", "China", "Thailand", "Korea" } },
             };
 
             _vehicles = new Dictionary<string, string[]>
             {
                 { "Without motors", new[] { "Bicycles", "Scooters" } },
-                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } }
+                { "With motors", new[] { "Motorbikes", "Cars", "Lorries" } },
             };
         }
 
@@ -145,7 +148,7 @@ namespace Demo.AvaloniaApplication
                 o switch
                 {
                     int i => i.ToString("N0"),
-                    _ => o.ToString() ?? string.Empty
+                    _ => o.ToString() ?? string.Empty,
                 };
 
             csr.ContextItems = o =>
@@ -159,16 +162,20 @@ namespace Demo.AvaloniaApplication
                                 $"First|Second|Hide {region}",
                                 (ResultSet rs) => Console.WriteLine(rs.Result)
                             ),
-                            ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result))
+                            (
+                                $"First|Second|Split {region}",
+                                (ResultSet rs) => Console.WriteLine(rs.Result)
+                            ),
+                            ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
                         ],
-                    _ => Array.Empty<(string description, Action<ResultSet> action)>()
+                    _ => Array.Empty<(string description, Action<ResultSet> action)>(),
                 };
 
             csr.Qualify = o =>
                 o switch
                 {
                     int i => i < 1_000_000 ? Qualification.Custom : Qualification.Normal,
-                    _ => Qualification.Normal
+                    _ => Qualification.Normal,
                 };
 
             csr.Colorize = o =>
@@ -188,7 +195,7 @@ namespace Demo.AvaloniaApplication
                                 Brushes.IndianRed.Color.G,
                                 Brushes.IndianRed.Color.B
                             )
-                        )
+                        ),
                 };
 
             csr.TooltipCreator = (p, c) => $"{p} x {c}";

@@ -5,7 +5,7 @@ namespace HierarchyGrid.Skia
 {
     internal record SkiaTheme
     {
-        public SkiaTheme( ITheme theme )
+        public SkiaTheme(ITheme theme)
         {
             BackgroundColor = theme.BackgroundColor.ToSKColor();
             ForegroundColor = theme.ForegroundColor.ToSKColor();
@@ -43,7 +43,7 @@ namespace HierarchyGrid.Skia
             ErrorForegroundColor = theme.ErrorForegroundColor.ToSKColor();
 
             EmptyBackgroundColor = theme.EmptyBackgroundColor.ToSKColor();
-            EmptyForegroundColor = theme.BorderColor.With( a: 100 ).ToSKColor();
+            EmptyForegroundColor = theme.BorderColor.With(a: 100).ToSKColor();
         }
 
         public SKColor BackgroundColor { get; init; }
@@ -87,7 +87,7 @@ namespace HierarchyGrid.Skia
 
     internal static class ThemeColorExtension
     {
-        public static SKColor ToSKColor( this ThemeColor tColor )
-            => new( tColor.R , tColor.G , tColor.B , tColor.A );
+        public static SKColor ToSKColor(this ThemeColor tColor) =>
+            new(tColor.R, tColor.G, tColor.B, tColor.A);
     }
 }
