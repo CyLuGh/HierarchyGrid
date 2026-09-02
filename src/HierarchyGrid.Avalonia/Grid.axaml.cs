@@ -684,7 +684,11 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.ColumnsWidths[pos] = Math.Max(viewModel.ColumnsWidths[pos] + args.Vector.X, 10d);
 
         Signal
+#if DEBUG
             .Return((false, "splitter"))
+#else
+            .Return(false)
+#endif
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -701,7 +705,11 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         );
 
         Signal
+#if DEBUG
             .Return((false, "splitter header"))
+#else
+            .Return(false)
+#endif
             .Delay(TimeSpan.FromMilliseconds(100))
             .InvokeCommand(viewModel, x => x.DrawGridCommand);
     }
@@ -723,7 +731,11 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 var content = viewModel.EditionContent;
                 viewModel.EditedCell = Option<PositionedCell>.None;
                 Signal
+#if DEBUG
                     .Return((editor(content ?? string.Empty), "editor"))
+#else
+                    .Return(editor(content ?? string.Empty))
+#endif
                     .InvokeCommand(viewModel.DrawGridCommand);
                 break;
 

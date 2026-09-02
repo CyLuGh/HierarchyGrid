@@ -301,7 +301,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             HorizontalOffset = 0;
         }
 
+#if DEBUG
         Signal.Return((false, "gridstate")).InvokeCommand(DrawGridCommand);
+#else
+        Signal.Return(false).InvokeCommand(DrawGridCommand);
+#endif
     }
 
     private IEnumerable<PositionedCell> MatchPositionedCells(IEnumerable<PositionedCell> cells)
@@ -329,7 +333,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         set => SetGridState(value);
     }
 
+#if DEBUG
     public ReactiveCommand<(bool, string), RxVoid> DrawGridCommand { get; }
+#else
+    public ReactiveCommand<bool, RxVoid> DrawGridCommand { get; }
+#endif
     public Interaction<RxUnit, RxUnit> DrawGridInteraction { get; } =
         new(RxSchedulers.MainThreadScheduler);
 
@@ -542,6 +550,9 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 ClearHighlightsCommand.Select(_ => (false, "highlights")),
                 ToggleStatesCommand.Select(_ => (false, "toggle states"))
             )
+#if !DEBUG
+            .Select(t => t.Item1)
+#endif
             .Throttle(TimeSpan.FromMilliseconds(10))
             .InvokeCommand(DrawGridCommand)
             .DisposeWith(disposables);
@@ -597,22 +608,14 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         @this.DrawEditionTextBoxInteraction.RegisterHandler(ctx => ctx.SetOutput(RxVoid.Default));
     }
 
-    private ReactiveCommand<(bool, string), RxUnit> CreateDrawGridCommand()
+#if DEBUG
+    private ReactiveCommand<(bool, string), RxVoid> CreateDrawGridCommand()
     {
-        // var command = ReactiveCommand.CreateFromTask<bool, RxUnit>(async invalidate =>
-        // {
-        //     if (invalidate)
-        //         ResultSets.Clear();
-        //
-        //     await DrawGridInteraction.Handle(RxUnit.Default);
-        //     return RxUnit.Default;
-        // });
-
         var command = ReactiveCommand.CreateFromObservable(
             ((bool, string) t) =>
             {
                 var (invalidate, source) = t;
-                Console.WriteLine($"Drawing grid from {source}");
+                this.Log().Debug("Calling DrawGrid from {0}", source);
                 if (invalidate)
                     ResultSets.Clear();
                 return DrawGridInteraction.Handle(RxVoid.Default);
@@ -622,6 +625,22 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
         return command;
     }
+#else
+    private ReactiveCommand<bool, RxVoid> CreateDrawGridCommand()
+    {
+        var command = ReactiveCommand.CreateFromObservable(
+            (bool invalidate) =>
+            {
+                if (invalidate)
+                    ResultSets.Clear();
+                return DrawGridInteraction.Handle(RxVoid.Default);
+            }
+        );
+        command.ThrownExceptions.SubscribeSafe(e => this.Log().Error(e));
+
+        return command;
+    }
+#endif
 
     private ReactiveCommand<
         (Option<PositionedCell>, Option<PositionedDefinition>),
@@ -695,7 +714,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         Consumers = hierarchyDefinitions.Consumers;
 
         SetHeadersDimension(IsTransposed, preserveSizes);
+#if DEBUG
         Signal.Return((true, "set definitions")).InvokeCommand(DrawGridCommand);
+#else
+        Signal.Return(true).InvokeCommand(DrawGridCommand);
+#endif
     }
 
     private void Clear(bool preserveSizes = false)
@@ -950,7 +973,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 .IfSome(a =>
                 {
                     a();
+#if DEBUG
                     Signal.Return((false, "Global header")).InvokeCommand(DrawGridCommand);
+#else
+                    Signal.Return(false).InvokeCommand(DrawGridCommand);
+#endif
                 });
         }
         else
@@ -1088,7 +1115,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         else
             definition.IsHighlighted = !definition.IsHighlighted;
 
+#if DEBUG
         Signal.Return((false, "Header")).InvokeCommand(DrawGridCommand);
+#else
+        Signal.Return(false).InvokeCommand(DrawGridCommand);
+#endif
     }
 
     internal void HandleDoubleClick(double x, double y, double screenScale)

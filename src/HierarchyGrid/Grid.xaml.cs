@@ -614,7 +614,11 @@ namespace HierarchyGrid
                                             var content = viewModel.EditionContent;
                                             viewModel.EditedCell = Option<PositionedCell>.None;
                                             Signal
+#if DEBUG
                                                 .Return((editor(content), "Editor"))
+#else
+                                                .Return(editor(content))
+#endif
                                                 .InvokeCommand(viewModel.DrawGridCommand);
                                             break;
                                     }
@@ -820,7 +824,11 @@ namespace HierarchyGrid
                         );
                         Clear<Rectangle>(view);
                     })
+#if DEBUG
                     .Select(_ => (false, "Splitter Drag Complete"))
+#else
+                    .Select(_ => false)
+#endif
                     .InvokeCommand(viewModel, x => x.DrawGridCommand);
 
                 viewModel.ResizeObservables.Enqueue(dsp);
