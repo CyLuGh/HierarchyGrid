@@ -19,6 +19,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="ReactiveUI.Primitives.Wpf" />
 		<PackageReference Include="ReactiveUI.WPF" />
 		<PackageReference Include="SkiaSharp.HarfBuzz" />
 		<PackageReference Include="SkiaSharp.Views.WPF" />
