@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Avalonia.Media;
 using HierarchyGrid.Definitions;
 using MoreLinq;
+using ReactiveUI.Primitives.Signals;
 
 namespace Demo.AvaloniaApplication
 {
@@ -168,7 +169,32 @@ namespace Demo.AvaloniaApplication
                             ),
                             ("First|Other", (ResultSet rs) => Console.WriteLine(rs.Result)),
                         ],
-                    _ => Array.Empty<(string description, Action<ResultSet> action)>(),
+                    _ => [],
+                };
+
+            csr.ObservableContextItems = o =>
+                o switch
+                {
+                    string region
+                        =>
+                        [
+                            (
+                                "Test observable, should be enabled for Belgium only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "Belgium")
+                            ),
+                            (
+                                "Test observable, should be enabled for Germany only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "Germany")
+                            ),
+                            (
+                                "Embedded|Test observable, should be enabled for France only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "France")
+                            )
+                        ],
+                    _ => []
                 };
 
             csr.Qualify = o =>

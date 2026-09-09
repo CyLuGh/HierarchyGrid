@@ -49,8 +49,8 @@ public readonly record struct ResultSet
     /// or functionalities for the result set in a reactive application.
     /// If no context commands are defined, the property defaults to being empty.
     /// </summary>
-    public Option<(string, Action<ResultSet>)[]> ContextCommands { get; init; } =
-        Option<(string, Action<ResultSet>)[]>.None;
+    public Option<(string, Action<ResultSet>, IObservable<bool>)[]> ContextCommands { get; init; } =
+        Option<(string, Action<ResultSet>, IObservable<bool>)[]>.None;
 
     /// <summary>
     /// Optional path to SVG that should be displayed as left-side decor.

@@ -1,5 +1,9 @@
 ﻿using System;
+using System.Linq;
 using LanguageExt;
+using ReactiveUI;
+using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Signals;
 
 namespace HierarchyGrid.Definitions;
 
@@ -62,6 +66,11 @@ public class ConsumerDefinition : HierarchyDefinition
         (string description, Action<ResultSet> action)[]
     >? ContextItems { get; set; }
 
+    public Func<
+        object,
+        (string description, Action<ResultSet> action, IObservable<bool> canExecute)[]
+    >? ObservableContextItems { get; set; }
+
     private Qualification GetQualification(InputSet inputSet, object data) =>
         inputSet.Qualifier != Qualification.Unset
             ? inputSet.Qualifier
@@ -83,12 +92,25 @@ public class ConsumerDefinition : HierarchyDefinition
 
         var tooltipText = GenerateTooltipContent(inputSet, data);
 
-        var contextCommands = Option<(string, Action<ResultSet>)[]>.None;
+        var contextItems = (
+            ContextItems != null
+                ? ContextItems(inputSet.Input)
+                    .Map(t =>
+                        (
+                            t.description,
+                            t.action,
+                            Signal.Return(true).ObserveOn(RxSchedulers.MainThreadScheduler)
+                        )
+                    )
+                : []
+        )
+            .Concat(ObservableContextItems != null ? ObservableContextItems(inputSet.Input) : [])
+            .ToArray();
 
-        if (ContextItems != null)
-        {
-            contextCommands = ContextItems(inputSet.Input);
-        }
+        var contextCommands =
+            contextItems.Length == 0
+                ? Option<(string, Action<ResultSet>, IObservable<bool>)[]>.None
+                : contextItems;
 
         Option<string> leftDecor = LeftDecor is not null
             ? LeftDecor(inputSet.Input, data)

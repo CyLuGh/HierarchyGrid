@@ -375,7 +375,7 @@ namespace HierarchyGrid
         }
 
         private static IEnumerable<MenuItem> BuildCustomItems(
-            (string, Action<ResultSet>)[] commands,
+            (string, Action<ResultSet>, IObservable<bool>)[] commands,
             ResultSet resultSet
         )
         {
@@ -383,7 +383,7 @@ namespace HierarchyGrid
 
             foreach (var t in commands)
             {
-                var (header, command) = t;
+                var (header, command, canExecute) = t;
                 var splits = header.Split('|');
 
                 if (splits.Length == 1)
@@ -391,7 +391,7 @@ namespace HierarchyGrid
                     yield return new MenuItem
                     {
                         Header = header,
-                        Command = ReactiveCommand.Create((ResultSet r) => command(r)),
+                        Command = ReactiveCommand.Create((ResultSet r) => command(r), canExecute),
                     };
                 }
                 else
@@ -405,7 +405,10 @@ namespace HierarchyGrid
                                 new MenuItem
                                 {
                                     Header = splits[i],
-                                    Command = ReactiveCommand.Create((ResultSet r) => command(r)),
+                                    Command = ReactiveCommand.Create(
+                                        (ResultSet r) => command(r),
+                                        canExecute
+                                    ),
                                     CommandParameter = resultSet,
                                 }
                             );

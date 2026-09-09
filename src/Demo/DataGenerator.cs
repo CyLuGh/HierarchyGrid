@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows.Media;
 using HierarchyGrid.Definitions;
 using MoreLinq;
+using ReactiveUI.Primitives.Signals;
 
 namespace Demo
 {
@@ -157,6 +158,31 @@ namespace Demo
                             ($"Show {region}", rs => Console.WriteLine(rs.Result)),
                             ($"First|Second|Hide {region}", rs => Console.WriteLine(rs.Result)),
                             ("First|Other", rs => Console.WriteLine(rs.Result))
+                        ],
+                    _ => []
+                };
+
+            csr.ObservableContextItems = o =>
+                o switch
+                {
+                    string region
+                        =>
+                        [
+                            (
+                                "Test observable, should be enabled for Belgium only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "Belgium")
+                            ),
+                            (
+                                "Test observable, should be enabled for Germany only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "Germany")
+                            ),
+                            (
+                                "Embedded|Test observable, should be enabled for France only",
+                                (ResultSet rs) => Console.WriteLine(rs.Result),
+                                Signal.Return(region == "France")
+                            )
                         ],
                     _ => []
                 };
