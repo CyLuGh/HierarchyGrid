@@ -1,88 +1,112 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="clr-namespace:Demo.AvaloniaApplication.ViewModels"
-             xmlns:hierarchyGrid="using:HierarchyGrid.Avalonia"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Demo.AvaloniaApplication.Views.MainView"
-             x:DataType="vm:MainViewModel">
-  <Design.DataContext>
-    <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-    <vm:MainViewModel />
-  </Design.DataContext>
+<UserControl
+    x:Class="Demo.AvaloniaApplication.Views.MainView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hierarchyGrid="using:HierarchyGrid.Avalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Demo.AvaloniaApplication.ViewModels"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="vm:MainViewModel"
+    mc:Ignorable="d">
+    <Design.DataContext>
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
+        <vm:MainViewModel />
+    </Design.DataContext>
 
-  <TabControl>
-    <TabItem Header="Vehicles">
-      <DockPanel>
-        <UniformGrid HorizontalAlignment="Stretch"
-                     Rows="1"
-                     Margin="5"
-                     DockPanel.Dock="Bottom">
-          <Button x:Name="ButtonFill"
-                  Content="Fill"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-          <Button x:Name="ButtonTranspose"
-                  Content="Transpose"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-        </UniformGrid>
-        <hierarchyGrid:Grid x:Name="HierarchyGrid"
-                            DefaultColumnWidth="250"
-                            DefaultHeaderHeight="40"
-                            DefaultHeaderWidth="120"
-                            DefaultRowHeight="60"
-                            StatusMessage="I'm a test message!"
-                            EnableCrosshair="True"
-                            HeaderFontSize="18"
-                            CellFontSize="12"
-                            CellFontFamily="Futura"
-                            DockPanel.Dock="Top">
-          <hierarchyGrid:Grid.Styles>
-            <Style Selector="FlyoutPresenter.TooltipFlyoutPresenter">
-              <Setter Property="Background" Value="LightYellow"/>
-              <Setter Property="BorderBrush" Value="Black"/>
-              <Setter Property="BorderThickness" Value="1"/>
-              <Setter Property="Padding" Value="5"/>
-              <Setter Property="MaxWidth" Value="300"/>
-              <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
-              <Setter Property="VerticalAlignment" Value="Center"/>
-              <Setter Property="VerticalContentAlignment" Value="Center"/>
-            </Style>
-          </hierarchyGrid:Grid.Styles>
-        </hierarchyGrid:Grid>
-      </DockPanel>
-    </TabItem>
-    <TabItem Header="Test">
-      <DockPanel>
-        <UniformGrid HorizontalAlignment="Stretch"
-                     Rows="1"
-                     Margin="5"
-                     DockPanel.Dock="Bottom">
-          <Button x:Name="ButtonFillTest"
-                  Content="Fill"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-          <Button x:Name="ButtonSwitchTheme"
-                  Content="Switch theme"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-          <Button x:Name="ButtonToggleRowHeight"
-                  Content="Cycle row heights"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-          <Button x:Name="ButtonCycleFontSize"
-                  Content="Cycle font size"
-                  HorizontalAlignment="Stretch"
-                  HorizontalContentAlignment="Center"/>
-        </UniformGrid>
-        <hierarchyGrid:Grid x:Name="HierarchyGridTest" 
-                            DefaultColumnWidth="50"
-                            DockPanel.Dock="Top"/>
-      </DockPanel>
-    </TabItem>
-  </TabControl>
+    <TabControl>
+        <TabItem Header="Vehicles">
+            <DockPanel>
+                <UniformGrid
+                    Margin="5"
+                    HorizontalAlignment="Stretch"
+                    DockPanel.Dock="Bottom"
+                    Rows="1">
+                    <Button
+                        x:Name="ButtonFill"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Fill" />
+                    <Button
+                        x:Name="ButtonTranspose"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Transpose" />
+                </UniformGrid>
+                <hierarchyGrid:Grid
+                    x:Name="HierarchyGrid"
+                    CellFontFamily="Futura"
+                    CellFontSize="12"
+                    DefaultColumnWidth="250"
+                    DefaultHeaderHeight="40"
+                    DefaultHeaderWidth="120"
+                    DefaultRowHeight="60"
+                    DockPanel.Dock="Top"
+                    EnableCrosshair="True"
+                    HeaderFontSize="18"
+                    StatusMessage="I'm a test message!">
+                    <hierarchyGrid:Grid.Styles>
+                        <Style Selector="FlyoutPresenter.TooltipFlyoutPresenter">
+                            <Setter Property="Background" Value="LightYellow" />
+                            <Setter Property="BorderBrush" Value="Black" />
+                            <Setter Property="BorderThickness" Value="1" />
+                            <Setter Property="Padding" Value="5" />
+                            <Setter Property="MaxWidth" Value="300" />
+                            <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                        </Style>
+                    </hierarchyGrid:Grid.Styles>
+                </hierarchyGrid:Grid>
+            </DockPanel>
+        </TabItem>
+        <TabItem Header="Test">
+            <DockPanel>
+                <UniformGrid
+                    Margin="5"
+                    HorizontalAlignment="Stretch"
+                    DockPanel.Dock="Bottom"
+                    Rows="1">
+                    <Button
+                        x:Name="ButtonFillTest"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Fill" />
+                    <Button
+                        x:Name="ButtonSwitchTheme"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Switch theme" />
+                    <Button
+                        x:Name="ButtonToggleRowHeight"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Cycle row heights" />
+                    <Button
+                        x:Name="ButtonCycleFontSize"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Content="Cycle font size" />
+                </UniformGrid>
+                <hierarchyGrid:Grid
+                    x:Name="HierarchyGridTest"
+                    DefaultColumnWidth="50"
+                    DockPanel.Dock="Top" />
+            </DockPanel>
+        </TabItem>
+        <TabItem Header="Flat headers">
+            <DockPanel>
+                <Button
+                    Command="{Binding BuildFlatDefinitionsCommand}"
+                    Content="Fill"
+                    DockPanel.Dock="Bottom" />
+                <hierarchyGrid:Grid x:Name="HierarchyGridSingle" DefaultColumnWidth="50" />
+            </DockPanel>
+        </TabItem>
+    </TabControl>
 
 </UserControl>

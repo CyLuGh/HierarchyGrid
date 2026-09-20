@@ -218,7 +218,7 @@ namespace HierarchyGrid
                         {
                             < .75 => .75,
                             > 1 => 1,
-                            _ => scale
+                            _ => scale,
                         };
                     }
                     else if (
@@ -685,7 +685,12 @@ namespace HierarchyGrid
                 .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
                 .ToArray();
 
-            foreach (var c in headers.Where(t => t.Definition.Definition is ConsumerDefinition))
+            /* Resize columns => consumers if not transposed, producers if transposed */
+            var columnHeaders = !viewModel.IsTransposed
+                ? headers.Where(t => t.Definition.Definition is ConsumerDefinition)
+                : headers.Where(t => t.Definition.Definition is ProducerDefinition);
+
+            foreach (var c in columnHeaders)
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter(splitterCount++);

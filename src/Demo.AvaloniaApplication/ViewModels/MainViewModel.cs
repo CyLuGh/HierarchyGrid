@@ -21,6 +21,9 @@ public partial class MainViewModel : ViewModelBase
     public HierarchyGridViewModel TestViewModel { get; } =
         new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
 
+    public HierarchyGridViewModel FlatHierarchyViewModel { get; } =
+        new HierarchyGridViewModel { SelectionMode = SelectionMode.Single };
+
     // [ObservableAsProperty(ReadOnly = false)]
     // private HierarchyDefinitions _sampleDefinitions;
 
@@ -194,21 +197,18 @@ public partial class MainViewModel : ViewModelBase
                                         int.TryParse(o.ToString(), out var i)
                                             ? i switch
                                             {
-                                                17
-                                                    => (
-                                                        new ThemeColor(150, 100, 120, 0),
-                                                        new ThemeColor(255, 0, 0, 0)
-                                                    ),
-                                                18
-                                                    => (
-                                                        new ThemeColor(150, 0, 100, 120),
-                                                        new ThemeColor(255, 255, 0, 0)
-                                                    ),
-                                                _
-                                                    => (
-                                                        new ThemeColor(0, 0, 0, 0),
-                                                        new ThemeColor(0, 255, 0, 0)
-                                                    ),
+                                                17 => (
+                                                    new ThemeColor(150, 100, 120, 0),
+                                                    new ThemeColor(255, 0, 0, 0)
+                                                ),
+                                                18 => (
+                                                    new ThemeColor(150, 0, 100, 120),
+                                                    new ThemeColor(255, 255, 0, 0)
+                                                ),
+                                                _ => (
+                                                    new ThemeColor(0, 0, 0, 0),
+                                                    new ThemeColor(0, 255, 0, 0)
+                                                ),
                                             }
                                             : (
                                                 new ThemeColor(0, 0, 0, 0),
@@ -222,10 +222,9 @@ public partial class MainViewModel : ViewModelBase
                                         cdef.RightDecor = (_, o) =>
                                             o switch
                                             {
-                                                int i
-                                                    => i % 2 == 0
-                                                        ? "Resources/comment.svg"
-                                                        : string.Empty,
+                                                int i => i % 2 == 0
+                                                    ? "Resources/comment.svg"
+                                                    : string.Empty,
                                                 _ => string.Empty,
                                             };
                                         cdef.Editor = (p, c, s) =>
@@ -254,5 +253,20 @@ public partial class MainViewModel : ViewModelBase
 
                 return hdef;
             });
+    }
+
+    [ReactiveCommand]
+    private void BuildFlatDefinitions()
+    {
+        var producers = Enumerable
+            .Range(1, 10)
+            .Select(idx => new ProducerDefinition { Content = $"Row {idx}" });
+
+        var consumers = Enumerable
+            .Range(1, 7)
+            .Select(idx => new ConsumerDefinition { Content = $"Column {idx}" });
+
+        FlatHierarchyViewModel.Set(new(producers, consumers));
+        FlatHierarchyViewModel.IsTransposed = true;
     }
 }

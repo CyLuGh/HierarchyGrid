@@ -36,6 +36,13 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
         view.OneWayBind(viewModel, vm => vm.TestViewModel, v => v.HierarchyGridTest.ViewModel)
             .DisposeWith(disposables);
 
+        view.OneWayBind(
+                viewModel,
+                vm => vm.FlatHierarchyViewModel,
+                v => v.HierarchyGridSingle.ViewModel
+            )
+            .DisposeWith(disposables);
+
         view.BindCommand(viewModel, vm => vm.BuildSampleDefinitions, v => v.ButtonFill)
             .DisposeWith(disposables);
 

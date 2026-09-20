@@ -278,7 +278,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             {
                 < .75 => .75,
                 > 1 => 1,
-                _ => scale
+                _ => scale,
             };
         }
         else if (args.KeyModifiers.HasFlag(KeyModifiers.Shift))
@@ -598,24 +598,6 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel.ResizeObservables.Clear();
 
         var splitters = view.Canvas.Children.OfType<GridSplitter>().ToArray();
-        GridSplitter GetSplitter(int idx)
-        {
-            if (idx < splitters.Length)
-            {
-                return splitters[idx];
-            }
-            else
-            {
-                var splitter = new GridSplitter
-                {
-                    BorderThickness = new Thickness(2d),
-                    BorderBrush = Brushes.Transparent,
-                    Opacity = 0,
-                };
-                view.Canvas.Children.Add(splitter);
-                return splitter;
-            }
-        }
 
         int splitterCount = 0;
 
@@ -623,7 +605,12 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             .HeadersCoordinates.Where(x => x.Definition.Definition.Count() == 1)
             .ToArray();
 
-        foreach (var c in headers.Where(t => t.Definition.Definition is ConsumerDefinition))
+        /* Resize columns => consumers if not transposed, producers if transposed */
+        var columnHeaders = !viewModel.IsTransposed
+            ? headers.Where(t => t.Definition.Definition is ConsumerDefinition)
+            : headers.Where(t => t.Definition.Definition is ProducerDefinition);
+
+        foreach (var c in columnHeaders)
         {
             var (coord, def) = c;
             var splitter = GetSplitter(splitterCount++);
@@ -675,6 +662,27 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         var exceeding = splitters.Skip(splitterCount).ToArray();
         Clear(view, exceeding);
+        return;
+
+        // Recycle splitters
+        GridSplitter GetSplitter(int idx)
+        {
+            if (idx < splitters.Length)
+            {
+                return splitters[idx];
+            }
+            else
+            {
+                var splitter = new GridSplitter
+                {
+                    BorderThickness = new Thickness(2d),
+                    BorderBrush = Brushes.Transparent,
+                    Opacity = 0,
+                };
+                view.Canvas.Children.Add(splitter);
+                return splitter;
+            }
+        }
     }
 
     private static void Splitter_DragComplete(
