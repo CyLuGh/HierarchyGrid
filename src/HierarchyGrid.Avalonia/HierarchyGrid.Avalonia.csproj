@@ -25,7 +25,6 @@
     <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="ReactiveUI.Avalonia" />
     <PackageReference Include="ReactiveUI.Primitives.Avalonia" />
-    <PackageReference Include="SkiaSharp.Views" />
   </ItemGroup>
 
   <ItemGroup>
