@@ -40,7 +40,7 @@ namespace HierarchyGrid.Definitions
 #if DEBUG
             Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
 #else
-            Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
 #endif
         }
 
@@ -52,7 +52,7 @@ namespace HierarchyGrid.Definitions
 #if DEBUG
             Signal.Return((false, "Row height")).InvokeCommand(DrawGridCommand);
 #else
-            Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
 #endif
         }
 
@@ -63,7 +63,7 @@ namespace HierarchyGrid.Definitions
 #if DEBUG
             Signal.Return((false, "Font size")).InvokeCommand(DrawGridCommand);
 #else
-            Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
 #endif
         }
 
@@ -74,7 +74,7 @@ namespace HierarchyGrid.Definitions
 #if DEBUG
             Signal.Return((false, "Header font size")).InvokeCommand(DrawGridCommand);
 #else
-            Signal.Return((false, "Column width")).InvokeCommand(DrawGridCommand);
+            Signal.Return(false).InvokeCommand(DrawGridCommand);
 #endif
         }
     }
