@@ -216,9 +216,9 @@ namespace Demo
             var pC = new PositionedCell
             {
                 ProducerDefinition = (ProducerDefinition)
-                    HierarchyGrid.ViewModel.RowsDefinitions.Leaves().Skip(3).First(),
+                    HierarchyGrid.ViewModel.Producers.Leaves().Skip(3).First(),
                 ConsumerDefinition = (ConsumerDefinition)
-                    HierarchyGrid.ViewModel.ColumnsDefinitions.Leaves().Skip(2).First(),
+                    HierarchyGrid.ViewModel.Consumers.Leaves().Skip(2).First(),
             };
 
             HierarchyGrid.ViewModel.FocusCells = HashMap.create(

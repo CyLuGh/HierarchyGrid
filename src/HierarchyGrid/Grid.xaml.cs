@@ -246,41 +246,19 @@ namespace HierarchyGrid
                 })
                 .DisposeWith(disposables);
 
-            var horizontalScrollSignal = Signal
-                .FromEventPattern<ScrollEventHandler, ScrollEventArgs>(
-                    handler => view.HorizontalScrollBar.Scroll += handler,
-                    handler => view.HorizontalScrollBar.Scroll -= handler
-                )
-                .Publish()
-                .RefCount();
-
-            horizontalScrollSignal.Subscribe().DisposeWith(disposables);
-
             view.Bind(
                     viewModel,
                     vm => vm.HorizontalOffset,
                     v => v.HorizontalScrollBar.Value,
-                    horizontalScrollSignal,
                     viewModelToViewConverter: Convert.ToDouble,
                     viewToViewModelConverter: Convert.ToInt32
                 )
                 .DisposeWith(disposables);
 
-            var verticalScrollSignal = Signal
-                .FromEventPattern<ScrollEventHandler, ScrollEventArgs>(
-                    handler => view.VerticalScrollBar.Scroll += handler,
-                    handler => view.VerticalScrollBar.Scroll -= handler
-                )
-                .Publish()
-                .RefCount();
-
-            verticalScrollSignal.Subscribe().DisposeWith(disposables);
-
             view.Bind(
                     viewModel,
                     vm => vm.VerticalOffset,
                     v => v.VerticalScrollBar.Value,
-                    verticalScrollSignal,
                     viewModelToViewConverter: Convert.ToDouble,
                     viewToViewModelConverter: Convert.ToInt32
                 )
