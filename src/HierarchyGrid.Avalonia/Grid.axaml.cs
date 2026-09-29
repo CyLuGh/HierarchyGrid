@@ -48,8 +48,9 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         this.WhenActivated(disposables =>
         {
             this.WhenAnyValue(x => x.ViewModel)
-                .Where(x => x is not null)
                 .Throttle(TimeSpan.FromMilliseconds(50))
+                .Where(x => x is not null)
+                .Select(x => x!)
                 .ObserveOn(RxSchedulers.MainThreadScheduler)
                 .Do(vm => PopulateFromViewModel(this, vm, disposables))
                 .Subscribe()
@@ -125,9 +126,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 handler => view.SkiaElement.PointerExited -= handler
             )
             .ObserveOn(RxSchedulers.MainThreadScheduler)
-            .Subscribe(t =>
+            .Subscribe(_ =>
             {
-                var args = t.EventArgs;
                 SkiaElement_PointerExit(viewModel);
             })
             .DisposeWith(disposables);
@@ -340,7 +340,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             );
 
             // Show context menu
-            if (viewModel.IsValid && viewModel.HasData)
+            if (viewModel is { IsValid: true, HasData: true })
             {
                 var view = (args.Source as Visual).FindAncestorOfType<Grid>();
                 if (view is not null)
@@ -485,10 +485,10 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                 r.Match(
                     c =>
                         c.ResultSet.ContextCommands.Match(
-                            cmds => BuildCustomItems(cmds, c.ResultSet).ToArray(),
-                            () => Array.Empty<MenuItem>()
+                            commands => BuildCustomItems(commands, c.ResultSet).ToArray(),
+                            () => []
                         ),
-                    () => Array.Empty<MenuItem>()
+                    () => []
                 ),
             _ => Array.Empty<MenuItem>()
         );
@@ -726,7 +726,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     }
 
     private static void EditorKeyDown(
-        TextBox tb,
+        TextBox _,
         KeyEventArgs args,
         HierarchyGridViewModel viewModel,
         Func<string, bool> editor

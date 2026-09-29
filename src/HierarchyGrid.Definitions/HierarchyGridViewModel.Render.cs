@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using ReactiveUI;
-using ReactiveUI.Primitives.Signals;
+﻿using ReactiveUI.Primitives.Signals;
 
 namespace HierarchyGrid.Definitions
 {
