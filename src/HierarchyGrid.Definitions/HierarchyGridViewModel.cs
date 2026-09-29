@@ -653,7 +653,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 #else
     private ReactiveCommand<bool, RxVoid> CreateDrawGridCommand()
     {
-        var command = ReactiveCommand.CreateFromObservable(
+        var command = ReactiveCommand.CreateFromTask(
             (bool invalidate) =>
             {
                 if (invalidate)

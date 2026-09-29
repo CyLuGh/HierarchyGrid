@@ -40,6 +40,7 @@ namespace HierarchyGrid
 
                 this.WhenAnyValue(x => x.ViewModel)
                     .Where(x => x is not null)
+                    .Select(x => x!)
                     .Do(vm => PopulateFromViewModel(this, vm, disposables))
                     .Subscribe()
                     .DisposeWith(disposables);
