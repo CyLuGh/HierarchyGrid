@@ -29,7 +29,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// <summary>
     /// Indicates whether the grid has at least one producer and one consumer definition
     /// </summary>
-    [ReactiveUI.Binding.ObservableAsProperty]
+    [ObservableAsProperty]
     public partial bool HasData { get; }
 
     /// <summary>
@@ -98,7 +98,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     /// Indicates whether the grid is currently in editing mode. True when <see cref="EditedCell"/> is some
     /// and its associated <see cref="ResultSet"/> has a defined editor.
     /// </summary>
-    [ReactiveUI.Binding.ObservableAsProperty]
+    [ObservableAsProperty]
     public partial bool IsEditing { get; }
 
     public ReactiveCommand<Seq<PositionedCell>, RxVoid> DrawEditionTextBox { get; }
@@ -184,10 +184,10 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public partial Guid HoveredElementId { get; private set; }
 
-    [ReactiveUI.Binding.ObservableAsProperty]
+    [ObservableAsProperty]
     public partial Seq<HierarchyDefinition> ColumnsDefinitions { get; }
 
-    [ReactiveUI.Binding.ObservableAsProperty]
+    [ObservableAsProperty]
     public partial Seq<HierarchyDefinition> RowsDefinitions { get; }
 
     public HierarchyGridState GetGridState() => new(this);
@@ -313,7 +313,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public Interaction<string, RxUnit> FillClipboardInteraction { get; } =
         new(RxSchedulers.MainThreadScheduler);
 
-    [ReactiveUI.Binding.ObservableAsProperty]
+    [ObservableAsProperty]
     public partial bool IsCopyingToClipboard { get; }
 
     public ReactiveCommand<bool, RxUnit> ToggleStatesCommand { get; }

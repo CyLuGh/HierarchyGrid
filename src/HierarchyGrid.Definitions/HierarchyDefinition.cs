@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Collections.Immutable;
 using ReactiveUI;
 using ReactiveUI.Primitives;
 using ReactiveUI.SourceGenerators;
@@ -108,6 +105,7 @@ public abstract partial class HierarchyDefinition
 
         this.WhenAnyValue(o => o.Parent)
             .Where(x => x is not null)
+            .Select(p => p!)
             .Subscribe(p =>
             {
                 CanToggle = p.CanToggle;
@@ -248,7 +246,7 @@ public abstract partial class HierarchyDefinition
 
     public bool IsExpanded
     {
-        get => CanToggle ? _isExpanded : true;
+        get => !CanToggle || _isExpanded;
         set
         {
             if (CanToggle)
