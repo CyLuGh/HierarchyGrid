@@ -1,13 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using LanguageExt;
+﻿using LanguageExt;
 using MoreLinq;
 
 namespace HierarchyGrid.Definitions;
 
 public static class HierarchyDefinitionExtensions
 {
-    extension( IEnumerable<HierarchyDefinition> definitions )
+    extension( Seq<HierarchyDefinition> definitions )
     {
         public void Invalidate() => definitions.ForEach( definition => definition.Invalidate() );
 
@@ -29,9 +27,8 @@ public static class HierarchyDefinitionExtensions
             bool ignoreState = true
         )
         {
-            var hierarchyDefinitions = definitions as HierarchyDefinition[] ?? [.. definitions];
-            return hierarchyDefinitions.Length > 0
-                ? hierarchyDefinitions.Max( o => o.Depth( ignoreState ) )
+            return definitions.Length > 0
+                ? definitions.Max( o => o.Depth( ignoreState ) )
                 : 0;
         }
     }
@@ -59,7 +56,7 @@ public static class HierarchyDefinitionExtensions
                 flat = flat.Add( definition );
 
                 if ( includeAll || definition.IsExpanded )
-                    flat = flat.Append( definition.Children.OfType<T>().FlatList( includeAll ) );
+                    flat = flat.Append( definition.Children.OfType<T>().ToSeq().FlatList( includeAll ) );
             }
 
             return flat;
@@ -112,7 +109,7 @@ public static class HierarchyDefinitionExtensions
 
             var leaves = new List<T>();
 
-            var hierarchyDefinitions = definitions as T[] ?? definitions.ToArray();
+            var hierarchyDefinitions = definitions?.ToSeq() ?? Seq<T>.Empty;
             foreach ( var definition in hierarchyDefinitions.Where( o => o.Frozen ) )
             {
                 if ( !definition.HasChild || ( !isTrueLeaf && !definition.IsExpanded ) )

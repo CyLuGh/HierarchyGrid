@@ -2,6 +2,7 @@
 using ReactiveUI;
 using ReactiveUI.Primitives.Signals;
 using SkiaSharp;
+using Topten.RichTextKit;
 
 namespace HierarchyGrid.Skia
 {
@@ -64,23 +65,28 @@ namespace HierarchyGrid.Skia
             }
             else
             {
-                using var font = new SKFont();
-                font.Size = 64f;
-
-                using var paint = new SKPaint();
-                paint.IsAntialias = true;
-                paint.Color = theme.ForegroundColor;
-
                 var resultingScale = screenScale * viewModel.Scale;
 
-                // TODO: should probably not take all scale into account
-                canvas.DrawText(
+                TextBlock textDrawer = new();
+                textDrawer.AddText(
                     viewModel.StatusMessage ?? "NO MESSAGE",
-                    (float)resultingScale * width / 2,
-                    (float)resultingScale * height / 2,
-                    SKTextAlign.Center,
-                    font,
-                    paint
+                    new Style()
+                    {
+                        FontSize = (float)(64f * screenScale),
+                        TextColor = theme.ForegroundColor,
+                        FontFamily = !string.IsNullOrEmpty(viewModel.CellFontFamily)
+                            ? viewModel.CellFontFamily
+                            : "Monospace",
+                    }
+                );
+
+                textDrawer.Paint(
+                    canvas,
+                    new SKPoint(
+                        (float)(resultingScale * width - textDrawer.MeasuredWidth) / 2,
+                        (float)(resultingScale * height - textDrawer.MeasuredHeight) / 2
+                    ),
+                    new TextPaintOptions { Edging = SKFontEdging.SubpixelAntialias }
                 );
             }
 

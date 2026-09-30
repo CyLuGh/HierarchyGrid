@@ -4,10 +4,10 @@ using SkiaSharp;
 
 namespace HierarchyGrid.Skia
 {
-    internal struct RenderInfo
+    internal readonly record struct RenderInfo
     {
-        public SKColor BackgroundColor { get; set; }
-        public SKColor ForegroundColor { get; set; }
+        public SKColor BackgroundColor { get; private init; }
+        public SKColor ForegroundColor { get; private init; }
 
         private static SKColor FindBackgroundColor(
             HierarchyGridViewModel viewModel,

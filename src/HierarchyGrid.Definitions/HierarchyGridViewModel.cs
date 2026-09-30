@@ -184,11 +184,9 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     [Reactive]
     public partial Guid HoveredElementId { get; private set; }
 
-    [ObservableAsProperty]
-    public partial Seq<HierarchyDefinition> ColumnsDefinitions { get; }
+    public Seq<HierarchyDefinition> ColumnsDefinitions { get; private set; }
 
-    [ObservableAsProperty]
-    public partial Seq<HierarchyDefinition> RowsDefinitions { get; }
+    public Seq<HierarchyDefinition> RowsDefinitions { get; private set; }
 
     public HierarchyGridState GetGridState() => new(this);
 
@@ -359,12 +357,41 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             ManageScaleConstraints(disposables);
             ManageOffsets(disposables);
             HandleTooltipDisplay(disposables);
-            TriggerGridDrawing(disposables);
             ManageSelectionChange(disposables);
         });
 
+        // TODO: clean up
+        this.WhenAnyValue(x => x.Consumers, x => x.Producers, x => x.IsTransposed)
+            .Where(t => !t.Property1.IsEmpty && !t.Property2.IsEmpty)
+            .Subscribe(t =>
+            {
+                var (consumers, producers, isTransposed) = t;
+                ColumnsDefinitions = GetColumnsDefinitions(producers, consumers, isTransposed);
+                RowsDefinitions = GetRowsDefinitions(producers, consumers, isTransposed);
+            });
+
+        SetupGridDrawingTriggers();
+
         SetupObservablesAsProperties();
     }
+
+    private static Seq<HierarchyDefinition> GetColumnsDefinitions(
+        Seq<ProducerDefinition> producers,
+        Seq<ConsumerDefinition> consumers,
+        bool isTransposed
+    ) =>
+        isTransposed
+            ? producers.Cast<HierarchyDefinition>()
+            : consumers.Cast<HierarchyDefinition>();
+
+    private static Seq<HierarchyDefinition> GetRowsDefinitions(
+        Seq<ProducerDefinition> producers,
+        Seq<ConsumerDefinition> consumers,
+        bool isTransposed
+    ) =>
+        isTransposed
+            ? consumers.Cast<HierarchyDefinition>()
+            : producers.Cast<HierarchyDefinition>();
 
     private void SetupObservablesAsProperties()
     {
@@ -394,38 +421,6 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 return editor.IsSome;
             })
             .ToProperty(this, x => x.IsEditing, scheduler: RxSchedulers.MainThreadScheduler);
-
-        _columnsDefinitionsHelper = this.WhenAnyValue(
-                x => x.Consumers,
-                x => x.Producers,
-                x => x.IsTransposed
-            )
-            .Select(t =>
-            {
-                var (consumers, producers, isTransposed) = t;
-                return isTransposed
-                    ? producers.Cast<HierarchyDefinition>()
-                    : consumers.Cast<HierarchyDefinition>();
-            })
-            .ToProperty(
-                this,
-                x => x.ColumnsDefinitions,
-                scheduler: RxSchedulers.MainThreadScheduler
-            );
-
-        _rowsDefinitionsHelper = this.WhenAnyValue(
-                x => x.Consumers,
-                x => x.Producers,
-                x => x.IsTransposed
-            )
-            .Select(t =>
-            {
-                var (consumers, producers, isTransposed) = t;
-                return isTransposed
-                    ? consumers.Cast<HierarchyDefinition>()
-                    : producers.Cast<HierarchyDefinition>();
-            })
-            .ToProperty(this, x => x.RowsDefinitions, scheduler: RxSchedulers.MainThreadScheduler);
 
         _isCopyingToClipboardHelper = CopyToClipboardCommand.IsExecuting.ToProperty(
             this,
@@ -525,7 +520,19 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .DisposeWith(disposables);
     }
 
-    private void TriggerGridDrawing(MultipleDisposable disposables)
+    /// <summary>
+    /// Configures the triggers that determine when the grid should be redrawn in response to various
+    /// events such as scrolling, scaling, mouse interactions, layout changes, theme updates, or
+    /// specific commands.
+    /// </summary>
+    /// <remarks>
+    /// This method sets up various observable sequences to monitor updates to the grid's layout,
+    /// mouse-related properties, and other state variables. These sequences are throttled and
+    /// de-duplicated to optimize performance and to minimize unnecessary redraws. It also handles
+    /// transpose-related adjustments for header dimensions and incorporates multiple sources of
+    /// redraw signals, ensuring seamless updates to the grid display.
+    /// </remarks>
+    private void SetupGridDrawingTriggers()
     {
         /* Redraw grid when scrolling or changing scale */
         var gridLayoutEventsObservable = this.WhenAnyValue(
@@ -553,16 +560,22 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .Publish()
             .RefCount();
 
-        // Events starting a grid redraw
+        var transpose = this.WhenAnyValue(x => x.IsTransposed)
+            .Unique()
+            .Do(isTransposed =>
+            {
+                /* Need to adapt header size on transpose */
+                SetHeadersDimension(
+                    GetRowsDefinitions(Producers, Consumers, IsTransposed),
+                    GetColumnsDefinitions(Producers, Consumers, IsTransposed)
+                );
+            })
+            .Select(_ => (false, "transpose"));
+
+        // Events starting grid redraw
         Signal
             .Merge(
-                this.WhenAnyValue(x => x.IsTransposed)
-                    .Do(isTransposed =>
-                    {
-                        /* Need to adapt headers size on transpose */
-                        SetHeadersDimension(isTransposed);
-                    })
-                    .Select(_ => (false, "transpose")),
+                transpose,
                 this.WhenAnyValue(x => x.Theme)
                     .Where(x => x is not null)
                     .Select(_ => (false, "theme")),
@@ -577,30 +590,27 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             .Select(t => t.Item1)
 #endif
             .Throttle(TimeSpan.FromMilliseconds(10))
-            .InvokeCommand(DrawGridCommand)
-            .DisposeWith(disposables);
+            .InvokeCommand(DrawGridCommand);
+        // .DisposeWith(disposables);
     }
 
-    private void SetHeadersDimension(bool isTransposed, bool preserveSizes = false)
+    private void SetHeadersDimension(
+        Seq<HierarchyDefinition> rows,
+        Seq<HierarchyDefinition> columns,
+        bool preserveSizes = false
+    )
     {
-        var rowDefinitions = !isTransposed
-            ? Producers.Cast<HierarchyDefinition>()
-            : Consumers.Cast<HierarchyDefinition>();
-        var columnDefinitions = !isTransposed
-            ? Consumers.Cast<HierarchyDefinition>()
-            : Producers.Cast<HierarchyDefinition>();
-
         RowsHeadersWidth =
         [
-            .. Enumerable.Range(0, rowDefinitions.TotalDepth()).Select(_ => DefaultHeaderWidth),
+            .. Enumerable.Range(0, rows.TotalDepth()).Select(_ => DefaultHeaderWidth),
         ];
 
         ColumnsHeadersHeight =
         [
-            .. Enumerable.Range(0, columnDefinitions.TotalDepth()).Select(_ => DefaultHeaderHeight),
+            .. Enumerable.Range(0, columns.TotalDepth()).Select(_ => DefaultHeaderHeight),
         ];
 
-        var columnsCount = columnDefinitions.TotalCount(true);
+        var columnsCount = columns.TotalCount(true);
         if (!preserveSizes || columnsCount != ColumnsWidths.Count)
         {
             ColumnsWidths.Clear();
@@ -608,7 +618,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
                 ColumnsWidths.Add(x, DefaultColumnWidth);
         }
 
-        var rowsCount = rowDefinitions.TotalCount(true);
+        var rowsCount = rows.TotalCount(true);
         if (!preserveSizes || rowsCount != RowsHeights.Count)
         {
             RowsHeights.Clear();
@@ -738,7 +748,11 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         Producers = hierarchyDefinitions.Producers;
         Consumers = hierarchyDefinitions.Consumers;
 
-        SetHeadersDimension(IsTransposed, preserveSizes);
+        SetHeadersDimension(
+            GetRowsDefinitions(Producers, Consumers, IsTransposed),
+            GetColumnsDefinitions(Producers, Consumers, IsTransposed),
+            preserveSizes
+        );
 #if DEBUG
         Signal.Return((true, "set definitions")).InvokeCommand(DrawGridCommand);
 #else

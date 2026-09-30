@@ -977,7 +977,7 @@ namespace HierarchyGrid.Skia
                     TextColor = renderInfo.ForegroundColor,
                     FontFamily = !string.IsNullOrEmpty(viewModel.CellFontFamily)
                         ? viewModel.CellFontFamily
-                        : "Sans Serif",
+                        : "Monospace",
                 }
             );
 
