@@ -164,7 +164,7 @@ namespace HierarchyGrid.Skia
             GlobalHeader globalHeader = GlobalHeader.Local
         )
         {
-            var actualScale = screenScale * viewModel.Scale;
+            var actualScale = screenScale * viewModel.ZoomLevel;
             var rect = SKRect.Create(
                 (float)(left * actualScale),
                 (float)(top * actualScale),
@@ -229,7 +229,7 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
-            var actualAvailableWidth = availableWidth / viewModel.Scale;
+            var actualAvailableWidth = availableWidth / viewModel.ZoomLevel;
 
             viewModel.ColumnsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
@@ -400,7 +400,7 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
-            var actualAvailableHeight = availableHeight / viewModel.Scale;
+            var actualAvailableHeight = availableHeight / viewModel.ZoomLevel;
 
             viewModel.RowsParents.Clear();
             var hdefs = selector(viewModel).ToArr();
@@ -568,7 +568,7 @@ namespace HierarchyGrid.Skia
             double screenScale
         )
         {
-            float actualScale = (float)(screenScale * viewModel.Scale);
+            float actualScale = (float)(screenScale * viewModel.ZoomLevel);
             var rect = SKRect.Create(
                 left * actualScale,
                 top * actualScale,
@@ -691,10 +691,9 @@ namespace HierarchyGrid.Skia
             {
                 GlobalHeader.ExpandAll => BuildExpandAllPath(left, top, width, height),
                 GlobalHeader.CollapseAll => BuildFoldAllPath(left, top, width, height),
-                _
-                    => isExpanded
-                        ? BuildExpandedPath(left, top, width, height)
-                        : BuildFoldedPath(left, top, width, height),
+                _ => isExpanded
+                    ? BuildExpandedPath(left, top, width, height)
+                    : BuildFoldedPath(left, top, width, height),
             };
 
         private static SKPath BuildFoldAllPath(float left, float top, float width, float height)
@@ -792,7 +791,7 @@ namespace HierarchyGrid.Skia
             double screenScale = 1d
         )
         {
-            var actualScale = screenScale * viewModel.Scale;
+            var actualScale = screenScale * viewModel.ZoomLevel;
 
             var rect = SKRect.Create(
                 (float)(cell.Left * actualScale),
@@ -862,7 +861,7 @@ namespace HierarchyGrid.Skia
             RenderLeftSideDecor(canvas, cell, renderInfo, actualScale);
             RenderRightSideDecor(canvas, cell, renderInfo, actualScale);
 
-            viewModel.CellsCoordinates.Add((new(cell, viewModel.Scale), cell));
+            viewModel.CellsCoordinates.Add((new(cell, viewModel.ZoomLevel), cell));
         }
 
         private static void RenderDecor(
@@ -890,7 +889,7 @@ namespace HierarchyGrid.Skia
                 ColorFilter = SKColorFilter.CreateBlendMode(
                     renderInfo.ForegroundColor,
                     SKBlendMode.SrcIn
-                )
+                ),
             };
 
             canvas.DrawPicture(picture, new SKPoint(x, y), paint);

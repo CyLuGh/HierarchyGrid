@@ -4,37 +4,37 @@
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Avalonia" Version="12.1.4" />
-    <PackageVersion Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageVersion Include="Avalonia" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.6" />
     <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.22" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.4" />
-    <PackageVersion Include="Avalonia.Skia" Version="12.1.4" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.6" />
     <PackageVersion Include="Bogus" Version="35.6.5" />
     <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="LanguageExt.Core" Version="4.4.9" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="morelinq" Version="4.4.0" />
-    <PackageVersion Include="NLog" Version="6.2.1" />
+    <PackageVersion Include="NLog" Version="6.2.2" />
     <PackageVersion Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.3.1" />
-    <PackageVersion Include="ReactiveUI" Version="26.0.1" />
-    <PackageVersion Include="ReactiveUI.Avalonia" Version="12.1.6" />
-    <PackageVersion Include="ReactiveUI.Primitives" Version="9.0.0" />
-    <PackageVersion Include="ReactiveUI.Primitives.Avalonia" Version="9.0.0" />
-    <PackageVersion Include="ReactiveUI.Primitives.Wpf" Version="9.0.0" />
-    <PackageVersion Include="ReactiveUI.Testing" Version="26.0.1" />
-    <PackageVersion Include="ReactiveUI.WPF" Version="26.0.1" />
-    <PackageVersion Include="SkiaSharp" Version="4.153.1" />
-    <PackageVersion Include="SkiaSharp.HarfBuzz" Version="4.153.1" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.153.1" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="4.153.1" />
-    <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="4.153.1" />
-    <PackageVersion Include="SkiaSharp.Views.WPF" Version="4.153.1" />
-    <PackageVersion Include="Splat.DependencyInjection.SourceGenerator" Version="3.0.0" />
+    <PackageVersion Include="ReactiveUI" Version="28.0.0" />
+    <PackageVersion Include="ReactiveUI.Avalonia" Version="12.1.9" />
+    <PackageVersion Include="ReactiveUI.Primitives" Version="10.2.3" />
+    <PackageVersion Include="ReactiveUI.Primitives.Avalonia" Version="10.2.3" />
+    <PackageVersion Include="ReactiveUI.Primitives.Wpf" Version="10.2.3" />
+    <PackageVersion Include="ReactiveUI.Testing" Version="28.0.0" />
+    <PackageVersion Include="ReactiveUI.WPF" Version="28.0.0" />
+    <PackageVersion Include="SkiaSharp" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.HarfBuzz" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="4.157.0" />
+    <PackageVersion Include="SkiaSharp.Views.WPF" Version="4.157.0" />
+    <PackageVersion Include="Splat.DependencyInjection.SourceGenerator" Version="4.0.0" />
     <PackageVersion Include="Svg.Skia" Version="5.2.3" />
     <PackageVersion Include="System.Text.Json" Version="10.0.3" />
     <PackageVersion Include="TextCopy" Version="6.2.1" />
-    <PackageVersion Include="Topten.RichTextKit" Version="0.6.170" />
+    <PackageVersion Include="Topten.RichTextKit" Version="0.6.174" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>

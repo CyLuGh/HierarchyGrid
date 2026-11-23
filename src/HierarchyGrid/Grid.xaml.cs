@@ -124,7 +124,7 @@ namespace HierarchyGrid
                     viewModel.HandleMouseOver(
                         position.X,
                         position.Y,
-                        viewModel.Scale * view.ScreenScale
+                        viewModel.ZoomLevel * view.ScreenScale
                     );
                 })
                 .DisposeWith(disposables);
@@ -213,9 +213,9 @@ namespace HierarchyGrid
                     var e = t.EventArgs;
                     if (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl))
                     {
-                        var scale = viewModel.Scale + (.05 * (e.Delta < 0 ? 1 : -1));
+                        var scale = viewModel.ZoomLevel + (.05 * (e.Delta < 0 ? 1 : -1));
 
-                        viewModel.Scale = scale switch
+                        viewModel.ZoomLevel = scale switch
                         {
                             < .75 => .75,
                             > 1 => 1,
@@ -673,7 +673,7 @@ namespace HierarchyGrid
             {
                 var (coord, def) = c;
                 var splitter = GetSplitter(splitterCount++);
-                splitter.Height = coord.Height * viewModel.Scale;
+                splitter.Height = coord.Height * viewModel.ZoomLevel;
                 splitter.Width = 2;
                 splitter.ResizeDirection = GridResizeDirection.Columns;
 
@@ -709,19 +709,19 @@ namespace HierarchyGrid
                         var rect = new Rectangle
                         {
                             Fill = Brushes.DarkSlateGray,
-                            Height = coord.Height * viewModel.Scale,
+                            Height = coord.Height * viewModel.ZoomLevel,
                             Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, coord.Top * viewModel.Scale);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
+                        Canvas.SetTop(rect, coord.Top * viewModel.ZoomLevel);
+                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.ZoomLevel);
                     });
 
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
-                Canvas.SetLeft(splitter, coord.Right * viewModel.Scale);
+                Canvas.SetTop(splitter, coord.Top * viewModel.ZoomLevel);
+                Canvas.SetLeft(splitter, coord.Right * viewModel.ZoomLevel);
             }
 
             foreach (var p in headers.Where(t => t.Definition.Definition is ProducerDefinition))
@@ -729,7 +729,7 @@ namespace HierarchyGrid
                 var (coord, def) = p;
                 var splitter = GetSplitter(splitterCount++);
                 splitter.Height = 2;
-                splitter.Width = coord.Width * viewModel.Scale;
+                splitter.Width = coord.Width * viewModel.ZoomLevel;
                 splitter.ResizeDirection = GridResizeDirection.Rows;
 
                 var dsp = Signal
@@ -765,18 +765,18 @@ namespace HierarchyGrid
                         {
                             Fill = Brushes.DarkSlateGray,
                             Height = 2d,
-                            Width = coord.Width * viewModel.Scale,
+                            Width = coord.Width * viewModel.ZoomLevel,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, (posY + args.VerticalChange) * viewModel.Scale);
-                        Canvas.SetLeft(rect, coord.Left * viewModel.Scale);
+                        Canvas.SetTop(rect, (posY + args.VerticalChange) * viewModel.ZoomLevel);
+                        Canvas.SetLeft(rect, coord.Left * viewModel.ZoomLevel);
                     });
 
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, coord.Bottom * viewModel.Scale);
-                Canvas.SetLeft(splitter, coord.Left * viewModel.Scale);
+                Canvas.SetTop(splitter, coord.Bottom * viewModel.ZoomLevel);
+                Canvas.SetLeft(splitter, coord.Left * viewModel.ZoomLevel);
             }
 
             var currentX = 0d;
@@ -792,7 +792,7 @@ namespace HierarchyGrid
                 var currentIndex = i;
                 var width = viewModel.RowsHeadersWidth[currentIndex];
                 var splitter = GetSplitter(splitterCount++);
-                splitter.Height = height * viewModel.Scale;
+                splitter.Height = height * viewModel.ZoomLevel;
                 splitter.Width = 2;
                 splitter.ResizeDirection = GridResizeDirection.Columns;
                 currentX += width;
@@ -834,19 +834,19 @@ namespace HierarchyGrid
                         var rect = new Rectangle
                         {
                             Fill = Brushes.DarkSlateGray,
-                            Height = height * viewModel.Scale,
+                            Height = height * viewModel.ZoomLevel,
                             Width = 2d,
                         };
                         view.Canvas.Children.Add(rect);
 
-                        Canvas.SetTop(rect, currentY * viewModel.Scale);
-                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.Scale);
+                        Canvas.SetTop(rect, currentY * viewModel.ZoomLevel);
+                        Canvas.SetLeft(rect, (posX + args.HorizontalChange) * viewModel.ZoomLevel);
                     });
 
                 viewModel.ResizeObservables.Enqueue(delta);
 
-                Canvas.SetTop(splitter, currentY * viewModel.Scale);
-                Canvas.SetLeft(splitter, currentX * viewModel.Scale);
+                Canvas.SetTop(splitter, currentY * viewModel.ZoomLevel);
+                Canvas.SetLeft(splitter, currentX * viewModel.ZoomLevel);
             }
 
             var exceeding = splitters.Skip(splitterCount).ToArray();

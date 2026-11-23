@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/Avalonia/">
+    <Project Path="Demo.AvaloniaApplication.Desktop/Demo.AvaloniaApplication.Desktop.csproj" />
+    <Project Path="Demo.AvaloniaApplication/Demo.AvaloniaApplication.csproj" />
+    <Project Path="HierarchyGrid.Avalonia/HierarchyGrid.Avalonia.csproj" />
+  </Folder>
+  <Folder Name="/Misc/">
+    <File Path="../readme.md" />
+    <File Path="../.gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/Misc/GitHub Actions/">
+      <File Path="../.github/workflows/ci.yml" />
+      <File Path="../.github/workflows/cd.yml" />
+    </Folder>
+  <Folder Name="/WPF/">
+    <Project Path="Demo/Demo.csproj" />
+    <Project Path="HierarchyGrid/HierarchyGrid.csproj" />
+  </Folder>
+  <Project Path="HierarchyGrid.Definitions.Tests/HierarchyGrid.Definitions.Tests.csproj" />
+  <Project Path="HierarchyGrid.Definitions/HierarchyGrid.Definitions.csproj" />
+  <Project Path="HierarchyGrid.Skia/HierarchyGrid.Skia.csproj" />
+</Solution>

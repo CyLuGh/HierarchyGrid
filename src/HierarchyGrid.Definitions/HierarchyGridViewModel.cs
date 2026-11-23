@@ -143,7 +143,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     public partial int VerticalOffset { get; set; }
 
     [Reactive]
-    public partial double Scale { get; set; } = 1d;
+    public partial double ZoomLevel { get; set; } = 1d;
 
     [Reactive]
     public partial double Width { get; set; } = double.NaN;
@@ -444,16 +444,16 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
 
     private void ManageScaleConstraints(MultipleDisposable disposables)
     {
-        /* Don't allow scale < 0.75 */
-        this.WhenAnyValue(x => x.Scale)
-            .Where(x => x < 0.75)
-            .SubscribeSafe(_ => Scale = 0.75)
+        /* Don't allow scale < 0.5 */
+        this.WhenAnyValue(x => x.ZoomLevel)
+            .Where(x => x < 0.5)
+            .SubscribeSafe(_ => ZoomLevel = 0.75)
             .DisposeWith(disposables);
 
         /* Don't allow scale > 1 */
-        this.WhenAnyValue(x => x.Scale)
+        this.WhenAnyValue(x => x.ZoomLevel)
             .Where(x => x > 1)
-            .SubscribeSafe(_ => Scale = 1)
+            .SubscribeSafe(_ => ZoomLevel = 1)
             .DisposeWith(disposables);
     }
 
@@ -538,7 +538,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
         var gridLayoutEventsObservable = this.WhenAnyValue(
                 x => x.HorizontalOffset,
                 x => x.VerticalOffset,
-                x => x.Scale,
+                x => x.ZoomLevel,
                 x => x.Width,
                 x => x.Height
             )
@@ -832,7 +832,7 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
             VerticalOffset,
             width,
             height,
-            screenScale * Scale,
+            screenScale * ZoomLevel,
             invalidate
         );
         return DrawnCells;
