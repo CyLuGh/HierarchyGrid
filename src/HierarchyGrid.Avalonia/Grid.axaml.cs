@@ -161,7 +161,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         viewModel
             .ShowTooltipInteraction.RegisterHandler(ctx =>
             {
-                view.ShowTooltip(ctx.Input, viewModel.Scale);
+                view.ShowTooltip(ctx.Input, viewModel.ZoomLevel);
                 ctx.SetOutput(RxVoid.Default);
             })
             .DisposeWith(disposables);
@@ -255,7 +255,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
     )
     {
         var position = args.GetPosition(element);
-        viewModel.HandleMouseOver(position.X, position.Y, viewModel.Scale);
+        viewModel.HandleMouseOver(position.X, position.Y, viewModel.ZoomLevel);
     }
 
     private static void SkiaElement_PointerExit(HierarchyGridViewModel viewModel)
@@ -272,9 +272,9 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
         if (args.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
-            var scale = viewModel.Scale + (.05 * (delta < 0 ? 1 : -1));
+            var scale = viewModel.ZoomLevel + (.05 * (delta < 0 ? 1 : -1));
 
-            viewModel.Scale = scale switch
+            viewModel.ZoomLevel = scale switch
             {
                 < .75 => .75,
                 > 1 => 1,
@@ -614,7 +614,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         {
             var (coord, def) = c;
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = coord.Height * viewModel.Scale;
+            splitter.Height = coord.Height * viewModel.ZoomLevel;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
 
@@ -627,8 +627,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, coord.Top * viewModel.Scale);
-            Canvas.SetLeft(splitter, (coord.Right - 2) * viewModel.Scale);
+            Canvas.SetTop(splitter, coord.Top * viewModel.ZoomLevel);
+            Canvas.SetLeft(splitter, (coord.Right - 2) * viewModel.ZoomLevel);
         }
 
         var currentX = 0d;
@@ -642,7 +642,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
             var currentIndex = i;
             var width = viewModel.RowsHeadersWidth[currentIndex];
             var splitter = GetSplitter(splitterCount++);
-            splitter.Height = height * viewModel.Scale;
+            splitter.Height = height * viewModel.ZoomLevel;
             splitter.Width = 2;
             splitter.ResizeDirection = GridResizeDirection.Columns;
             currentX += width;
@@ -656,8 +656,8 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
 
             viewModel.ResizeObservables.Enqueue(dsp);
 
-            Canvas.SetTop(splitter, currentY * viewModel.Scale);
-            Canvas.SetLeft(splitter, (currentX - 2) * viewModel.Scale);
+            Canvas.SetTop(splitter, currentY * viewModel.ZoomLevel);
+            Canvas.SetLeft(splitter, (currentX - 2) * viewModel.ZoomLevel);
         }
 
         var exceeding = splitters.Skip(splitterCount).ToArray();

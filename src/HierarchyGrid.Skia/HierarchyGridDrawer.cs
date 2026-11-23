@@ -65,7 +65,7 @@ namespace HierarchyGrid.Skia
             }
             else
             {
-                var resultingScale = screenScale * viewModel.Scale;
+                var resultingScale = screenScale * viewModel.ZoomLevel;
 
                 TextBlock textDrawer = new();
                 textDrawer.AddText(
