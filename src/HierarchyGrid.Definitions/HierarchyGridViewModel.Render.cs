@@ -4,11 +4,11 @@ namespace HierarchyGrid.Definitions
 {
     public partial class HierarchyGridViewModel
     {
-        private static readonly double DEFAULT_HEADER_HEIGHT = 30;
-        private static readonly double DEFAULT_COLUMN_WIDTH = 120;
-        private static readonly double DEFAULT_ROW_HEIGHT = 30;
-        private static readonly double DEFAULT_HEADER_WIDTH = 80;
-        private static readonly float DEFAULT_FONT_SIZE = 15;
+        public static readonly double DEFAULT_HEADER_HEIGHT = 30;
+        public static readonly double DEFAULT_COLUMN_WIDTH = 120;
+        public static readonly double DEFAULT_ROW_HEIGHT = 30;
+        public static readonly double DEFAULT_HEADER_WIDTH = 80;
+        public static readonly float DEFAULT_FONT_SIZE = 15;
 
         public double DefaultHeaderWidth { get; set; } = DEFAULT_HEADER_WIDTH;
         public double DefaultHeaderHeight { get; set; } = DEFAULT_HEADER_HEIGHT;

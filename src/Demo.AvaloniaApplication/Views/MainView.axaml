@@ -104,7 +104,7 @@
                     Command="{Binding BuildFlatDefinitionsCommand}"
                     Content="Fill"
                     DockPanel.Dock="Bottom" />
-                <hierarchyGrid:Grid x:Name="HierarchyGridSingle" DefaultColumnWidth="50" />
+                <hierarchyGrid:Grid x:Name="HierarchyGridSingle" DefaultColumnWidth="200" DefaultHeaderWidth="300"/>
             </DockPanel>
         </TabItem>
     </TabControl>
