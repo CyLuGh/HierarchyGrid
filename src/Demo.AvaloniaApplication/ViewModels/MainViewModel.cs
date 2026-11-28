@@ -276,4 +276,22 @@ public partial class MainViewModel : ViewModelBase
     {
         Signal.Return(RxVoid.Default).InvokeCommand(TestViewModel, x => x.ScrollToBottomCommand);
     }
+
+    [ReactiveCommand]
+    private void Scroll2Right()
+    {
+        Signal.Return(RxVoid.Default).InvokeCommand(TestViewModel, x => x.ScrollToRightCommand);
+    }
+
+    [ReactiveCommand]
+    private void Scroll2Top()
+    {
+        Signal.Return(RxVoid.Default).InvokeCommand(TestViewModel, x => x.ScrollToTopCommand);
+    }
+
+    [ReactiveCommand]
+    private void Scroll2Left()
+    {
+        Signal.Return(RxVoid.Default).InvokeCommand(TestViewModel, x => x.ScrollToLeftCommand);
+    }
 }
