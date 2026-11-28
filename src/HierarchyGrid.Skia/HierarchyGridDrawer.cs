@@ -22,6 +22,9 @@ namespace HierarchyGrid.Skia
             canvas.Clear();
             var theme = new SkiaTheme(viewModel.Theme);
 
+            // Save some render info for scrolling commands
+            viewModel.AvailableSpace = (height, width, screenScale);
+
             using var paintBackground = new SKPaint();
             paintBackground.Color = theme.BackgroundColor;
             paintBackground.Style = SKPaintStyle.StrokeAndFill;

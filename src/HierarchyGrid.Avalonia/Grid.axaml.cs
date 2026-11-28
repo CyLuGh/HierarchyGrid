@@ -219,16 +219,49 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
         view.SkiaElement.Invalidate();
     }
 
+    /// <summary>
+    /// Apply dependency properties only if they differ from default values. Otherwise,
+    /// we may be overriding values set in the viewmodel instead.
+    /// </summary>
+    /// <param name="view"></param>
+    /// <param name="viewModel"></param>
     private static void ApplyDependencyProperties(Grid view, HierarchyGridViewModel viewModel)
     {
-        viewModel.DefaultColumnWidth = view.DefaultColumnWidth;
-        viewModel.DefaultRowHeight = view.DefaultRowHeight;
-        viewModel.DefaultHeaderHeight = view.DefaultHeaderHeight;
-        viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
-        viewModel.StatusMessage = view.StatusMessage ?? "No message";
+        if (
+            Math.Abs(view.DefaultColumnWidth - HierarchyGridViewModel.DEFAULT_COLUMN_WIDTH)
+            > double.Epsilon
+        )
+            viewModel.DefaultColumnWidth = view.DefaultColumnWidth;
+
+        if (
+            Math.Abs(view.DefaultRowHeight - HierarchyGridViewModel.DEFAULT_ROW_HEIGHT)
+            > double.Epsilon
+        )
+            viewModel.DefaultRowHeight = view.DefaultRowHeight;
+
+        if (
+            Math.Abs(view.DefaultHeaderHeight - HierarchyGridViewModel.DEFAULT_HEADER_HEIGHT)
+            > double.Epsilon
+        )
+            viewModel.DefaultHeaderHeight = view.DefaultHeaderHeight;
+
+        if (
+            Math.Abs(view.DefaultHeaderWidth - HierarchyGridViewModel.DEFAULT_HEADER_WIDTH)
+            > double.Epsilon
+        )
+            viewModel.DefaultHeaderWidth = view.DefaultHeaderWidth;
+
+        if (!string.IsNullOrEmpty(view.StatusMessage))
+            viewModel.StatusMessage = view.StatusMessage;
+
         viewModel.EnableCrosshair = view.EnableCrosshair;
-        viewModel.CellFontSize = view.CellFontSize;
-        viewModel.HeaderFontSize = view.HeaderFontSize;
+
+        if (Math.Abs(view.CellFontSize - HierarchyGridViewModel.DEFAULT_FONT_SIZE) > float.Epsilon)
+        {
+            viewModel.CellFontSize = view.CellFontSize;
+            viewModel.HeaderFontSize = view.HeaderFontSize;
+        }
+
         viewModel.CellFontFamily = view.CellFontFamily;
         viewModel.HeaderFontFamily = view.HeaderFontFamily;
     }
@@ -800,7 +833,7 @@ public partial class Grid : ReactiveUserControl<HierarchyGridViewModel>
                                 handler => tb.KeyDown += handler,
                                 handler => tb.KeyDown -= handler
                             )
-                            .Subscribe(t => EditorKeyDown(tb, t.EventArgs, viewModel, editor))
+                            .Subscribe(a => EditorKeyDown(tb, a.EventArgs, viewModel, editor))
                             .DisposeWith(disposables);
 
                         tb.Bind(TextBox.TextProperty, binding).DisposeWith(disposables);

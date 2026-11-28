@@ -1,11 +1,12 @@
 ﻿using Avalonia;
+using HierarchyGrid.Definitions;
 
 namespace HierarchyGrid.Avalonia;
 
 public partial class Grid
 {
     public static readonly StyledProperty<string?> StatusMessageProperty =
-        AvaloniaProperty.Register<Grid, string?>(nameof(StatusMessage), "No message");
+        AvaloniaProperty.Register<Grid, string?>(nameof(StatusMessage), string.Empty);
 
     public string? StatusMessage
     {
@@ -13,39 +14,49 @@ public partial class Grid
         set => SetValue(StatusMessageProperty, value);
     }
 
-    public static readonly StyledProperty<int> DefaultColumnWidthProperty =
-        AvaloniaProperty.Register<Grid, int>(nameof(DefaultColumnWidth), 120);
+    public static readonly StyledProperty<double> DefaultColumnWidthProperty =
+        AvaloniaProperty.Register<Grid, double>(
+            nameof(DefaultColumnWidth),
+            HierarchyGridViewModel.DEFAULT_COLUMN_WIDTH
+        );
 
-    public int DefaultColumnWidth
+    public double DefaultColumnWidth
     {
         get => GetValue(DefaultColumnWidthProperty);
         set => SetValue(DefaultColumnWidthProperty, value);
     }
 
-    public static readonly StyledProperty<int> DefaultRowHeightProperty = AvaloniaProperty.Register<
-        Grid,
-        int
-    >(nameof(DefaultRowHeight), 30);
+    public static readonly StyledProperty<double> DefaultRowHeightProperty =
+        AvaloniaProperty.Register<Grid, double>(
+            nameof(DefaultRowHeight),
+            HierarchyGridViewModel.DEFAULT_ROW_HEIGHT
+        );
 
-    public int DefaultRowHeight
+    public double DefaultRowHeight
     {
         get => GetValue(DefaultRowHeightProperty);
         set => SetValue(DefaultRowHeightProperty, value);
     }
 
-    public static readonly StyledProperty<int> DefaultHeaderWidthProperty =
-        AvaloniaProperty.Register<Grid, int>(nameof(DefaultHeaderWidth), 80);
+    public static readonly StyledProperty<double> DefaultHeaderWidthProperty =
+        AvaloniaProperty.Register<Grid, double>(
+            nameof(DefaultHeaderWidth),
+            HierarchyGridViewModel.DEFAULT_HEADER_WIDTH
+        );
 
-    public int DefaultHeaderWidth
+    public double DefaultHeaderWidth
     {
         get => GetValue(DefaultHeaderWidthProperty);
         set => SetValue(DefaultHeaderWidthProperty, value);
     }
 
-    public static readonly StyledProperty<int> DefaultHeaderHeightProperty =
-        AvaloniaProperty.Register<Grid, int>(nameof(DefaultHeaderHeight), 30);
+    public static readonly StyledProperty<double> DefaultHeaderHeightProperty =
+        AvaloniaProperty.Register<Grid, double>(
+            nameof(DefaultHeaderHeight),
+            HierarchyGridViewModel.DEFAULT_HEADER_HEIGHT
+        );
 
-    public int DefaultHeaderHeight
+    public double DefaultHeaderHeight
     {
         get => GetValue(DefaultHeaderHeightProperty);
         set => SetValue(DefaultHeaderHeightProperty, value);
@@ -65,7 +76,7 @@ public partial class Grid
     public static readonly StyledProperty<float> CellFontSizeProperty = AvaloniaProperty.Register<
         Grid,
         float
-    >(nameof(CellFontSize), 15);
+    >(nameof(CellFontSize), HierarchyGridViewModel.DEFAULT_FONT_SIZE);
 
     public float CellFontSize
     {
@@ -76,7 +87,7 @@ public partial class Grid
     public static readonly StyledProperty<float> HeaderFontSizeProperty = AvaloniaProperty.Register<
         Grid,
         float
-    >(nameof(HeaderFontSize), 15);
+    >(nameof(HeaderFontSize), HierarchyGridViewModel.DEFAULT_FONT_SIZE);
 
     public float HeaderFontSize
     {

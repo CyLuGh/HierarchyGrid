@@ -1296,4 +1296,80 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     }
 
     public bool IsEmpty() => Producers.IsEmpty || Consumers.IsEmpty;
+
+    [ReactiveCommand]
+    private void ScrollToBottom()
+    {
+        var (height, _, scale) = AvailableSpace;
+        VerticalOffset = GetMaxScrollOffset(
+            height,
+            scale,
+            ColumnsHeadersHeight,
+            RowsDefinitions,
+            RowsHeights,
+            MaxVerticalOffset
+        );
+    }
+
+    [ReactiveCommand]
+    private void ScrollToRight()
+    {
+        var (_, width, scale) = AvailableSpace;
+        HorizontalOffset = GetMaxScrollOffset(
+            width,
+            scale,
+            RowsHeadersWidth,
+            ColumnsDefinitions,
+            ColumnsWidths,
+            MaxHorizontalOffset
+        );
+    }
+
+    [ReactiveCommand]
+    private void ScrollToTop()
+    {
+        VerticalOffset = 0;
+    }
+
+    [ReactiveCommand]
+    private void ScrollToLeft()
+    {
+        HorizontalOffset = 0;
+    }
+
+    private int GetMaxScrollOffset(
+        float available,
+        double scale,
+        double[] headersSizes,
+        Seq<HierarchyDefinition> definitions,
+        Dictionary<int, double> cellsSizes,
+        int maxOffset
+    )
+    {
+        // Need to render headers
+        var headersSpace = headersSizes.Sum() * scale;
+
+        // Need to render fixed items
+        var frozenSpace =
+            definitions.Where(x => x.Frozen).Sum(r => cellsSizes.GetValueOrDefault(r.Position, 0d))
+            * scale;
+
+        var availableSpace = available - (headersSpace + frozenSpace);
+        int offset = maxOffset;
+
+        while (
+            offset > 0
+            && availableSpace > cellsSizes.GetValueOrDefault(offset - 1, double.MaxValue)
+        )
+        {
+            var size = cellsSizes.GetValueOrDefault(offset, double.NaN);
+            if (double.IsNaN(size))
+                break;
+            availableSpace -= size * scale;
+            offset--;
+        }
+
+        // Loop will execute offset-- once too many if available space breaks loop
+        return offset + 1;
+    }
 }
