@@ -91,6 +91,10 @@
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Center"
                         Content="Cycle font size" />
+                    <Button x:Name="ButtonScrollBottom"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Content="Scroll to bottom"/>
                 </UniformGrid>
                 <hierarchyGrid:Grid
                     x:Name="HierarchyGridTest"

@@ -4,6 +4,7 @@ using System.Linq;
 using HierarchyGrid.Definitions;
 using ReactiveUI;
 using ReactiveUI.Primitives;
+using ReactiveUI.Primitives.Signals;
 using ReactiveUI.SourceGenerators;
 using Splat;
 
@@ -268,5 +269,11 @@ public partial class MainViewModel : ViewModelBase
 
         FlatHierarchyViewModel.Set(new(producers, consumers));
         FlatHierarchyViewModel.IsTransposed = true;
+    }
+
+    [ReactiveCommand]
+    private void Scroll2Bottom()
+    {
+        Signal.Return(RxVoid.Default).InvokeCommand(TestViewModel, x => x.ScrollToBottomCommand);
     }
 }

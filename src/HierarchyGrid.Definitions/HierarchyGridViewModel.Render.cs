@@ -30,6 +30,8 @@ namespace HierarchyGrid.Definitions
         public List<HierarchyDefinition> ColumnsParents { get; } = [];
         public List<HierarchyDefinition> RowsParents { get; } = [];
 
+        public (float height, float width, double screenScale) AvailableSpace { get; set; }
+
         public void SetColumnsWidths(double width)
         {
             foreach (var kvp in ColumnsWidths)

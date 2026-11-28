@@ -61,5 +61,8 @@ public partial class MainView : ReactiveUserControl<MainViewModel>
 
         view.BindCommand(viewModel, vm => vm.TransposeGrid, v => v.ButtonTranspose)
             .DisposeWith(disposables);
+
+        view.BindCommand(viewModel, vm => vm.Scroll2BottomCommand, v => v.ButtonScrollBottom)
+            .DisposeWith(disposables);
     }
 }

@@ -1296,4 +1296,40 @@ public partial class HierarchyGridViewModel : ReactiveObject, IActivatableViewMo
     }
 
     public bool IsEmpty() => Producers.IsEmpty || Consumers.IsEmpty;
+
+    [ReactiveCommand]
+    private void ScrollToBottom()
+    {
+        var (height, _, scale) = AvailableSpace;
+
+        // Need to render headers
+        var headersSpace = ColumnsHeadersHeight.Sum() * scale;
+
+        // Need to render fixed rows
+        var frozenSpace =
+            RowsDefinitions
+                .Where(x => x.Frozen)
+                .Sum(r => RowsHeights.GetValueOrDefault(r.Position, 0d)) * scale;
+
+        var availableSpace = height - (headersSpace + frozenSpace);
+
+        int offset = MaxVerticalOffset;
+
+        while (
+            offset > 0
+            && availableSpace > RowsHeights.GetValueOrDefault(offset - 1, double.MaxValue)
+        )
+        {
+            var size = RowsHeights.GetValueOrDefault(offset, double.NaN);
+            if (double.IsNaN(size))
+                break;
+            availableSpace -= size * scale;
+            offset--;
+        }
+
+        // Loop will execute offset-- once too many if available space breaks loop
+        VerticalOffset = offset + 1;
+    }
+
+    //private int GetMaxScrollOffset() { }
 }
